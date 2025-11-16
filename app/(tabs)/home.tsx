@@ -4,7 +4,7 @@ import { Colors, Fonts, Spacing } from '../../constants';
 export default function HomeScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Dashboard</Text>
+      <Text style={styles.title}>Home</Text>
       <Text style={styles.subtitle}>Your personalized fitness journey starts here</Text>
     </View>
   );

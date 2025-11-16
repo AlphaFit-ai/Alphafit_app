@@ -24,7 +24,7 @@ export default function SupplementsScreen() {
       isCompleted: true,
     });
     setCurrentStep(4);
-    router.replace('/(tabs)/nutrition');
+    router.replace('/(tabs)/diet');
   };
 
   return (

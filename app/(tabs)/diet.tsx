@@ -6,7 +6,7 @@ import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } fr
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
 
-export default function NutritionScreen() {
+export default function DietScreen() {
   const { dietData } = useDiet();
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [cameraPermission, setCameraPermission] = useState<boolean>(false);
@@ -84,7 +84,7 @@ export default function NutritionScreen() {
           </View>
         </View>
         <Text style={styles.title}>Smart Diet Plan</Text>
-        <Text style={styles.subtitle}>AI-powered nutrition guidance</Text>
+        <Text style={styles.subtitle}>AI-powered diet guidance</Text>
       </View>
 
       <View style={styles.scanSection}>

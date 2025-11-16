@@ -13,10 +13,10 @@ export default function TabsLayout() {
   const [showProModal, setShowProModal] = useState(false);
 
   const navItems = [
-    { name: 'home', route: '/(tabs)/home', label: 'Dashboard', icon: 'home' as const, iconSet: 'feather' as const },
-    { name: 'projection', route: '/(tabs)/projection', label: 'Workouts', icon: 'barbell-outline' as const, iconSet: 'ionicons' as const },
-    { name: 'workouts', route: '/(tabs)/workouts', label: 'Scan', icon: 'scan-outline' as const, iconSet: 'ionicons' as const },
-    { name: 'nutrition', route: '/(tabs)/nutrition', label: 'Diet', icon: 'restaurant-outline' as const, iconSet: 'ionicons' as const },
+    { name: 'home', route: '/(tabs)/home', label: 'Home', icon: 'home' as const, iconSet: 'feather' as const },
+    { name: 'workouts', route: '/(tabs)/workouts', label: 'Workouts', icon: 'barbell-outline' as const, iconSet: 'ionicons' as const },
+    { name: 'projections', route: '/(tabs)/projections', label: 'Scan', icon: 'scan-outline' as const, iconSet: 'ionicons' as const },
+    { name: 'diet', route: '/(tabs)/diet', label: 'Diet', icon: 'restaurant-outline' as const, iconSet: 'ionicons' as const },
     { name: 'profile', route: '/(tabs)/profile', label: 'Profile', icon: 'person-outline' as const, iconSet: 'ionicons' as const },
   ];
 
@@ -120,7 +120,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Dashboard',
+          title: 'Home',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconWrapper, focused && styles.iconWrapperActive]}>
               <Feather 
@@ -131,12 +131,12 @@ export default function TabsLayout() {
             </View>
           ),
           ...(isWeb && {
-            tabBarLabel: ({ color }) => <Text style={[styles.webLabel, { color }]}>Dashboard</Text>,
+            tabBarLabel: ({ color }) => <Text style={[styles.webLabel, { color }]}>Home</Text>,
           }),
         }}
       />
       <Tabs.Screen
-        name="projection"
+        name="workouts"
         options={{
           title: 'Workouts',
           tabBarIcon: ({ color, focused }) => (
@@ -154,7 +154,7 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="workouts"
+        name="projections"
         options={{
           title: '',
           tabBarIcon: ({ focused }) => (
@@ -169,7 +169,7 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="nutrition"
+        name="diet"
         options={{
           title: 'Diet',
           tabBarIcon: ({ color, focused }) => (
