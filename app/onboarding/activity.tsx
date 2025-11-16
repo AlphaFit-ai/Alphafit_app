@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button, OptionCard, ProgressBar } from '../../components';
-import { Colors, Fonts, Spacing } from '../../constants';
+import { SharedStyles } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 
 export default function ActivityLevelScreen() {
@@ -21,15 +21,15 @@ export default function ActivityLevelScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={SharedStyles.container}>
+      <View style={SharedStyles.header}>
         <ProgressBar currentStep={6} totalSteps={10} />
       </View>
 
-      <View style={styles.content}>
-        <Text style={styles.title}>{t('onboarding.activity.title')}</Text>
+      <View style={SharedStyles.content}>
+        <Text style={SharedStyles.title}>{t('onboarding.activity.title')}</Text>
 
-        <View style={styles.optionsContainer}>
+        <View style={SharedStyles.optionsContainer}>
           <OptionCard
             title={t('onboarding.activity.low')}
             selected={selectedLevel === 'low'}
@@ -48,40 +48,11 @@ export default function ActivityLevelScreen() {
         </View>
       </View>
 
-      <View style={styles.footer}>
+      <View style={SharedStyles.footer}>
         <Button title={t('onboarding.continue')} onPress={handleContinue} disabled={!selectedLevel} />
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.white,
-  },
-  header: {
-    paddingTop: 60,
-    paddingHorizontal: Spacing.screenPaddingHorizontal,
-    paddingBottom: 20,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: Spacing.screenPaddingHorizontal,
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 32,
-    fontFamily: Fonts.bold,
-    fontWeight: '700',
-    color: Colors.black,
-    marginBottom: Spacing.lg,
-  },
-  optionsContainer: {
-    gap: 12,
-  },
-  footer: {
-    paddingHorizontal: Spacing.screenPaddingHorizontal,
-    paddingBottom: 40,
-  },
-});
+const styles = StyleSheet.create({});

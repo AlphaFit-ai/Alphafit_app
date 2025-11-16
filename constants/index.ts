@@ -1,5 +1,6 @@
-export { Colors } from './Colors';
-export { Fonts } from './Fonts';
-export { Spacing } from './Spacing';
-export { Theme } from './Theme';
+export * from './Colors';
+export * from './Fonts';
+export * from './SharedStyles';
+export * from './Spacing';
+export * from './Theme';
 

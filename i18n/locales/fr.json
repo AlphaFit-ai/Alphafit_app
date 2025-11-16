@@ -113,5 +113,29 @@
     "progressTraining": "Entraînement Progressif",
     "progressTrainingSubtitle": "Analyses Intelligentes",
     "upgradeToPro": "passer à Pro"
+  },
+  "diet": {
+    "preference": {
+      "title": "Quelle est votre préférence alimentaire?",
+      "highProtein": "Riche en Protéines",
+      "plantBased": "À Base de Plantes",
+      "lowCarb": "Faible en Glucides",
+      "balanced": "Équilibré"
+    },
+    "allergies": {
+      "title": "Avez-vous des allergies alimentaires ou des restrictions diététiques?",
+      "yes": "Oui",
+      "no": "Non",
+      "placeholder": "Veuillez préciser ..."
+    },
+    "meals": {
+      "title": "Combien de repas mangez-vous habituellement par jour?"
+    },
+    "supplements": {
+      "title": "Prenez-vous actuellement des suppléments?",
+      "yes": "Oui",
+      "no": "Non",
+      "placeholder": "Veuillez préciser ..."
+    }
   }
 }

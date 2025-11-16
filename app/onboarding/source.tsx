@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button, OptionCard, ProgressBar } from '../../components';
-import { Colors, Fonts, Spacing } from '../../constants';
+import { Colors, SharedStyles } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 
 export default function SourceScreen() {
@@ -22,8 +22,8 @@ export default function SourceScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={SharedStyles.container}>
+      <View style={SharedStyles.header}>
         <ProgressBar currentStep={1} totalSteps={10} />
       </View>
 
@@ -31,9 +31,9 @@ export default function SourceScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>{t('onboarding.source.title')}</Text>
+        <Text style={SharedStyles.title}>{t('onboarding.source.title')}</Text>
 
-        <View style={styles.optionsContainer}>
+        <View style={SharedStyles.optionsContainer}>
           <OptionCard
             title="Instagram"
             selected={selectedSource === 'instagram'}
@@ -85,7 +85,7 @@ export default function SourceScreen() {
         </View>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={SharedStyles.footerFloating}>
         <Button title={t('onboarding.continue')} onPress={handleContinue} disabled={!selectedSource} floating />
       </View>
     </View>
@@ -93,36 +93,14 @@ export default function SourceScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.white,
-  },
-  header: {
-    paddingTop: 60,
-    paddingHorizontal: Spacing.screenPaddingHorizontal,
-    paddingBottom: 20,
-  },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: Spacing.screenPaddingHorizontal,
+    paddingHorizontal: 24,
     justifyContent: 'center',
     paddingBottom: 80,
-  },
-  title: {
-    fontSize: 32,
-    fontFamily: Fonts.bold,
-    fontWeight: '700',
-    color: Colors.black,
-    marginBottom: 20,
-  },
-  optionsContainer: {
-    gap: 12,
   },
   logoImage: {
     width: 24,
     height: 24,
-  },
-  footer: {
-    paddingHorizontal: Spacing.screenPaddingHorizontal,
   },
 });

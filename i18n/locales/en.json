@@ -113,5 +113,29 @@
     "progressTraining": "Progress Training",
     "progressTrainingSubtitle": "Smart Analytics",
     "upgradeToPro": "upgrade to Pro"
+  },
+  "diet": {
+    "preference": {
+      "title": "What is your diet preference?",
+      "highProtein": "High Protein",
+      "plantBased": "Plant Based",
+      "lowCarb": "Low Carb",
+      "balanced": "Balanced"
+    },
+    "allergies": {
+      "title": "Do you have any food allergies or dietary restrictions?",
+      "yes": "Yes",
+      "no": "No",
+      "placeholder": "Please specify ..."
+    },
+    "meals": {
+      "title": "How many meals do you usually eat per day?"
+    },
+    "supplements": {
+      "title": "Do you currently take any supplements?",
+      "yes": "Yes",
+      "no": "No",
+      "placeholder": "Please specify ..."
+    }
   }
 }

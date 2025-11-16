@@ -1,8 +1,8 @@
 import {
-  Urbanist_400Regular,
-  Urbanist_500Medium,
-  Urbanist_600SemiBold,
-  Urbanist_700Bold,
+    Urbanist_400Regular,
+    Urbanist_500Medium,
+    Urbanist_600SemiBold,
+    Urbanist_700Bold,
 } from '@expo-google-fonts/urbanist';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
@@ -10,6 +10,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
+import { DietProvider } from '../context/DietContext';
 import '../i18n/config';
 
 // Prevent the splash screen from auto-hiding
@@ -34,7 +35,7 @@ export default function RootLayout() {
   }
 
   const content = (
-    <>
+    <DietProvider>
       <StatusBar style="dark" />
       <Stack
         screenOptions={{
@@ -44,9 +45,10 @@ export default function RootLayout() {
       >
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="diet" />
         <Stack.Screen name="index" />
       </Stack>
-    </>
+    </DietProvider>
   );
 
   // Add horizontal padding for web
