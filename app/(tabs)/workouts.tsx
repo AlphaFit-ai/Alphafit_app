@@ -178,121 +178,101 @@ export default function WorkoutsScreen() {
       </View>
 
       <View style={styles.workoutCards}>
-        {workoutPrograms.map((program) => (
-          <TouchableOpacity
-            key={program.day}
-            style={[
-              styles.workoutCard,
-              selectedDay === program.day && styles.workoutCardActive,
-            ]}
-            onPress={() => setSelectedDay(program.day)}
-            activeOpacity={0.7}
-          >
-            <Image 
-              source={program.icon} 
+          {workoutPrograms.map((program) => (
+            <TouchableOpacity
+              key={program.day}
               style={[
-                styles.workoutIcon,
-                selectedDay === program.day && styles.workoutIconActive,
+                styles.workoutCard,
+                selectedDay === program.day && styles.workoutCardActive,
               ]}
-              resizeMode="contain"
-            />
-            <Text style={[
-              styles.workoutTitle,
-              selectedDay === program.day && styles.workoutTitleActive,
-            ]}>
-              {program.title}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {selectedProgram && (
-        <View style={styles.programDetails}>
-          <Text style={styles.programTitle}>{selectedProgram.title} - {selectedProgram.subtitle.replace(/\n/g, ', ')}</Text>
-          
-          <View style={styles.durationContainer}>
-            <Ionicons name="time-outline" size={18} color={Colors.gray[400]} />
-            <Text style={styles.durationText}>{selectedProgram.duration}</Text>
-          </View>
-
-          <View style={styles.exercisesList}>
-            {selectedProgram.exercises.map((exercise, index) => (
-              <View key={index} style={styles.exerciseCard}>
-                <View style={styles.exerciseHeader}>
-                  <Text style={styles.exerciseName}>{exercise.name}</Text>
-                  {exercise.tag && (
-                    <View style={styles.exerciseTag}>
-                      <Text style={styles.exerciseTagText}>{exercise.tag}</Text>
-                    </View>
-                  )}
-                </View>
-                
-                <View style={styles.exerciseInfo}>
-                  <Text style={styles.exerciseStats}>
-                    Sets: <Text style={styles.exerciseStatsValue}>{exercise.sets}</Text>
-                    {'  '}
-                    Reps: <Text style={styles.exerciseStatsValue}>{exercise.reps}</Text>
-                  </Text>
-                </View>
-
-                <Text style={styles.exerciseDescription}>{exercise.description}</Text>
-
-                <TouchableOpacity style={styles.demoButton} disabled>
-                  <Ionicons name="play-circle" size={16} color={Colors.white} />
-                  <Text style={styles.demoButtonText}>{exercise.demo}</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-          </View>
+              onPress={() => setSelectedDay(program.day)}
+              activeOpacity={0.7}
+            >
+              <Image 
+                source={program.icon} 
+                style={[
+                  styles.workoutIcon,
+                  selectedDay === program.day && styles.workoutIconActive,
+                ]}
+                resizeMode="contain"
+              />
+              <Text style={[
+                styles.workoutTitle,
+                selectedDay === program.day && styles.workoutTitleActive,
+              ]}>
+                {program.title}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
-      )}
 
-      <View style={styles.proSection}>
-        <View style={styles.lockIconContainer}>
-          <Ionicons name="lock-closed" size={28} color={Colors.black} />
-        </View>
-        <Text style={styles.proTitle}>{t('workoutScreen.unlockProTitle')}</Text>
-        <Text style={styles.proDescription}>
-          {t('workoutScreen.unlockProDescription')}
-        </Text>
+        {selectedProgram && (
+          <View style={styles.programDetails}>
+            <Text style={styles.programTitle}>{selectedProgram.title} - {selectedProgram.subtitle.replace(/\n/g, ', ')}</Text>
+            
+            <View style={styles.durationContainer}>
+              <Ionicons name="time-outline" size={18} color={Colors.gray[400]} />
+              <Text style={styles.durationText}>{selectedProgram.duration}</Text>
+            </View>
 
-        <View style={styles.proFeatures}>
-          <View style={styles.proFeature}>
-            <Ionicons name="checkmark-circle" size={24} color={Colors.black} />
-            <View style={styles.proFeatureText}>
-              <Text style={styles.proFeatureTitle}>{t('workoutScreen.customPlans')}</Text>
-              <Text style={styles.proFeatureSubtitle}>{t('workoutScreen.customPlansSubtitle')}</Text>
+            <View style={styles.exercisesList}>
+              {selectedProgram.exercises.map((exercise, index) => (
+                <View key={index} style={styles.exerciseCard}>
+                  <View style={styles.exerciseHeader}>
+                    <Text style={styles.exerciseName}>{exercise.name}</Text>
+                    {exercise.tag && (
+                      <View style={styles.exerciseTag}>
+                        <Text style={styles.exerciseTagText}>{exercise.tag}</Text>
+                      </View>
+                    )}
+                  </View>
+                  
+                  <View style={styles.exerciseInfo}>
+                    <Text style={styles.exerciseStats}>
+                      Sets: <Text style={styles.exerciseStatsValue}>{exercise.sets}</Text>
+                      {'  '}
+                      Reps: <Text style={styles.exerciseStatsValue}>{exercise.reps}</Text>
+                    </Text>
+                  </View>
+
+                  <Text style={styles.exerciseDescription}>{exercise.description}</Text>
+
+                  <TouchableOpacity style={styles.demoButton} disabled>
+                    <Ionicons name="play-circle" size={16} color={Colors.white} />
+                    <Text style={styles.demoButtonText}>{exercise.demo}</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
             </View>
           </View>
-          <View style={styles.proFeature}>
-            <Ionicons name="trending-up" size={24} color={Colors.black} />
-            <View style={styles.proFeatureText}>
-              <Text style={styles.proFeatureTitle}>{t('workoutScreen.progressTraining')}</Text>
-              <Text style={styles.proFeatureSubtitle}>{t('workoutScreen.progressTrainingSubtitle')}</Text>
-            </View>
-          </View>
-        </View>
+        )}
 
-        <TouchableOpacity activeOpacity={0.8} style={{ width: '100%' }} onPress={() => setShowProModal(true)}>
-          <LinearGradient
-            colors={[Colors.gold, Colors.goldDark]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.upgradeToProButton}
-          >
-            <Ionicons name="trophy" size={20} color={Colors.white} />
-            <Text style={styles.upgradeToProText}>{t('workoutScreen.upgradeToPro')}</Text>
+        <View style={styles.proSection}>
+          <View style={styles.lockIconContainer}>
+            <Ionicons name="lock-closed" size={28} color={Colors.black} />
+          </View>
+          <Text style={styles.proTitle}>{t('workoutScreen.unlockProTitle')}</Text>
+          <Text style={styles.proDescription}>
+            {t('workoutScreen.unlockProDescription')}
+          </Text>
+
+          <TouchableOpacity activeOpacity={0.8} style={{ width: '100%' }} onPress={() => setShowProModal(true)}>
+            <LinearGradient
+              colors={[Colors.gold, Colors.goldDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.upgradeToProButton}
+            >
+              <Ionicons name="trophy" size={20} color={Colors.white} />
+              <Text style={styles.upgradeToProText}>{t('workoutScreen.upgradeToPro')}</Text>
           </LinearGradient>
         </TouchableOpacity>
       </View>
 
-      <View style={{ height: 40 }} />
       <ProPlanModal visible={showProModal} onClose={() => setShowProModal(false)} />
     </ScrollView>
   );
-}
-
-const styles = StyleSheet.create({
+}const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.white,
@@ -488,30 +468,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 24,
     paddingHorizontal: 16,
-  },
-  proFeatures: {
-    flexDirection: 'row',
-    gap: 32,
-    marginBottom: 32,
-  },
-  proFeature: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  proFeatureText: {
-    gap: 2,
-  },
-  proFeatureTitle: {
-    fontSize: 14,
-    fontFamily: Fonts.bold,
-    fontWeight: '700',
-    color: Colors.black,
-  },
-  proFeatureSubtitle: {
-    fontSize: 12,
-    fontFamily: Fonts.regular,
-    color: Colors.gray[400],
   },
   upgradeToProButton: {
     flexDirection: 'row',

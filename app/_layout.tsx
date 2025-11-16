@@ -1,8 +1,8 @@
 import {
-    Urbanist_400Regular,
-    Urbanist_500Medium,
-    Urbanist_600SemiBold,
-    Urbanist_700Bold,
+  Urbanist_400Regular,
+  Urbanist_500Medium,
+  Urbanist_600SemiBold,
+  Urbanist_700Bold,
 } from '@expo-google-fonts/urbanist';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';

@@ -138,6 +138,7 @@ export default function LoginScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               error={emailError}
+              style={{ marginBottom: 10 }}
             />
 
             {/* Continue Button */}

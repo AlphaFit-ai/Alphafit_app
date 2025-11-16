@@ -57,7 +57,7 @@ export default function DietPreferenceScreen() {
     <SafeAreaView style={SharedStyles.container}>
       <TouchableOpacity 
         style={SharedStyles.backButton}
-        onPress={() => router.push('/(tabs)/home')}
+        onPress={() => router.replace('/(tabs)/home')}
         activeOpacity={0.7}
       >
         <Ionicons name="arrow-back" size={24} color={Colors.black} />
