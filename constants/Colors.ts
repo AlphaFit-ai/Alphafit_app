@@ -30,6 +30,7 @@ export const Colors = {
   error: '#EF4444',
   warning: '#F59E0B',
   info: '#3B82F6',
+  red: '#EF4444',
   
   // Premium Colors
   gold: '#EFBF04',

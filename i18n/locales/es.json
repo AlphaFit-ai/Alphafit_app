@@ -137,5 +137,23 @@
       "no": "No",
       "placeholder": "Por favor especifica ..."
     }
+  },
+  "profile": {
+    "title": "Perfil",
+    "accountSection": "Cuenta",
+    "supportSection": "Soporte",
+    "appSettings": "Configuración de la aplicación",
+    "accountDetails": "Detalles de la cuenta",
+    "notifications": "Notificaciones",
+    "notificationsSubtitle": "Administra tus preferencias de notificación",
+    "subscription": "Suscripción",
+    "subscriptionSubtitle": "Administra tu suscripción Pro",
+    "support": "Soporte",
+    "supportSubtitle": "Obtén ayuda y contáctanos",
+    "privacyPolicy": "Política de privacidad",
+    "termsOfService": "Términos de servicio",
+    "language": "Idioma",
+    "darkMode": "Modo oscuro",
+    "logout": "Cerrar sesión"
   }
 }
