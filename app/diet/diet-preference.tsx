@@ -64,9 +64,10 @@ export default function DietPreferenceScreen() {
       </TouchableOpacity>
 
       <View style={styles.content}>
-        <Text style={SharedStyles.title}>{t('diet.preference.title')}</Text>
+        <View style={styles.innerContent}>
+          <Text style={SharedStyles.title}>{t('diet.preference.title')}</Text>
 
-        <View style={styles.optionsGrid}>
+          <View style={styles.optionsGrid}>
           {dietOptions.map((option) => (
             <TouchableOpacity
               key={option.type}
@@ -83,6 +84,7 @@ export default function DietPreferenceScreen() {
               </View>
             </TouchableOpacity>
           ))}
+          </View>
         </View>
       </View>
 
@@ -100,8 +102,12 @@ export default function DietPreferenceScreen() {
 const styles = StyleSheet.create({
   content: {
     flex: 1,
-    paddingHorizontal: Spacing.screenPaddingHorizontal,
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  innerContent: {
+    width: '100%',
+    paddingHorizontal: Spacing.screenPaddingHorizontal,
   },
   optionsGrid: {
     flexDirection: 'row',

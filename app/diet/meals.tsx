@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../components';
 import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
@@ -42,49 +42,46 @@ export default function MealsScreen() {
         <Ionicons name="arrow-back" size={24} color={Colors.black} />
       </TouchableOpacity>
 
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={SharedStyles.title}>{t('diet.meals.title')}</Text>
+      <View style={styles.content}>
+        <View style={styles.innerContent}>
+          <Text style={SharedStyles.title}>{t('diet.meals.title')}</Text>
 
-        <Image 
-          source={require('../../assets/images/diet/meals.png')} 
-          style={styles.image}
-          resizeMode="contain"
-        />
+          <Image 
+            source={require('../../assets/images/diet/meals.png')} 
+            style={styles.image}
+            resizeMode="contain"
+          />
 
-        <View style={styles.optionsContainer}>
-          {proteinOptions.map((option) => {
-            return (
-              <TouchableOpacity
-                key={option.value}
-                style={[
-                  styles.optionButton,
-                  selectedProtein === option.value && styles.optionButtonActive,
-                ]}
-                onPress={() => handleSelect(option.value)}
-                activeOpacity={0.7}
-              >
-                <Text style={[
-                  styles.optionButtonText,
-                  selectedProtein === option.value && styles.optionButtonTextActive,
-                ]}>
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+          <View style={styles.optionsContainer}>
+            {proteinOptions.map((option) => {
+              return (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.optionButton,
+                    selectedProtein === option.value && styles.optionButtonActive,
+                  ]}
+                  onPress={() => handleSelect(option.value)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[
+                    styles.optionButtonText,
+                    selectedProtein === option.value && styles.optionButtonTextActive,
+                  ]}>
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
-      </ScrollView>
+      </View>
 
-      <View style={SharedStyles.footerFloating}>
+      <View style={SharedStyles.footer}>
         <Button 
           title={t('onboarding.continue')} 
           onPress={handleContinue} 
           disabled={!selectedProtein}
-          floating
         />
       </View>
     </SafeAreaView>
@@ -92,18 +89,18 @@ export default function MealsScreen() {
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
+  content: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  scrollContent: {
+  innerContent: {
+    width: '100%',
     paddingHorizontal: Spacing.screenPaddingHorizontal,
-    paddingTop: 60,
-    paddingBottom: 100,
   },
   image: {
     width: '100%',
-    height: 280,
-    marginBottom: 40,
+    height: 200,
   },
   optionsContainer: {
     flexDirection: 'row',

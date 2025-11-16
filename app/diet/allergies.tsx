@@ -15,6 +15,9 @@ export default function AllergiesScreen() {
   const [allergiesText, setAllergiesText] = useState('');
 
   const handleContinue = () => {
+    if (hasAllergies === true && !allergiesText.trim()) {
+      return; // Don't continue if Yes is selected but no text entered
+    }
     updateDietData({
       hasAllergies: hasAllergies || false,
       allergies: hasAllergies ? allergiesText : '',
@@ -38,15 +41,16 @@ export default function AllergiesScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={SharedStyles.title}>{t('diet.allergies.title')}</Text>
+        <View style={styles.innerContent}>
+          <Text style={SharedStyles.title}>{t('diet.allergies.title')}</Text>
 
-        <Image 
-          source={require('../../assets/images/diet/food allergy.png')} 
-          style={styles.image}
-          resizeMode="contain"
-        />
+          <Image 
+            source={require('../../assets/images/diet/food allergy.png')} 
+            style={styles.image}
+            resizeMode="contain"
+          />
 
-        <View style={styles.buttonGroup}>
+          <View style={styles.buttonGroup}>
           <TouchableOpacity
             style={[
               styles.choiceButton,
@@ -95,13 +99,14 @@ export default function AllergiesScreen() {
             textAlignVertical="top"
           />
         )}
+        </View>
       </ScrollView>
 
       <View style={SharedStyles.footerFloating}>
         <Button 
           title={t('onboarding.continue')} 
           onPress={handleContinue} 
-          disabled={hasAllergies === null}
+          disabled={hasAllergies === null || (hasAllergies === true && !allergiesText.trim())}
           floating
         />
       </View>
@@ -114,9 +119,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  innerContent: {
+    width: '100%',
     paddingHorizontal: Spacing.screenPaddingHorizontal,
-    paddingTop: 60,
-    paddingBottom: 100,
   },
   image: {
     width: '100%',
@@ -150,7 +158,7 @@ const styles = StyleSheet.create({
     color: Colors.white,
   },
   textArea: {
-    backgroundColor: Colors.gray[50],
+    backgroundColor: Colors.gray[100],
     borderRadius: 16,
     padding: 16,
     fontSize: Fonts.sizes.base,

@@ -39,15 +39,16 @@ export default function SupplementsScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={SharedStyles.title}>{t('diet.supplements.title')}</Text>
+        <View style={styles.innerContent}>
+          <Text style={SharedStyles.title}>{t('diet.supplements.title')}</Text>
 
-        <Image 
-          source={require('../../assets/images/diet/supplements.png')} 
-          style={styles.image}
-          resizeMode="contain"
-        />
+          <Image 
+            source={require('../../assets/images/diet/supplements.png')} 
+            style={styles.image}
+            resizeMode="contain"
+          />
 
-        <View style={styles.buttonGroup}>
+          <View style={styles.buttonGroup}>
           <TouchableOpacity
             style={[
               styles.choiceButton,
@@ -96,6 +97,7 @@ export default function SupplementsScreen() {
             textAlignVertical="top"
           />
         )}
+        </View>
       </ScrollView>
 
       <View style={SharedStyles.footerFloating}>
@@ -115,9 +117,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: Spacing.screenPaddingHorizontal,
-    paddingTop: 60,
+    flexGrow: 1,
+    justifyContent: 'center',
     paddingBottom: 100,
+  },
+  innerContent: {
+    width: '100%',
+    paddingHorizontal: Spacing.screenPaddingHorizontal,
   },
   image: {
     width: '100%',
@@ -151,7 +157,7 @@ const styles = StyleSheet.create({
     color: Colors.white,
   },
   textArea: {
-    backgroundColor: Colors.gray[50],
+    backgroundColor: Colors.gray[100],
     borderRadius: 16,
     padding: 16,
     fontSize: Fonts.sizes.base,
