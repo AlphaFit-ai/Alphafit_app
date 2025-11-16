@@ -100,7 +100,8 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    height: 200,
+    height: 150,
+    marginBottom: Spacing.lg,
   },
   optionsContainer: {
     flexDirection: 'row',

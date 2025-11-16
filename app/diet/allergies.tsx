@@ -2,10 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../components';
-import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
+import { Colors, SharedStyles } from '../../constants';
 import { useDiet } from '../../context/DietContext';
 
 export default function AllergiesScreen() {
@@ -37,31 +37,31 @@ export default function AllergiesScreen() {
       </TouchableOpacity>
 
       <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        style={SharedStyles.scrollView}
+        contentContainerStyle={SharedStyles.scrollContentCentered}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.innerContent}>
+        <View style={SharedStyles.innerContent}>
           <Text style={SharedStyles.title}>{t('diet.allergies.title')}</Text>
 
           <Image 
             source={require('../../assets/images/diet/food allergy.png')} 
-            style={styles.image}
+            style={SharedStyles.fullWidthImage}
             resizeMode="contain"
           />
 
-          <View style={styles.buttonGroup}>
+          <View style={SharedStyles.buttonGroup}>
           <TouchableOpacity
             style={[
-              styles.choiceButton,
-              hasAllergies === true && styles.choiceButtonActive,
+              SharedStyles.choiceButton,
+              hasAllergies === true && SharedStyles.choiceButtonActive,
             ]}
             onPress={() => setHasAllergies(true)}
             activeOpacity={0.7}
           >
             <Text style={[
-              styles.choiceButtonText,
-              hasAllergies === true && styles.choiceButtonTextActive,
+              SharedStyles.choiceButtonText,
+              hasAllergies === true && SharedStyles.choiceButtonTextActive,
             ]}>
               {t('diet.allergies.yes')}
             </Text>
@@ -69,8 +69,8 @@ export default function AllergiesScreen() {
 
           <TouchableOpacity
             style={[
-              styles.choiceButton,
-              hasAllergies === false && styles.choiceButtonActive,
+              SharedStyles.choiceButton,
+              hasAllergies === false && SharedStyles.choiceButtonActive,
             ]}
             onPress={() => {
               setHasAllergies(false);
@@ -79,8 +79,8 @@ export default function AllergiesScreen() {
             activeOpacity={0.7}
           >
             <Text style={[
-              styles.choiceButtonText,
-              hasAllergies === false && styles.choiceButtonTextActive,
+              SharedStyles.choiceButtonText,
+              hasAllergies === false && SharedStyles.choiceButtonTextActive,
             ]}>
               {t('diet.allergies.no')}
             </Text>
@@ -89,7 +89,7 @@ export default function AllergiesScreen() {
 
         {hasAllergies === true && (
           <TextInput
-            style={styles.textArea}
+            style={SharedStyles.textArea}
             placeholder={t('diet.allergies.placeholder')}
             placeholderTextColor={Colors.gray[400]}
             value={allergiesText}
@@ -113,58 +113,3 @@ export default function AllergiesScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-  },
-  innerContent: {
-    width: '100%',
-    paddingHorizontal: Spacing.screenPaddingHorizontal,
-  },
-  image: {
-    width: '100%',
-    height: 200,
-    marginBottom: 32,
-  },
-  buttonGroup: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 24,
-  },
-  choiceButton: {
-    flex: 1,
-    paddingVertical: 16,
-    borderRadius: 30,
-    backgroundColor: Colors.white,
-    borderWidth: 2,
-    borderColor: Colors.gray[200],
-    alignItems: 'center',
-  },
-  choiceButtonActive: {
-    backgroundColor: Colors.black,
-    borderColor: Colors.black,
-  },
-  choiceButtonText: {
-    fontSize: Fonts.sizes.base,
-    fontFamily: Fonts.bold,
-    color: Colors.black,
-  },
-  choiceButtonTextActive: {
-    color: Colors.white,
-  },
-  textArea: {
-    backgroundColor: Colors.gray[100],
-    borderRadius: 16,
-    padding: 16,
-    fontSize: Fonts.sizes.base,
-    fontFamily: Fonts.regular,
-    color: Colors.black,
-    minHeight: 140,
-    marginTop: 8,
-  },
-});
