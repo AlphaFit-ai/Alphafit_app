@@ -1,0 +1,117 @@
+{
+  "welcome": {
+    "title": "WELCOME TO",
+    "subtitle": "Sign in to start forging your best physique",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithApple": "Continue with Apple",
+    "or": "OR",
+    "email": "Email",
+    "emailPlaceholder": "example@gmail.com",
+    "continue": "Continue",
+    "terms": "By continuing, you agree to our Terms of Service and Privacy Policy",
+    "invalidEmail": "Please enter a valid email address"
+  },
+  "onboarding": {
+    "age": {
+      "title": "When were you born?",
+      "month": "Month",
+      "day": "Day",
+      "year": "Year",
+      "january": "January",
+      "february": "February",
+      "march": "March",
+      "april": "April",
+      "may": "May",
+      "june": "June",
+      "july": "July",
+      "august": "August",
+      "september": "September",
+      "october": "October",
+      "november": "November",
+      "december": "December"
+    },
+    "gender": {
+      "title": "What's your gender?",
+      "male": "Male",
+      "female": "Female"
+    },
+    "height": {
+      "title": "What's your height & weight?",
+      "heightLabel": "Height",
+      "weightLabel": "Weight",
+      "imperial": "Imperial",
+      "metric": "Metric"
+    },
+    "activity": {
+      "title": "How active are you in your daily life?",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "workouts": {
+      "title": "How many workouts do you do per week?",
+      "subtitle": "Workouts now and then"
+    },
+    "fitnessLevel": {
+      "title": "What is your current fitness level?",
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "equipment": {
+      "title": "What kind of equipment do you have access to?",
+      "fullGym": "Full gym",
+      "dumbbellsBarbell": "Dumbbells-Barbell",
+      "bodyweightOnly": "Bodyweight only"
+    },
+    "goal": {
+      "title": "What is your main fitness goal right now?",
+      "loseFat": "Lose fat",
+      "getStronger": "Get stronger",
+      "buildMuscle": "Build muscle",
+      "stayFit": "Stay fit"
+    },
+    "intro": {
+      "title": "AI Physique Projection",
+      "subtitle": "Estimate how your body could transform using advanced AI models",
+      "analyzing": "Analyzing your profile...",
+      "generating": "Generating projection...",
+      "almost": "Almost there...",
+      "current": "Current",
+      "projected": "Projected (6m)",
+      "getStarted": "Get Started"
+    },
+    "source": {
+      "title": "Where did you hear about us?",
+      "others": "Others"
+    },
+    "continue": "Continue",
+    "back": "Back",
+    "step": "{{current}} of {{total}}"
+  },
+  "workoutScreen": {
+    "title": "Custom Workouts",
+    "description": "Learn the basics with simple beginner routines. Follow along with our Push/Pull/Legs split.",
+    "pushDay": "Push Day",
+    "pullDay": "Pull Day",
+    "legDay": "Leg Day",
+    "chest": "Chest",
+    "shoulders": "Shoulders",
+    "triceps": "Triceps",
+    "back": "Back",
+    "biceps": "Biceps",
+    "quads": "Quads",
+    "glutes": "Glutes",
+    "calves": "Calves",
+    "mins": "mins",
+    "sets": "Sets",
+    "reps": "Reps",
+    "unlockProTitle": "Unlock Pro Workouts",
+    "unlockProDescription": "Get personalized, advanced AI workouts with progress tracking, custom routines, and adaptive difficulty.",
+    "customPlans": "Custom Plans",
+    "customPlansSubtitle": "AI-tailored workouts",
+    "progressTraining": "Progress Training",
+    "progressTrainingSubtitle": "Smart Analytics",
+    "upgradeToPro": "upgrade to Pro"
+  }
+}

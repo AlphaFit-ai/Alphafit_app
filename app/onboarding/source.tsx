@@ -1,0 +1,128 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Button, OptionCard, ProgressBar } from '../../components';
+import { Colors, Fonts, Spacing } from '../../constants';
+import { useOnboarding } from '../../context/OnboardingContext';
+
+export default function SourceScreen() {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const { updateOnboardingData, setCurrentStep } = useOnboarding();
+  const [selectedSource, setSelectedSource] = useState<'instagram' | 'facebook' | 'tiktok' | 'threads' | 'x' | 'youtube' | 'google' | 'others' | null>(null);
+
+  const handleContinue = () => {
+    if (selectedSource) {
+      updateOnboardingData({ source: selectedSource });
+      setCurrentStep(1);
+      router.push('/onboarding/age');
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <ProgressBar currentStep={1} totalSteps={10} />
+      </View>
+
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.title}>{t('onboarding.source.title')}</Text>
+
+        <View style={styles.optionsContainer}>
+          <OptionCard
+            title="Instagram"
+            selected={selectedSource === 'instagram'}
+            onPress={() => setSelectedSource('instagram')}
+            icon={<Image source={require('../../assets/images/logo/instagram.png')} style={styles.logoImage} />}
+          />
+          <OptionCard
+            title="Facebook"
+            selected={selectedSource === 'facebook'}
+            onPress={() => setSelectedSource('facebook')}
+            icon={<Ionicons name="logo-facebook" size={24} color="#1877F2" />}
+          />
+          <OptionCard
+            title="TikTok"
+            selected={selectedSource === 'tiktok'}
+            onPress={() => setSelectedSource('tiktok')}
+            icon={<Ionicons name="logo-tiktok" size={24} color={selectedSource === 'tiktok' ? Colors.white : Colors.black} />}
+          />
+          <OptionCard
+            title="Threads"
+            selected={selectedSource === 'threads'}
+            onPress={() => setSelectedSource('threads')}
+            icon={<Ionicons name="logo-threads" size={24} color={selectedSource === 'threads' ? Colors.white : Colors.black} />}
+          />
+          <OptionCard
+            title="X"
+            selected={selectedSource === 'x'}
+            onPress={() => setSelectedSource('x')}
+            icon={<Ionicons name="logo-x" size={24} color={selectedSource === 'x' ? Colors.white : Colors.black} />}
+          />
+          <OptionCard
+            title="YouTube"
+            selected={selectedSource === 'youtube'}
+            onPress={() => setSelectedSource('youtube')}
+            icon={<Ionicons name="logo-youtube" size={24} color="#FF0000" />}
+          />
+          <OptionCard
+            title="Google"
+            selected={selectedSource === 'google'}
+            onPress={() => setSelectedSource('google')}
+            icon={<Image source={require('../../assets/images/logo/google.png')} style={styles.logoImage} />}
+          />
+          <OptionCard
+            title={t('onboarding.source.others')}
+            selected={selectedSource === 'others'}
+            onPress={() => setSelectedSource('others')}
+            icon={<Ionicons name="people" size={24} color={selectedSource === 'others' ? Colors.white : Colors.black} />}
+          />
+        </View>
+      </ScrollView>
+
+      <View style={styles.footer}>
+        <Button title={t('onboarding.continue')} onPress={handleContinue} disabled={!selectedSource} floating />
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.white,
+  },
+  header: {
+    paddingTop: 60,
+    paddingHorizontal: Spacing.screenPaddingHorizontal,
+    paddingBottom: 20,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: Spacing.screenPaddingHorizontal,
+    justifyContent: 'center',
+    paddingBottom: 80,
+  },
+  title: {
+    fontSize: 32,
+    fontFamily: Fonts.bold,
+    fontWeight: '700',
+    color: Colors.black,
+    marginBottom: 20,
+  },
+  optionsContainer: {
+    gap: 12,
+  },
+  logoImage: {
+    width: 24,
+    height: 24,
+  },
+  footer: {
+    paddingHorizontal: Spacing.screenPaddingHorizontal,
+  },
+});

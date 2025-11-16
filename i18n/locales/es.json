@@ -1,0 +1,117 @@
+{
+  "welcome": {
+    "title": "BIENVENIDO A",
+    "subtitle": "Inicia sesión para comenzar a forjar tu mejor físico",
+    "continueWithGoogle": "Continuar con Google",
+    "continueWithApple": "Continuar con Apple",
+    "or": "O",
+    "email": "Correo electrónico",
+    "emailPlaceholder": "ejemplo@gmail.com",
+    "continue": "Continuar",
+    "terms": "Al continuar, aceptas nuestros Términos de Servicio y Política de Privacidad",
+    "invalidEmail": "Por favor ingresa un correo electrónico válido"
+  },
+  "onboarding": {
+    "age": {
+      "title": "¿Cuándo naciste?",
+      "month": "Mes",
+      "day": "Día",
+      "year": "Año",
+      "january": "Enero",
+      "february": "Febrero",
+      "march": "Marzo",
+      "april": "Abril",
+      "may": "Mayo",
+      "june": "Junio",
+      "july": "Julio",
+      "august": "Agosto",
+      "september": "Septiembre",
+      "october": "Octubre",
+      "november": "Noviembre",
+      "december": "Diciembre"
+    },
+    "gender": {
+      "title": "¿Cuál es tu género?",
+      "male": "Masculino",
+      "female": "Femenino"
+    },
+    "height": {
+      "title": "¿Cuál es tu altura y peso?",
+      "heightLabel": "Altura",
+      "weightLabel": "Peso",
+      "imperial": "Imperial",
+      "metric": "Métrico"
+    },
+    "activity": {
+      "title": "¿Qué tan activo eres en tu vida diaria?",
+      "low": "Bajo",
+      "medium": "Medio",
+      "high": "Alto"
+    },
+    "workouts": {
+      "title": "¿Cuántos entrenamientos haces por semana?",
+      "subtitle": "Entrenamientos de vez en cuando"
+    },
+    "fitnessLevel": {
+      "title": "¿Cuál es tu nivel de condición física actual?",
+      "beginner": "Principiante",
+      "intermediate": "Intermedio",
+      "advanced": "Avanzado"
+    },
+    "equipment": {
+      "title": "¿A qué tipo de equipo tienes acceso?",
+      "fullGym": "Gimnasio completo",
+      "dumbbellsBarbell": "Mancuernas-Barra",
+      "bodyweightOnly": "Solo peso corporal"
+    },
+    "goal": {
+      "title": "¿Cuál es tu objetivo principal de fitness ahora?",
+      "loseFat": "Perder grasa",
+      "getStronger": "Fortalecerse",
+      "buildMuscle": "Construir músculo",
+      "stayFit": "Mantenerse en forma"
+    },
+    "intro": {
+      "title": "Proyección Física con IA",
+      "subtitle": "Estima cómo podría transformarse tu cuerpo usando modelos de IA avanzados",
+      "analyzing": "Analizando tu perfil...",
+      "generating": "Generando proyección...",
+      "almost": "Casi listo...",
+      "current": "Actual",
+      "projected": "Proyectado (6m)",
+      "getStarted": "Comenzar"
+    },
+    "source": {
+      "title": "¿Dónde nos conociste?",
+      "others": "Otros"
+    },
+    "continue": "Continuar",
+    "back": "Atrás",
+    "step": "{{current}} de {{total}}"
+  },
+  "workoutScreen": {
+    "title": "Entrenamientos Personalizados",
+    "description": "Aprende lo básico con rutinas simples para principiantes. Sigue nuestro plan Push/Pull/Piernas.",
+    "pushDay": "Día de Empuje",
+    "pullDay": "Día de Jalón",
+    "legDay": "Día de Piernas",
+    "chest": "Pecho",
+    "shoulders": "Hombros",
+    "triceps": "Tríceps",
+    "back": "Espalda",
+    "biceps": "Bíceps",
+    "quads": "Cuádriceps",
+    "glutes": "Glúteos",
+    "calves": "Pantorrillas",
+    "mins": "mins",
+    "sets": "Series",
+    "reps": "Reps",
+    "unlockProTitle": "Desbloquear Entrenamientos Pro",
+    "unlockProDescription": "Obtén entrenamientos personalizados con IA avanzada, seguimiento de progreso, rutinas personalizadas y dificultad adaptativa.",
+    "customPlans": "Planes Personalizados",
+    "customPlansSubtitle": "Entrenamientos diseñados por IA",
+    "progressTraining": "Entrenamiento de Progreso",
+    "progressTrainingSubtitle": "Análisis Inteligente",
+    "upgradeToPro": "actualizar a Pro"
+  }
+}
