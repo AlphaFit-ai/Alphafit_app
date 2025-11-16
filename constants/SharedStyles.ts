@@ -29,7 +29,8 @@ export const SharedStyles = StyleSheet.create({
     fontSize: Fonts.sizes['4xl'],
     fontFamily: Fonts.bold,
     color: Colors.black,
-    marginBottom: 40,
+    marginBottom: 20,
+    marginTop: 30,
   },
 
   // Options Container

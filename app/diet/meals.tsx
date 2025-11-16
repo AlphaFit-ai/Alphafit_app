@@ -3,32 +3,37 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../components';
 import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
 
-const mealOptions = [2, 3, '4 +'];
+const proteinOptions = [
+  { label: '50-100g', value: 75 },
+  { label: '100-150g', value: 125 },
+  { label: '150-200g', value: 175 },
+  { label: '200g+', value: 200 },
+];
 
 export default function MealsScreen() {
   const { t } = useTranslation();
   const { updateDietData, setCurrentStep } = useDiet();
-  const [selectedMeals, setSelectedMeals] = useState<number | null>(null);
+  const [selectedProtein, setSelectedProtein] = useState<number | null>(null);
 
   const handleContinue = () => {
-    if (selectedMeals) {
-      updateDietData({ mealsPerDay: selectedMeals });
+    if (selectedProtein) {
+      updateDietData({ mealsPerDay: selectedProtein });
       setCurrentStep(3);
       router.push('/diet/supplements');
     }
   };
 
-  const handleSelect = (option: number | string) => {
-    const value = option === '4 +' ? 4 : (option as number);
-    setSelectedMeals(value);
+  const handleSelect = (value: number) => {
+    setSelectedProtein(value);
   };
 
   return (
-    <View style={SharedStyles.container}>
+    <SafeAreaView style={SharedStyles.container}>
       <TouchableOpacity 
         style={SharedStyles.backButton}
         onPress={() => router.back()}
@@ -51,23 +56,22 @@ export default function MealsScreen() {
         />
 
         <View style={styles.optionsContainer}>
-          {mealOptions.map((option) => {
-            const value = option === '4 +' ? 4 : (option as number);
+          {proteinOptions.map((option) => {
             return (
               <TouchableOpacity
-                key={option}
+                key={option.value}
                 style={[
                   styles.optionButton,
-                  selectedMeals === value && styles.optionButtonActive,
+                  selectedProtein === option.value && styles.optionButtonActive,
                 ]}
-                onPress={() => handleSelect(option)}
+                onPress={() => handleSelect(option.value)}
                 activeOpacity={0.7}
               >
                 <Text style={[
                   styles.optionButtonText,
-                  selectedMeals === value && styles.optionButtonTextActive,
+                  selectedProtein === option.value && styles.optionButtonTextActive,
                 ]}>
-                  {option}
+                  {option.label}
                 </Text>
               </TouchableOpacity>
             );
@@ -79,11 +83,11 @@ export default function MealsScreen() {
         <Button 
           title={t('onboarding.continue')} 
           onPress={handleContinue} 
-          disabled={!selectedMeals}
+          disabled={!selectedProtein}
           floating
         />
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -102,9 +106,12 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   optionsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 16,
   },
   optionButton: {
+    width: '47%',
     paddingVertical: 20,
     borderRadius: 16,
     backgroundColor: Colors.white,

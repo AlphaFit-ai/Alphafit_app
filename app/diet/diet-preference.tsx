@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../components';
 import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
@@ -53,7 +54,7 @@ export default function DietPreferenceScreen() {
   };
 
   return (
-    <View style={SharedStyles.container}>
+    <SafeAreaView style={SharedStyles.container}>
       <TouchableOpacity 
         style={SharedStyles.backButton}
         onPress={() => router.push('/(tabs)/home')}
@@ -62,11 +63,7 @@ export default function DietPreferenceScreen() {
         <Ionicons name="arrow-back" size={24} color={Colors.black} />
       </TouchableOpacity>
 
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <View style={styles.content}>
         <Text style={SharedStyles.title}>{t('diet.preference.title')}</Text>
 
         <View style={styles.optionsGrid}>
@@ -87,7 +84,7 @@ export default function DietPreferenceScreen() {
             </TouchableOpacity>
           ))}
         </View>
-      </ScrollView>
+      </View>
 
       <View style={SharedStyles.footer}>
         <Button 
@@ -96,20 +93,15 @@ export default function DietPreferenceScreen() {
           disabled={!selected}
         />
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
+  content: {
     flex: 1,
-  },
-  scrollContent: {
     paddingHorizontal: Spacing.screenPaddingHorizontal,
-    paddingTop: 60,
-    paddingBottom: 100,
     justifyContent: 'center',
-    flexGrow: 1,
   },
   optionsGrid: {
     flexDirection: 'row',

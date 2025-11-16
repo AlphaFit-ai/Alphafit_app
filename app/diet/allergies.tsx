@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../components';
 import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
@@ -23,7 +24,7 @@ export default function AllergiesScreen() {
   };
 
   return (
-    <View style={SharedStyles.container}>
+    <SafeAreaView style={SharedStyles.container}>
       <TouchableOpacity 
         style={SharedStyles.backButton}
         onPress={() => router.back()}
@@ -104,7 +105,7 @@ export default function AllergiesScreen() {
           floating
         />
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -152,9 +153,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.gray[50],
     borderRadius: 16,
     padding: 16,
-    fontSize: Fonts.sizes.sm,
+    fontSize: Fonts.sizes.base,
     fontFamily: Fonts.regular,
     color: Colors.black,
-    minHeight: 120,
+    minHeight: 140,
+    marginTop: 8,
   },
 });
