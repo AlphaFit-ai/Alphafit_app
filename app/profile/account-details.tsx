@@ -2,9 +2,9 @@ import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, NativeScrollEvent, NativeSyntheticEvent, Platform, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import CountryPicker, { Country, CountryCode } from 'react-native-country-picker-modal';
 import { Button } from '../../components';
-import { Colors, Fonts, Spacing } from '../../constants';
+import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
 
 interface SuccessModalProps {
   visible: boolean;
@@ -12,6 +12,8 @@ interface SuccessModalProps {
 }
 
 const SuccessModal = ({ visible, onClose }: SuccessModalProps) => {
+  const { t } = useTranslation();
+  
   return (
     <Modal
       visible={visible}
@@ -21,12 +23,12 @@ const SuccessModal = ({ visible, onClose }: SuccessModalProps) => {
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
-          <Text style={styles.modalTitle}>Success</Text>
+          <Text style={styles.modalTitle}>{t('profile.accountDetailsForm.successTitle')}</Text>
           <Text style={styles.modalMessage}>
-            Your account details have been updated successfully!
+            {t('profile.accountDetailsForm.successMessage')}
           </Text>
           <TouchableOpacity style={styles.modalButton} onPress={onClose} activeOpacity={0.7}>
-            <Text style={styles.modalButtonText}>OK</Text>
+            <Text style={styles.modalButtonText}>{t('profile.accountDetailsForm.ok')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -38,9 +40,11 @@ export default function AccountDetailsScreen() {
   const { t } = useTranslation();
   const [name, setName] = useState('John Doe');
   const [email, setEmail] = useState('john@example.com');
-  const [countryCode, setCountryCode] = useState('+1');
-  const [phone, setPhone] = useState('234 567 8900');
+  const [countryCode, setCountryCode] = useState<CountryCode>('MA'); // Morocco by default
+  const [callingCode, setCallingCode] = useState('+212');
+  const [phone, setPhone] = useState('');
   const [age, setAge] = useState('28');
+  const [showCountryPicker, setShowCountryPicker] = useState(false);
   
   const [isMetric, setIsMetric] = useState(true);
   const [selectedFeet, setSelectedFeet] = useState(5);
@@ -100,6 +104,11 @@ export default function AccountDetailsScreen() {
     }
   };
 
+  const onSelectCountry = (country: Country) => {
+    setCountryCode(country.cca2);
+    setCallingCode(`+${country.callingCode[0]}`);
+  };
+
   const handleCmScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const yOffset = event.nativeEvent.contentOffset.y;
     const index = Math.round(yOffset / ITEM_HEIGHT);
@@ -146,53 +155,68 @@ export default function AccountDetailsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled={false}
       >
         <View style={styles.innerContent}>
           <View style={styles.formSection}>
-            <Text style={styles.label}>Full Name</Text>
+            <Text style={styles.label}>{t('profile.accountDetailsForm.fullName')}</Text>
             <TextInput
               style={styles.input}
               value={name}
               onChangeText={setName}
-              placeholder="Enter your name"
+              placeholder={t('profile.accountDetailsForm.fullNamePlaceholder')}
               placeholderTextColor={Colors.gray[400]}
             />
           </View>
 
           <View style={styles.formSection}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>{t('profile.accountDetailsForm.email')}</Text>
             <TextInput
               style={[styles.input, !validateEmail(email) && email.length > 0 && styles.inputError]}
               value={email}
               onChangeText={handleEmailChange}
-              placeholder="Enter your email"
+              placeholder={t('profile.accountDetailsForm.emailPlaceholder')}
               placeholderTextColor={Colors.gray[400]}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
             />
             {!validateEmail(email) && email.length > 0 && (
-              <Text style={styles.errorText}>Please enter a valid email address</Text>
+              <Text style={styles.errorText}>{t('profile.accountDetailsForm.emailError')}</Text>
             )}
           </View>
 
           <View style={styles.formSection}>
-            <Text style={styles.label}>Phone Number</Text>
+            <Text style={styles.label}>{t('profile.accountDetailsForm.phoneNumber')}</Text>
             <View style={styles.phoneContainer}>
-              <View style={styles.countryCodeContainer}>
-                <Text style={styles.flag}>🇺🇸</Text>
-                <Text style={styles.countryCode}>{countryCode}</Text>
-              </View>
+              <TouchableOpacity 
+                style={styles.countryCodeContainer}
+                onPress={() => setShowCountryPicker(true)}
+                activeOpacity={0.7}
+              >
+                <CountryPicker
+                  countryCode={countryCode}
+                  withFilter
+                  withFlag
+                  withCallingCode
+                  withEmoji
+                  onSelect={onSelectCountry}
+                  visible={showCountryPicker}
+                  onClose={() => setShowCountryPicker(false)}
+                  containerButtonStyle={styles.countryPickerButton}
+                />
+                <Text style={styles.countryCode}>{callingCode}</Text>
+              </TouchableOpacity>
               <TextInput
                 style={[styles.input, styles.phoneInput]}
                 value={phone}
                 onChangeText={handlePhoneChange}
-                placeholder="234 567 8900"
+                placeholder={t('profile.accountDetailsForm.phonePlaceholder')}
                 placeholderTextColor={Colors.gray[400]}
                 keyboardType="phone-pad"
                 maxLength={12}
@@ -201,12 +225,12 @@ export default function AccountDetailsScreen() {
           </View>
 
           <View style={styles.formSection}>
-            <Text style={styles.label}>Age</Text>
+            <Text style={styles.label}>{t('profile.accountDetailsForm.age')}</Text>
             <TextInput
               style={styles.input}
               value={age}
               onChangeText={handleAgeChange}
-              placeholder="Enter your age"
+              placeholder={t('profile.accountDetailsForm.agePlaceholder')}
               placeholderTextColor={Colors.gray[400]}
               keyboardType="numeric"
               maxLength={3}
@@ -237,13 +261,14 @@ export default function AccountDetailsScreen() {
                     <View style={styles.highlightBar} />
                     <ScrollView
                       ref={cmScrollRef}
-                      style={styles.scrollView}
+                      style={styles.pickerScrollView}
                       contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * 2 }}
                       showsVerticalScrollIndicator={false}
                       snapToInterval={Platform.OS === 'web' ? undefined : ITEM_HEIGHT}
                       decelerationRate="fast"
                       onMomentumScrollEnd={handleCmScroll}
                       onScrollEndDrag={handleCmScroll}
+                      nestedScrollEnabled={true}
                     >
                       {Array.from({ length: 191 }, (_, i) => i + 60).map((cm) => (
                         <View key={cm} style={[styles.dateOption, { height: ITEM_HEIGHT }]}>
@@ -263,13 +288,14 @@ export default function AccountDetailsScreen() {
                       <View style={styles.highlightBar} />
                       <ScrollView
                         ref={feetScrollRef}
-                        style={styles.scrollView}
+                        style={styles.pickerScrollView}
                         contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * 2 }}
                         showsVerticalScrollIndicator={false}
                         snapToInterval={Platform.OS === 'web' ? undefined : ITEM_HEIGHT}
                         decelerationRate="fast"
                         onMomentumScrollEnd={handleFeetScroll}
                         onScrollEndDrag={handleFeetScroll}
+                        nestedScrollEnabled={true}
                       >
                         {Array.from({ length: 7 }, (_, i) => i + 2).map((ft) => (
                           <View key={ft} style={[styles.dateOption, { height: ITEM_HEIGHT }]}>
@@ -288,13 +314,14 @@ export default function AccountDetailsScreen() {
                       <View style={styles.highlightBar} />
                       <ScrollView
                         ref={inchesScrollRef}
-                        style={styles.scrollView}
+                        style={styles.pickerScrollView}
                         contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * 2 }}
                         showsVerticalScrollIndicator={false}
                         snapToInterval={Platform.OS === 'web' ? undefined : ITEM_HEIGHT}
                         decelerationRate="fast"
                         onMomentumScrollEnd={handleInchesScroll}
                         onScrollEndDrag={handleInchesScroll}
+                        nestedScrollEnabled={true}
                       >
                         {Array.from({ length: 12 }, (_, i) => i).map((inch) => (
                           <View key={inch} style={[styles.dateOption, { height: ITEM_HEIGHT }]}>
@@ -320,13 +347,14 @@ export default function AccountDetailsScreen() {
                   <View style={styles.highlightBar} />
                   <ScrollView
                     ref={weightScrollRef}
-                    style={styles.scrollView}
+                    style={styles.pickerScrollView}
                     contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * 2 }}
                     showsVerticalScrollIndicator={false}
                     snapToInterval={Platform.OS === 'web' ? undefined : ITEM_HEIGHT}
                     decelerationRate="fast"
                     onMomentumScrollEnd={handleWeightScroll}
                     onScrollEndDrag={handleWeightScroll}
+                    nestedScrollEnabled={true}
                   >
                     {isMetric
                       ? Array.from({ length: 171 }, (_, i) => i + 30).map((kg) => (
@@ -358,16 +386,17 @@ export default function AccountDetailsScreen() {
         </View>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={SharedStyles.footerFloating}>
         <Button 
-          title="Save Changes" 
+          title={t('profile.accountDetailsForm.saveChanges')}
           onPress={handleSave}
           disabled={!validateEmail(email) || !name.trim() || !age}
+          floating
         />
       </View>
 
       <SuccessModal visible={showSuccessModal} onClose={handleModalClose} />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -377,6 +406,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
   },
   scrollView: {
+    flex: 1,
+  },
+  pickerScrollView: {
     flex: 1,
   },
   scrollContent: {
@@ -430,6 +462,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     gap: 8,
   },
+  countryPickerButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   flag: {
     fontSize: 24,
   },
@@ -461,7 +497,7 @@ const styles = StyleSheet.create({
   pickerRow: {
     flexDirection: 'row',
     gap: 16,
-    marginBottom: 32,
+    marginBottom: 50,
   },
   column: {
     flex: 1,
@@ -481,6 +517,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 250,
     position: 'relative',
+    overflow: 'visible',
   },
   highlightBar: {
     position: 'absolute',
@@ -508,10 +545,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.bold,
     fontWeight: '700',
     color: Colors.black,
-  },
-  footer: {
-    paddingHorizontal: Spacing.screenPaddingHorizontal,
-    paddingBottom: 40,
   },
   modalOverlay: {
     flex: 1,

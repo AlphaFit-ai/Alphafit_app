@@ -145,15 +145,30 @@
     "appSettings": "Paramètres de l'application",
     "accountDetails": "Détails du compte",
     "notifications": "Notifications",
-    "notificationsSubtitle": "Gérer vos préférences de notification",
+    "notificationsSubtitle": "Gérez vos préférences de notification",
     "subscription": "Abonnement",
-    "subscriptionSubtitle": "Gérer votre abonnement Pro",
+    "subscriptionSubtitle": "Gérez votre abonnement Pro",
     "support": "Support",
-    "supportSubtitle": "Obtenir de l'aide et nous contacter",
+    "supportSubtitle": "Obtenez de l'aide et contactez-nous",
     "privacyPolicy": "Politique de confidentialité",
     "termsOfService": "Conditions d'utilisation",
     "language": "Langue",
     "darkMode": "Mode sombre",
-    "logout": "Se déconnecter"
+    "logout": "Déconnexion",
+    "accountDetailsForm": {
+      "fullName": "Nom complet",
+      "fullNamePlaceholder": "Entrez votre nom",
+      "email": "E-mail",
+      "emailPlaceholder": "Entrez votre e-mail",
+      "emailError": "Veuillez entrer une adresse e-mail valide",
+      "phoneNumber": "Numéro de téléphone",
+      "phonePlaceholder": "612 345 678",
+      "age": "Âge",
+      "agePlaceholder": "Entrez votre âge",
+      "saveChanges": "Enregistrer les modifications",
+      "successTitle": "Succès",
+      "successMessage": "Les détails de votre compte ont été mis à jour avec succès !",
+      "ok": "OK"
+    }
   }
 }

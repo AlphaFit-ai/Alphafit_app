@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Image, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
-import { ProPlanModal } from '../../components';
+import { Image, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, LanguageSelector, ProPlanModal } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 
 interface SettingItem {
@@ -18,10 +18,15 @@ interface SettingItem {
 }
 
 export default function ProfileScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [showProModal, setShowProModal] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
+  const [showLanguageSelector, setShowLanguageSelector] = useState(false);
+  const [alertConfig, setAlertConfig] = useState<{ visible: boolean; title: string; message?: string; buttons?: any[] }>({ visible: false, title: '' });
+
+  const currentLanguage = i18n.language || 'en';
+  const languageNames = { en: 'English', es: 'Español', fr: 'Français' };
 
   const accountSettings: SettingItem[] = [
     {
@@ -47,6 +52,13 @@ export default function ProfileScreen() {
       onPress: () => setShowProModal(true),
       showBadge: true,
     },
+    {
+      icon: 'settings-outline',
+      title: 'Settings',
+      subtitle: 'Language, Theme',
+      type: 'navigation',
+      onPress: () => router.push('/profile/settings'),
+    },
   ];
 
   const supportSettings: SettingItem[] = [
@@ -55,21 +67,25 @@ export default function ProfileScreen() {
       title: t('profile.support'),
       subtitle: t('profile.supportSubtitle'),
       type: 'navigation',
-      onPress: () => Alert.alert('Support', 'Contact us at support@forgeai.com'),
+      onPress: () => setAlertConfig({ visible: true, title: 'Support', message: 'Contact us at support@forgeai.com', buttons: [{ text: 'OK' }] }),
     },
     {
       icon: 'shield-checkmark-outline',
       title: t('profile.privacyPolicy'),
       type: 'navigation',
-      onPress: () => Alert.alert('Privacy Policy', 'View our privacy policy'),
+      onPress: () => setAlertConfig({ visible: true, title: 'Privacy Policy', message: 'View our privacy policy', buttons: [{ text: 'OK' }] }),
     },
     {
       icon: 'document-text-outline',
       title: t('profile.termsOfService'),
       type: 'navigation',
-      onPress: () => Alert.alert('Terms of Service', 'View our terms of service'),
+      onPress: () => setAlertConfig({ visible: true, title: 'Terms of Service', message: 'View our terms of service', buttons: [{ text: 'OK' }] }),
     },
   ];
+
+  const handleLanguageSelect = (language: { code: string; name: string; flag: string }) => {
+    i18n.changeLanguage(language.code);
+  };
 
   const appSettings: SettingItem[] = [
     {
@@ -145,10 +161,6 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{t('profile.title')}</Text>
-      </View>
-
       <View style={styles.profileSection}>
         <View style={styles.avatarContainer}>
           <Image
@@ -177,17 +189,18 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('profile.appSettings')}</Text>
-        <View style={styles.settingsList}>
-          {appSettings.map(renderSettingItem)}
-        </View>
-      </View>
-
       <TouchableOpacity
         style={styles.logoutButton}
         activeOpacity={0.7}
-        onPress={() => Alert.alert('Logout', 'Are you sure you want to logout?')}
+        onPress={() => setAlertConfig({ 
+          visible: true, 
+          title: 'Logout', 
+          message: 'Are you sure you want to logout?',
+          buttons: [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Logout', style: 'destructive', onPress: () => console.log('Logged out') }
+          ]
+        })}
       >
         <Ionicons name="log-out-outline" size={20} color={Colors.red} />
         <Text style={styles.logoutText}>{t('profile.logout')}</Text>
@@ -196,6 +209,19 @@ export default function ProfileScreen() {
       <View style={{ height: 40 }} />
 
       <ProPlanModal visible={showProModal} onClose={() => setShowProModal(false)} />
+      <Alert 
+        visible={alertConfig.visible} 
+        title={alertConfig.title} 
+        message={alertConfig.message}
+        buttons={alertConfig.buttons}
+        onClose={() => setAlertConfig({ visible: false, title: '' })} 
+      />
+      <LanguageSelector
+        visible={showLanguageSelector}
+        onClose={() => setShowLanguageSelector(false)}
+        onSelect={handleLanguageSelect}
+        selectedLanguage={currentLanguage}
+      />
     </ScrollView>
   );
 }
@@ -204,17 +230,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.white,
-  },
-  header: {
-    paddingHorizontal: Spacing.screenPaddingHorizontal,
-    paddingTop: 24,
-    paddingBottom: 16,
-  },
-  title: {
-    fontSize: 32,
-    fontFamily: Fonts.bold,
-    fontWeight: '700',
-    color: Colors.black,
   },
   profileSection: {
     alignItems: 'center',

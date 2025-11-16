@@ -154,6 +154,21 @@
     "termsOfService": "Terms of Service",
     "language": "Language",
     "darkMode": "Dark Mode",
-    "logout": "Logout"
+    "logout": "Logout",
+    "accountDetailsForm": {
+      "fullName": "Full Name",
+      "fullNamePlaceholder": "Enter your name",
+      "email": "Email",
+      "emailPlaceholder": "Enter your email",
+      "emailError": "Please enter a valid email address",
+      "phoneNumber": "Phone Number",
+      "phonePlaceholder": "612 345 678",
+      "age": "Age",
+      "agePlaceholder": "Enter your age",
+      "saveChanges": "Save Changes",
+      "successTitle": "Success",
+      "successMessage": "Your account details have been updated successfully!",
+      "ok": "OK"
+    }
   }
 }
