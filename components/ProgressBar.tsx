@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Colors } from '../constants';
+import { useTheme } from '../context/ThemeContext';
 
 interface ProgressBarProps {
   currentStep: number;
@@ -12,6 +13,7 @@ interface ProgressBarProps {
 
 export const ProgressBar: React.FC<ProgressBarProps> = ({ currentStep, totalSteps, onBack }) => {
   const router = useRouter();
+  const { colors, isDarkMode } = useTheme();
   const progress = (currentStep / totalSteps) * 100;
 
   const handleBack = () => {
@@ -25,11 +27,11 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ currentStep, totalStep
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={24} color={Colors.black} />
+        <Ionicons name="arrow-back" size={24} color={colors.text} />
       </TouchableOpacity>
       <View style={styles.progressWrapper}>
-        <View style={styles.background}>
-          <View style={[styles.progress, { width: `${progress}%` }]} />
+        <View style={[styles.background, { backgroundColor: isDarkMode ? Colors.gray[700] : Colors.gray[200] }]}>
+          <View style={[styles.progress, { width: `${progress}%`, backgroundColor: colors.text }]} />
         </View>
       </View>
     </View>

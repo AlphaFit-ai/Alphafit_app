@@ -6,11 +6,13 @@ import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, To
 import { Button, GradientText, Input } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const { updateOnboardingData } = useOnboarding();
+  const { isDarkMode, toggleTheme, colors } = useTheme();
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
@@ -55,38 +57,68 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView 
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      {/* Language Switcher */}
-      <View style={styles.languageContainer}>
-        <TouchableOpacity style={styles.languageButton} onPress={toggleLanguageMenu}>
-          <Ionicons name="language" size={24} color={Colors.black} />
-          <Text style={styles.languageText}>{i18n.language.toUpperCase()}</Text>
+      {/* Top Controls */}
+      <View style={styles.topControls}>
+        {/* Theme Switcher */}
+        <TouchableOpacity 
+          style={[styles.iconButton, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]} 
+          onPress={toggleTheme}
+        >
+          <Ionicons 
+            name={isDarkMode ? "sunny" : "moon"} 
+            size={22} 
+            color={colors.icon} 
+          />
         </TouchableOpacity>
-        
-        {showLanguageMenu && (
-          <View style={styles.languageMenu}>
-            <TouchableOpacity 
-              style={[styles.languageOption, i18n.language === 'en' && styles.languageOptionActive]} 
-              onPress={() => selectLanguage('en')}
-            >
-              <Text style={[styles.languageOptionText, i18n.language === 'en' && styles.languageOptionTextActive]}>English</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.languageOption, i18n.language === 'es' && styles.languageOptionActive]} 
-              onPress={() => selectLanguage('es')}
-            >
-              <Text style={[styles.languageOptionText, i18n.language === 'es' && styles.languageOptionTextActive]}>Español</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.languageOption, i18n.language === 'fr' && styles.languageOptionActive]} 
-              onPress={() => selectLanguage('fr')}
-            >
-              <Text style={[styles.languageOptionText, i18n.language === 'fr' && styles.languageOptionTextActive]}>Français</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+
+        {/* Language Switcher */}
+        <View style={styles.languageContainer}>
+          <TouchableOpacity 
+            style={[styles.languageButton, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]} 
+            onPress={toggleLanguageMenu}
+          >
+            <Ionicons name="language" size={22} color={colors.icon} />
+            <Text style={[styles.languageText, { color: colors.text }]}>{i18n.language.toUpperCase()}</Text>
+          </TouchableOpacity>
+          
+          {showLanguageMenu && (
+            <View style={[styles.languageMenu, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <TouchableOpacity 
+                style={[
+                  styles.languageOption, 
+                  { borderBottomColor: colors.border },
+                  i18n.language === 'en' && { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[50] }
+                ]} 
+                onPress={() => selectLanguage('en')}
+              >
+                <Text style={[styles.languageOptionText, { color: colors.text }, i18n.language === 'en' && styles.languageOptionTextActive]}>English</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[
+                  styles.languageOption, 
+                  { borderBottomColor: colors.border },
+                  i18n.language === 'es' && { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[50] }
+                ]} 
+                onPress={() => selectLanguage('es')}
+              >
+                <Text style={[styles.languageOptionText, { color: colors.text }, i18n.language === 'es' && styles.languageOptionTextActive]}>Español</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[
+                  styles.languageOption, 
+                  { borderBottomColor: colors.border },
+                  i18n.language === 'fr' && { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[50] }
+                ]} 
+                onPress={() => selectLanguage('fr')}
+              >
+                <Text style={[styles.languageOptionText, { color: colors.text }, i18n.language === 'fr' && styles.languageOptionTextActive]}>Français</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
       </View>
 
       <ScrollView 
@@ -98,32 +130,38 @@ export default function LoginScreen() {
         
         <View style={styles.bottomWrapper}>
           <View style={styles.header}>
-            <Text style={styles.welcomeText}>{t('welcome.title')}</Text>
+            <Text style={[styles.welcomeText, { color: colors.text }]}>{t('welcome.title')}</Text>
             <GradientText text="FORGE AI" style={styles.brandContainer} />
-            <Text style={styles.subtitle}>{t('welcome.subtitle')}</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('welcome.subtitle')}</Text>
           </View>
 
           <View style={styles.content}>
             {/* Google Button */}
-            <TouchableOpacity style={styles.socialButton} onPress={handleContinueWithGoogle}>
+            <TouchableOpacity 
+              style={[styles.socialButton, { backgroundColor: colors.card, borderColor: colors.border }]} 
+              onPress={handleContinueWithGoogle}
+            >
               <Image 
                 source={require('../../assets/images/logo/google.png')} 
                 style={styles.socialIcon}
               />
-              <Text style={styles.socialButtonText}>{t('welcome.continueWithGoogle')}</Text>
+              <Text style={[styles.socialButtonText, { color: colors.text }]}>{t('welcome.continueWithGoogle')}</Text>
             </TouchableOpacity>
 
             {/* Apple Button */}
-            <TouchableOpacity style={styles.socialButton} onPress={handleContinueWithApple}>
-              <Ionicons name="logo-apple" size={20} color={Colors.black} style={styles.socialIcon} />
-              <Text style={styles.socialButtonText}>{t('welcome.continueWithApple')}</Text>
+            <TouchableOpacity 
+              style={[styles.socialButton, { backgroundColor: colors.card, borderColor: colors.border }]} 
+              onPress={handleContinueWithApple}
+            >
+              <Ionicons name="logo-apple" size={20} color={colors.icon} style={styles.socialIcon} />
+              <Text style={[styles.socialButtonText, { color: colors.text }]}>{t('welcome.continueWithApple')}</Text>
             </TouchableOpacity>
 
             {/* Divider */}
             <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>{t('welcome.or')}</Text>
-              <View style={styles.dividerLine} />
+              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+              <Text style={[styles.dividerText, { color: colors.textSecondary }]}>{t('welcome.or')}</Text>
+              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
             </View>
 
             {/* Email Input */}
@@ -145,7 +183,7 @@ export default function LoginScreen() {
             <Button title={t('welcome.continue')} onPress={handleContinueWithEmail} />
 
             {/* Terms */}
-            <Text style={styles.terms}>{t('welcome.terms')}</Text>
+            <Text style={[styles.terms, { color: colors.textSecondary }]}>{t('welcome.terms')}</Text>
           </View>
         </View>
       </ScrollView>
@@ -156,29 +194,40 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
   },
-  languageContainer: {
+  topControls: {
     position: 'absolute',
     top: 50,
-    right: 20,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    zIndex: 10,
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  languageContainer: {
     zIndex: 10,
   },
   languageButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: Colors.gray[100],
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
   },
   languageMenu: {
     position: 'absolute',
     top: 45,
     right: 0,
-    backgroundColor: Colors.white,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: Colors.gray[300],
     minWidth: 150,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -190,14 +239,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.gray[200],
-  },
-  languageOptionActive: {
-    backgroundColor: Colors.gray[50],
   },
   languageOptionText: {
     fontSize: Fonts.sizes.base,
-    color: Colors.black,
     fontFamily: Fonts.regular,
   },
   languageOptionTextActive: {
@@ -209,7 +253,6 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     fontSize: Fonts.sizes.sm,
     fontWeight: Fonts.weights.semiBold,
-    color: Colors.black,
     fontFamily: Fonts.semiBold,
   },
   scrollContent: {
@@ -230,7 +273,6 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 20,
     fontWeight: '700',
-    color: Colors.black,
     textAlign: 'center',
     fontFamily: Fonts.bold,
   },
@@ -241,7 +283,6 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: Fonts.sizes.base,
-    color: Colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: 16,
     fontFamily: Fonts.regular,
@@ -253,12 +294,10 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     borderWidth: 1,
-    borderColor: Colors.gray[300],
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
-    backgroundColor: Colors.white,
   },
   socialIcon: {
     width: 20,
@@ -268,7 +307,6 @@ const styles = StyleSheet.create({
   socialButtonText: {
     fontSize: Fonts.sizes.base,
     fontWeight: Fonts.weights.semiBold,
-    color: Colors.black,
     fontFamily: Fonts.semiBold,
   },
   divider: {
@@ -279,18 +317,15 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: Colors.gray[300],
   },
   dividerText: {
     marginHorizontal: 12,
-    color: Colors.textSecondary,
     fontSize: Fonts.sizes.sm,
     fontFamily: Fonts.regular,
   },
   terms: {
     textAlign: 'center',
     fontSize: Fonts.sizes.xs,
-    color: Colors.textSecondary,
     marginTop: 16,
     lineHeight: 18,
     fontFamily: Fonts.regular,

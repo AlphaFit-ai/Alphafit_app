@@ -6,11 +6,13 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Button, OptionCard, ProgressBar } from '../../components';
 import { Colors, SharedStyles } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function GenderScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { updateOnboardingData, setCurrentStep } = useOnboarding();
+  const { colors, isDarkMode } = useTheme();
   const [selectedGender, setSelectedGender] = useState<'male' | 'female' | null>(null);
 
   const handleContinue = () => {
@@ -21,27 +23,32 @@ export default function GenderScreen() {
     }
   };
 
+  const getIconColor = (isSelected: boolean) => {
+    if (isSelected) return Colors.white;
+    return isDarkMode ? Colors.white : Colors.black;
+  };
+
   return (
-    <View style={SharedStyles.container}>
+    <View style={[SharedStyles.container, { backgroundColor: colors.background }]}>
       <View style={SharedStyles.header}>
         <ProgressBar currentStep={3} totalSteps={10} />
       </View>
 
       <View style={SharedStyles.content}>
-        <Text style={SharedStyles.title}>{t('onboarding.gender.title')}</Text>
+        <Text style={[SharedStyles.title, { color: colors.text }]}>{t('onboarding.gender.title')}</Text>
 
         <View style={SharedStyles.optionsContainer}>
           <OptionCard
             title={t('onboarding.gender.male')}
             selected={selectedGender === 'male'}
             onPress={() => setSelectedGender('male')}
-            icon={<Ionicons name="male" size={26} color={selectedGender === 'male' ? Colors.white : Colors.black} />}
+            icon={<Ionicons name="male" size={26} color={getIconColor(selectedGender === 'male')} />}
           />
           <OptionCard
             title={t('onboarding.gender.female')}
             selected={selectedGender === 'female'}
             onPress={() => setSelectedGender('female')}
-            icon={<Ionicons name="female" size={26} color={selectedGender === 'female' ? Colors.white : Colors.black} />}
+            icon={<Ionicons name="female" size={26} color={getIconColor(selectedGender === 'female')} />}
           />
         </View>
       </View>

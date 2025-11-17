@@ -7,6 +7,7 @@ import {
     ViewStyle,
 } from 'react-native';
 import { Colors, Fonts, Spacing } from '../constants';
+import { useTheme } from '../context/ThemeContext';
 
 interface OptionCardProps {
   title: string;
@@ -25,21 +26,26 @@ export const OptionCard: React.FC<OptionCardProps> = ({
   onPress,
   style,
 }) => {
+  const { colors, isDarkMode } = useTheme();
+  
   return (
     <TouchableOpacity
       onPress={onPress}
       style={[
         styles.container,
-        selected && styles.selected,
+        { 
+          backgroundColor: selected ? Colors.black : (isDarkMode ? Colors.gray[800] : Colors.gray[100]),
+          borderColor: selected ? Colors.black : 'transparent'
+        },
         style,
       ]}
       activeOpacity={0.7}
     >
       {icon && <View style={styles.iconContainer}>{icon}</View>}
       <View style={styles.textContainer}>
-        <Text style={[styles.title, selected && styles.selectedText]}>{title}</Text>
+        <Text style={[styles.title, { color: selected ? Colors.white : colors.text }]}>{title}</Text>
         {subtitle && (
-          <Text style={[styles.subtitle, selected && styles.selectedSubtext]}>
+          <Text style={[styles.subtitle, { color: selected ? Colors.gray[300] : colors.textSecondary }]}>
             {subtitle}
           </Text>
         )}
@@ -52,17 +58,11 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.gray[100],
     borderRadius: Spacing.radius.md,
     padding: Spacing.md,
     marginVertical: Spacing.xs,
     minHeight: 56,
     borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  selected: {
-    backgroundColor: Colors.black,
-    borderColor: Colors.black,
   },
   iconContainer: {
     marginRight: Spacing.sm,
@@ -74,18 +74,10 @@ const styles = StyleSheet.create({
     fontSize: Fonts.sizes.base,
     fontFamily: Fonts.semiBold,
     fontWeight: Fonts.weights.semiBold,
-    color: Colors.textPrimary,
   },
   subtitle: {
     fontSize: Fonts.sizes.sm,
     fontFamily: Fonts.regular,
-    color: Colors.textSecondary,
     marginTop: 2,
-  },
-  selectedText: {
-    color: Colors.white,
-  },
-  selectedSubtext: {
-    color: Colors.gray[300],
   },
 });

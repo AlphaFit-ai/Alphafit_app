@@ -1,11 +1,16 @@
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { Colors, Fonts, Spacing } from '../../constants';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function ProjectionsScreen() {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Scan</Text>
-      <Text style={styles.subtitle}>Scan your projections</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.title, { color: colors.text }]}>{t('tabs.scan')}</Text>
+      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('tabs.scanSubtitle')}</Text>
     </View>
   );
 }

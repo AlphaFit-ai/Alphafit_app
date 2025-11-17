@@ -8,6 +8,7 @@ import {
     ViewStyle,
 } from 'react-native';
 import { Colors, Fonts, Spacing } from '../constants';
+import { useTheme } from '../context/ThemeContext';
 
 interface ButtonProps {
   onPress: () => void;
@@ -34,6 +35,8 @@ export const Button: React.FC<ButtonProps> = ({
   style,
   textStyle,
 }) => {
+  const { colors, isDarkMode } = useTheme();
+  
   const getButtonStyle = (): ViewStyle => {
     const baseStyle: ViewStyle = {
       ...styles.button,
@@ -42,15 +45,15 @@ export const Button: React.FC<ButtonProps> = ({
 
     switch (variant) {
       case 'primary':
-        return { ...baseStyle, backgroundColor: Colors.black };
+        return { ...baseStyle, backgroundColor: isDarkMode ? Colors.white : Colors.black };
       case 'secondary':
-        return { ...baseStyle, backgroundColor: Colors.gray[200] };
+        return { ...baseStyle, backgroundColor: isDarkMode ? Colors.gray[700] : Colors.gray[200] };
       case 'outline':
         return {
           ...baseStyle,
           backgroundColor: 'transparent',
           borderWidth: 1,
-          borderColor: Colors.black,
+          borderColor: colors.text,
         };
       case 'ghost':
         return { ...baseStyle, backgroundColor: 'transparent' };
@@ -64,13 +67,13 @@ export const Button: React.FC<ButtonProps> = ({
 
     switch (variant) {
       case 'primary':
-        return { ...baseStyle, color: Colors.white };
+        return { ...baseStyle, color: isDarkMode ? Colors.black : Colors.white };
       case 'secondary':
-        return { ...baseStyle, color: Colors.black };
+        return { ...baseStyle, color: colors.text };
       case 'outline':
-        return { ...baseStyle, color: Colors.black };
+        return { ...baseStyle, color: colors.text };
       case 'ghost':
-        return { ...baseStyle, color: Colors.black };
+        return { ...baseStyle, color: colors.text };
       default:
         return baseStyle;
     }
@@ -103,7 +106,7 @@ export const Button: React.FC<ButtonProps> = ({
       activeOpacity={0.7}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? Colors.white : Colors.black} />
+        <ActivityIndicator color={variant === 'primary' ? (isDarkMode ? Colors.black : Colors.white) : colors.text} />
       ) : (
         <Text style={[getTextStyle(), textStyle]}>{title}</Text>
       )}

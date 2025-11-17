@@ -5,11 +5,13 @@ import { NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, Text, 
 import { Button, ProgressBar } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function AgeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { updateOnboardingData, setCurrentStep } = useOnboarding();
+  const { colors, isDarkMode } = useTheme();
   
   const [selectedMonth, setSelectedMonth] = useState(4); // April
   const [selectedDay, setSelectedDay] = useState(4);
@@ -84,20 +86,20 @@ export default function AgeScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <ProgressBar currentStep={2} totalSteps={10} />
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.title}>{t('onboarding.age.title')}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('onboarding.age.title')}</Text>
 
         <View style={styles.dateContainer}>
           {/* Month Selector */}
           <View style={styles.dateSection}>
-            <Text style={styles.label}>{t('onboarding.age.month')}</Text>
-            <View style={styles.pickerWrapper}>
-              <View style={styles.highlightBar} />
+            <Text style={[styles.label, { color: colors.text }]}>{t('onboarding.age.month')}</Text>
+            <View style={[styles.pickerWrapper, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[50] }]}>
+              <View style={[styles.highlightBar, { borderColor: isDarkMode ? Colors.gray[600] : Colors.gray[300] }]} />
               <ScrollView 
                 ref={monthScrollRef}
                 style={styles.scrollView}
@@ -115,7 +117,8 @@ export default function AgeScreen() {
                   >
                     <Text style={[
                       styles.dateText,
-                      index === selectedMonth && styles.dateTextSelected
+                      { color: isDarkMode ? Colors.gray[400] : Colors.gray[400] },
+                      index === selectedMonth && [styles.dateTextSelected, { color: colors.text }]
                     ]}>
                       {month}
                     </Text>
@@ -127,9 +130,9 @@ export default function AgeScreen() {
 
           {/* Day Selector */}
           <View style={styles.dateSection}>
-            <Text style={styles.label}>{t('onboarding.age.day')}</Text>
-            <View style={styles.pickerWrapper}>
-              <View style={styles.highlightBar} />
+            <Text style={[styles.label, { color: colors.text }]}>{t('onboarding.age.day')}</Text>
+            <View style={[styles.pickerWrapper, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[50] }]}>
+              <View style={[styles.highlightBar, { borderColor: isDarkMode ? Colors.gray[600] : Colors.gray[300] }]} />
               <ScrollView 
                 ref={dayScrollRef}
                 style={styles.scrollView}
@@ -147,7 +150,8 @@ export default function AgeScreen() {
                   >
                     <Text style={[
                       styles.dateText,
-                      day === selectedDay && styles.dateTextSelected
+                      { color: isDarkMode ? Colors.gray[400] : Colors.gray[400] },
+                      day === selectedDay && [styles.dateTextSelected, { color: colors.text }]
                     ]}>
                       {day}
                     </Text>
@@ -159,9 +163,9 @@ export default function AgeScreen() {
 
           {/* Year Selector */}
           <View style={styles.dateSection}>
-            <Text style={styles.label}>{t('onboarding.age.year')}</Text>
-            <View style={styles.pickerWrapper}>
-              <View style={styles.highlightBar} />
+            <Text style={[styles.label, { color: colors.text }]}>{t('onboarding.age.year')}</Text>
+            <View style={[styles.pickerWrapper, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[50] }]}>
+              <View style={[styles.highlightBar, { borderColor: isDarkMode ? Colors.gray[600] : Colors.gray[300] }]} />
               <ScrollView 
                 ref={yearScrollRef}
                 style={styles.scrollView}
@@ -179,7 +183,8 @@ export default function AgeScreen() {
                   >
                     <Text style={[
                       styles.dateText,
-                      year === selectedYear && styles.dateTextSelected
+                      { color: isDarkMode ? Colors.gray[400] : Colors.gray[400] },
+                      year === selectedYear && [styles.dateTextSelected, { color: colors.text }]
                     ]}>
                       {year}
                     </Text>

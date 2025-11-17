@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { Alert, LanguageSelector, ProPlanModal } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
+import { useTheme } from '../../context/ThemeContext';
 
 interface SettingItem {
   icon: keyof typeof Ionicons.glyphMap;
@@ -19,9 +20,9 @@ interface SettingItem {
 
 export default function ProfileScreen() {
   const { t, i18n } = useTranslation();
+  const { colors, isDarkMode, toggleTheme } = useTheme();
   const [showProModal, setShowProModal] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{ visible: boolean; title: string; message?: string; buttons?: any[] }>({ visible: false, title: '' });
 
@@ -91,7 +92,7 @@ export default function ProfileScreen() {
     {
       icon: 'language-outline',
       title: t('profile.language'),
-      subtitle: 'English',
+      subtitle: languageNames[currentLanguage as keyof typeof languageNames],
       type: 'navigation',
       onPress: () => router.push('/profile/language'),
     },
@@ -99,30 +100,30 @@ export default function ProfileScreen() {
       icon: 'moon-outline',
       title: t('profile.darkMode'),
       type: 'toggle',
-      value: darkMode,
-      onToggle: setDarkMode,
+      value: isDarkMode,
+      onToggle: toggleTheme,
     },
   ];
 
   const renderSettingItem = (item: SettingItem) => {
     if (item.type === 'toggle') {
       return (
-        <View key={item.title} style={styles.settingItem}>
+        <View key={item.title} style={[styles.settingItem, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
           <View style={styles.settingLeft}>
-            <View style={styles.iconContainer}>
-              <Ionicons name={item.icon} size={22} color={Colors.black} />
+            <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}>
+              <Ionicons name={item.icon} size={22} color={colors.icon} />
             </View>
             <View style={styles.settingText}>
-              <Text style={styles.settingTitle}>{item.title}</Text>
+              <Text style={[styles.settingTitle, { color: colors.text }]}>{item.title}</Text>
               {item.subtitle && (
-                <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
+                <Text style={[styles.settingSubtitle, { color: colors.textSecondary }]}>{item.subtitle}</Text>
               )}
             </View>
           </View>
           <Switch
             value={item.value}
             onValueChange={item.onToggle}
-            trackColor={{ false: Colors.gray[300], true: Colors.black }}
+            trackColor={{ false: Colors.gray[300], true: Colors.primary }}
             thumbColor={Colors.white}
           />
         </View>
@@ -132,18 +133,18 @@ export default function ProfileScreen() {
     return (
       <TouchableOpacity
         key={item.title}
-        style={styles.settingItem}
+        style={[styles.settingItem, { backgroundColor: colors.card, borderBottomColor: colors.border }]}
         onPress={item.onPress}
         activeOpacity={0.7}
       >
         <View style={styles.settingLeft}>
-          <View style={styles.iconContainer}>
-            <Ionicons name={item.icon} size={22} color={Colors.black} />
+          <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}>
+            <Ionicons name={item.icon} size={22} color={colors.icon} />
           </View>
           <View style={styles.settingText}>
-            <Text style={styles.settingTitle}>{item.title}</Text>
+            <Text style={[styles.settingTitle, { color: colors.text }]}>{item.title}</Text>
             {item.subtitle && (
-              <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
+              <Text style={[styles.settingSubtitle, { color: colors.textSecondary }]}>{item.subtitle}</Text>
             )}
           </View>
         </View>
@@ -160,7 +161,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
       <View style={styles.profileSection}>
         <View style={styles.avatarContainer}>
           <Image
@@ -171,26 +172,26 @@ export default function ProfileScreen() {
             <Ionicons name="camera" size={16} color={Colors.white} />
           </TouchableOpacity>
         </View>
-        <Text style={styles.userName}>John Doe</Text>
-        <Text style={styles.userEmail}>john@example.com</Text>
+        <Text style={[styles.userName, { color: colors.text }]}>John Doe</Text>
+        <Text style={[styles.userEmail, { color: colors.textSecondary }]}>john@example.com</Text>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('profile.accountSection')}</Text>
-        <View style={styles.settingsList}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('profile.accountSection')}</Text>
+        <View style={[styles.settingsList, { backgroundColor: isDarkMode ? Colors.gray[900] : Colors.gray[50] }]}>
           {accountSettings.map(renderSettingItem)}
         </View>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('profile.supportSection')}</Text>
-        <View style={styles.settingsList}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('profile.supportSection')}</Text>
+        <View style={[styles.settingsList, { backgroundColor: isDarkMode ? Colors.gray[900] : Colors.gray[50] }]}>
           {supportSettings.map(renderSettingItem)}
         </View>
       </View>
 
       <TouchableOpacity
-        style={styles.logoutButton}
+        style={[styles.logoutButton, { borderColor: Colors.red }]}
         activeOpacity={0.7}
         onPress={() => setAlertConfig({ 
           visible: true, 

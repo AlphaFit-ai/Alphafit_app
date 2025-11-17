@@ -5,11 +5,13 @@ import { NativeScrollEvent, NativeSyntheticEvent, Platform, ScrollView, StyleShe
 import { Button, ProgressBar } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function HeightScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { updateOnboardingData, setCurrentStep } = useOnboarding();
+  const { colors, isDarkMode } = useTheme();
   
   const [isMetric, setIsMetric] = useState(true);
   const [selectedFeet, setSelectedFeet] = useState(5);
@@ -123,32 +125,32 @@ export default function HeightScreen() {
       setCurrentStep(4);
       router.push('/onboarding/fitness-level');
     };  return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <ProgressBar currentStep={4} totalSteps={10} />
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.title}>{t('onboarding.height.title')}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('onboarding.height.title')}</Text>
 
         <View style={styles.switchContainer}>
-          <Text style={[styles.switchLabel, !isMetric && styles.switchLabelActive]}>{t('onboarding.height.imperial')}</Text>
+          <Text style={[styles.switchLabel, !isMetric && styles.switchLabelActive, { color: !isMetric ? colors.text : colors.textSecondary }]}>{t('onboarding.height.imperial')}</Text>
           <Switch
             value={isMetric}
             onValueChange={setIsMetric}
             trackColor={{ false: Colors.gray[300], true: Colors.gray[300] }}
-            thumbColor={Colors.black}
+            thumbColor={isDarkMode ? Colors.white : Colors.black}
           />
-          <Text style={[styles.switchLabel, isMetric && styles.switchLabelActive]}>{t('onboarding.height.metric')}</Text>
+          <Text style={[styles.switchLabel, isMetric && styles.switchLabelActive, { color: isMetric ? colors.text : colors.textSecondary }]}>{t('onboarding.height.metric')}</Text>
         </View>
 
         <View style={styles.pickerRow}>
           <View style={styles.column}>
-            <Text style={styles.columnLabel}>{t('onboarding.height.heightLabel')}</Text>
+            <Text style={[styles.columnLabel, { color: colors.text }]}>{t('onboarding.height.heightLabel')}</Text>
             <View style={styles.pickerContainer}>
               {isMetric ? (
-                <View style={styles.pickerWrapper}>
-                  <View style={styles.highlightBar} />
+                <View style={[styles.pickerWrapper, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}>
+                  <View style={[styles.highlightBar, { borderColor: isDarkMode ? Colors.gray[600] : Colors.gray[300] }]} />
                   <ScrollView
                     ref={cmScrollRef}
                     style={styles.scrollView}
@@ -164,7 +166,8 @@ export default function HeightScreen() {
                       <View key={cm} style={[styles.dateOption, { height: ITEM_HEIGHT }]}>
                         <Text style={[
                           styles.dateText,
-                          cm === selectedCm && styles.dateTextSelected
+                          { color: isDarkMode ? Colors.gray[400] : Colors.gray[400] },
+                          cm === selectedCm && [styles.dateTextSelected, { color: colors.text }]
                         ]}>
                           {cm} cm
                         </Text>
@@ -174,8 +177,8 @@ export default function HeightScreen() {
                 </View>
               ) : (
                 <>
-                  <View style={styles.pickerWrapper}>
-                    <View style={styles.highlightBar} />
+                  <View style={[styles.pickerWrapper, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}>
+                    <View style={[styles.highlightBar, { borderColor: isDarkMode ? Colors.gray[600] : Colors.gray[300] }]} />
                     <ScrollView
                       ref={feetScrollRef}
                       style={styles.scrollView}
@@ -191,7 +194,8 @@ export default function HeightScreen() {
                         <View key={ft} style={[styles.dateOption, { height: ITEM_HEIGHT }]}>
                           <Text style={[
                             styles.dateText,
-                            ft === selectedFeet && styles.dateTextSelected
+                            { color: isDarkMode ? Colors.gray[400] : Colors.gray[400] },
+                            ft === selectedFeet && [styles.dateTextSelected, { color: colors.text }]
                           ]}>
                             {ft} ft
                           </Text>
@@ -199,8 +203,8 @@ export default function HeightScreen() {
                       ))}
                     </ScrollView>
                   </View>
-                  <View style={styles.pickerWrapper}>
-                    <View style={styles.highlightBar} />
+                  <View style={[styles.pickerWrapper, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}>
+                    <View style={[styles.highlightBar, { borderColor: isDarkMode ? Colors.gray[600] : Colors.gray[300] }]} />
                     <ScrollView
                       ref={inchesScrollRef}
                       style={styles.scrollView}
@@ -216,7 +220,8 @@ export default function HeightScreen() {
                         <View key={inch} style={[styles.dateOption, { height: ITEM_HEIGHT }]}>
                           <Text style={[
                             styles.dateText,
-                            inch === selectedInches && styles.dateTextSelected
+                            { color: isDarkMode ? Colors.gray[400] : Colors.gray[400] },
+                            inch === selectedInches && [styles.dateTextSelected, { color: colors.text }]
                           ]}>
                             {inch} in
                           </Text>
@@ -230,9 +235,9 @@ export default function HeightScreen() {
           </View>
 
           <View style={styles.column}>
-            <Text style={styles.columnLabel}>{t('onboarding.height.weightLabel')}</Text>
-            <View style={styles.pickerWrapper}>
-              <View style={styles.highlightBar} />
+            <Text style={[styles.columnLabel, { color: colors.text }]}>{t('onboarding.height.weightLabel')}</Text>
+            <View style={[styles.pickerWrapper, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}>
+              <View style={[styles.highlightBar, { borderColor: isDarkMode ? Colors.gray[600] : Colors.gray[300] }]} />
               <ScrollView
                 ref={weightScrollRef}
                 style={styles.scrollView}
@@ -248,7 +253,8 @@ export default function HeightScreen() {
                   <View key={weight} style={[styles.dateOption, { height: ITEM_HEIGHT }]}>
                     <Text style={[
                       styles.dateText,
-                      weight === (isMetric ? selectedKg : selectedLbs) && styles.dateTextSelected
+                      { color: isDarkMode ? Colors.gray[400] : Colors.gray[400] },
+                      weight === (isMetric ? selectedKg : selectedLbs) && [styles.dateTextSelected, { color: colors.text }]
                     ]}>
                       {weight} {isMetric ? 'kg' : 'lb'}
                     </Text>

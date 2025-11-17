@@ -1,32 +1,47 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { LanguageSelector } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
-  const [darkMode, setDarkMode] = useState(false);
+  const { isDarkMode, toggleTheme, colors } = useTheme();
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const currentLanguage = i18n.language || 'en';
   const languageNames: { [key: string]: string } = { en: 'English', es: 'Español', fr: 'Français' };
 
   const handleLanguageSelect = (language: { code: string; name: string; flag: string }) => {
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 0.3,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    
     i18n.changeLanguage(language.code);
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
-          <View style={styles.settingItem}>
+        <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+          <View style={[styles.settingItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.settingLeft}>
-              <View style={styles.iconContainer}>
-                <Ionicons name="language-outline" size={22} color={Colors.black} />
+              <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}>
+                <Ionicons name="language-outline" size={22} color={colors.icon} />
               </View>
-              <Text style={styles.settingTitle}>{t('profile.language')}</Text>
+              <Text style={[styles.settingTitle, { color: colors.text }]}>{t('profile.language')}</Text>
             </View>
             <TouchableOpacity 
               style={styles.settingRight}
@@ -38,21 +53,21 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.settingItem}>
+          <View style={[styles.settingItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.settingLeft}>
-              <View style={styles.iconContainer}>
-                <Ionicons name="moon-outline" size={22} color={Colors.black} />
+              <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}>
+                <Ionicons name="moon-outline" size={22} color={colors.icon} />
               </View>
-              <Text style={styles.settingTitle}>{t('profile.darkMode')}</Text>
+              <Text style={[styles.settingTitle, { color: colors.text }]}>{t('profile.darkMode')}</Text>
             </View>
             <Switch
-              value={darkMode}
-              onValueChange={setDarkMode}
-              trackColor={{ false: Colors.gray[300], true: Colors.black }}
+              value={isDarkMode}
+              onValueChange={toggleTheme}
+              trackColor={{ false: Colors.gray[300], true: Colors.primary }}
               thumbColor={Colors.white}
             />
           </View>
-        </View>
+        </Animated.View>
       </ScrollView>
 
       <LanguageSelector

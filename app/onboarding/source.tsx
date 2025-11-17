@@ -6,11 +6,13 @@ import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button, OptionCard, ProgressBar } from '../../components';
 import { Colors, SharedStyles } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function SourceScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { updateOnboardingData, setCurrentStep } = useOnboarding();
+  const { colors, isDarkMode } = useTheme();
   const [selectedSource, setSelectedSource] = useState<'instagram' | 'facebook' | 'tiktok' | 'threads' | 'x' | 'youtube' | 'google' | 'others' | null>(null);
 
   const handleContinue = () => {
@@ -21,8 +23,13 @@ export default function SourceScreen() {
     }
   };
 
+  const getIconColor = (isSelected: boolean) => {
+    if (isSelected) return Colors.white;
+    return isDarkMode ? Colors.white : Colors.black;
+  };
+
   return (
-    <View style={SharedStyles.container}>
+    <View style={[SharedStyles.container, { backgroundColor: colors.background }]}>
       <View style={SharedStyles.header}>
         <ProgressBar currentStep={1} totalSteps={10} />
       </View>
@@ -31,7 +38,7 @@ export default function SourceScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={SharedStyles.title}>{t('onboarding.source.title')}</Text>
+        <Text style={[SharedStyles.title, { color: colors.text }]}>{t('onboarding.source.title')}</Text>
 
         <View style={SharedStyles.optionsContainer}>
           <OptionCard
@@ -50,19 +57,19 @@ export default function SourceScreen() {
             title="TikTok"
             selected={selectedSource === 'tiktok'}
             onPress={() => setSelectedSource('tiktok')}
-            icon={<Ionicons name="logo-tiktok" size={24} color={selectedSource === 'tiktok' ? Colors.white : Colors.black} />}
+            icon={<Ionicons name="logo-tiktok" size={24} color={getIconColor(selectedSource === 'tiktok')} />}
           />
           <OptionCard
             title="Threads"
             selected={selectedSource === 'threads'}
             onPress={() => setSelectedSource('threads')}
-            icon={<Ionicons name="logo-threads" size={24} color={selectedSource === 'threads' ? Colors.white : Colors.black} />}
+            icon={<Ionicons name="logo-threads" size={24} color={getIconColor(selectedSource === 'threads')} />}
           />
           <OptionCard
             title="X"
             selected={selectedSource === 'x'}
             onPress={() => setSelectedSource('x')}
-            icon={<Ionicons name="logo-x" size={24} color={selectedSource === 'x' ? Colors.white : Colors.black} />}
+            icon={<Ionicons name="logo-x" size={24} color={getIconColor(selectedSource === 'x')} />}
           />
           <OptionCard
             title="YouTube"
@@ -80,7 +87,7 @@ export default function SourceScreen() {
             title={t('onboarding.source.others')}
             selected={selectedSource === 'others'}
             onPress={() => setSelectedSource('others')}
-            icon={<Ionicons name="people" size={24} color={selectedSource === 'others' ? Colors.white : Colors.black} />}
+            icon={<Ionicons name="people" size={24} color={getIconColor(selectedSource === 'others')} />}
           />
         </View>
       </ScrollView>

@@ -5,9 +5,11 @@ import { useCallback, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function DietScreen() {
   const { dietData } = useDiet();
+  const { colors } = useTheme();
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [cameraPermission, setCameraPermission] = useState<boolean>(false);
 
@@ -70,11 +72,11 @@ export default function DietScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <View style={styles.titleSection}>
           <View style={styles.iconContainer}>
-            <Ionicons name="restaurant" size={32} color={Colors.black} />
+            <Ionicons name="restaurant" size={32} color={Colors.white} />
           </View>
           <View>
             <Text style={styles.headerTitle}>
@@ -83,8 +85,8 @@ export default function DietScreen() {
             </Text>
           </View>
         </View>
-        <Text style={styles.title}>Smart Diet Plan</Text>
-        <Text style={styles.subtitle}>AI-powered diet guidance</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Smart Diet Plan</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>AI-powered diet guidance</Text>
       </View>
 
       <View style={styles.scanSection}>
@@ -113,23 +115,23 @@ export default function DietScreen() {
 
         <View style={styles.scanOptions}>
           <TouchableOpacity style={styles.scanOption} onPress={takePhoto}>
-            <Ionicons name="camera" size={24} color={Colors.black} />
-            <Text style={styles.scanOptionText}>scan food</Text>
+            <Ionicons name="camera" size={24} color={colors.text} />
+            <Text style={[styles.scanOptionText, { color: colors.text }]}>scan food</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.scanOption} onPress={pickFromLibrary}>
-            <Ionicons name="barcode" size={24} color={Colors.black} />
-            <Text style={styles.scanOptionText}>Barcode</Text>
+            <Ionicons name="barcode" size={24} color={colors.text} />
+            <Text style={[styles.scanOptionText, { color: colors.text }]}>Barcode</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.scanOption}>
-            <Ionicons name="pricetag" size={24} color={Colors.black} />
-            <Text style={styles.scanOptionText}>Food Label</Text>
+            <Ionicons name="pricetag" size={24} color={colors.text} />
+            <Text style={[styles.scanOptionText, { color: colors.text }]}>Food Label</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.scanOption} onPress={pickFromLibrary}>
-            <Ionicons name="image" size={24} color={Colors.black} />
-            <Text style={styles.scanOptionText}>Library</Text>
+            <Ionicons name="image" size={24} color={colors.text} />
+            <Text style={[styles.scanOptionText, { color: colors.text }]}>Library</Text>
           </TouchableOpacity>
         </View>
 

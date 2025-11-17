@@ -6,11 +6,13 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Button, OptionCard, ProgressBar } from '../../components';
 import { Colors, SharedStyles } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function GoalScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { updateOnboardingData, setCurrentStep } = useOnboarding();
+  const { colors, isDarkMode } = useTheme();
   const [selectedGoal, setSelectedGoal] = useState<'lose-fat' | 'get-stronger' | 'build-muscle' | 'stay-fit' | null>(null);
 
   const handleContinue = () => {
@@ -21,39 +23,44 @@ export default function GoalScreen() {
     }
   };
 
+  const getIconColor = (isSelected: boolean) => {
+    if (isSelected) return Colors.white;
+    return isDarkMode ? Colors.white : Colors.black;
+  };
+
   return (
-    <View style={SharedStyles.container}>
+    <View style={[SharedStyles.container, { backgroundColor: colors.background }]}>
       <View style={SharedStyles.header}>
         <ProgressBar currentStep={9} totalSteps={10} />
       </View>
 
       <View style={SharedStyles.content}>
-        <Text style={SharedStyles.title}>{t('onboarding.goal.title')}</Text>
+        <Text style={[SharedStyles.title, { color: colors.text }]}>{t('onboarding.goal.title')}</Text>
 
         <View style={SharedStyles.optionsContainer}>
           <OptionCard
             title={t('onboarding.goal.loseFat')}
             selected={selectedGoal === 'lose-fat'}
             onPress={() => setSelectedGoal('lose-fat')}
-            icon={<Ionicons name="scale-outline" size={24} color={selectedGoal === 'lose-fat' ? Colors.white : Colors.black} />}
+            icon={<Ionicons name="scale-outline" size={24} color={getIconColor(selectedGoal === 'lose-fat')} />}
           />
           <OptionCard
             title={t('onboarding.goal.getStronger')}
             selected={selectedGoal === 'get-stronger'}
             onPress={() => setSelectedGoal('get-stronger')}
-            icon={<Ionicons name="barbell-outline" size={24} color={selectedGoal === 'get-stronger' ? Colors.white : Colors.black} />}
+            icon={<Ionicons name="barbell-outline" size={24} color={getIconColor(selectedGoal === 'get-stronger')} />}
           />
           <OptionCard
             title={t('onboarding.goal.buildMuscle')}
             selected={selectedGoal === 'build-muscle'}
             onPress={() => setSelectedGoal('build-muscle')}
-            icon={<Ionicons name="fitness-outline" size={24} color={selectedGoal === 'build-muscle' ? Colors.white : Colors.black} />}
+            icon={<Ionicons name="fitness-outline" size={24} color={getIconColor(selectedGoal === 'build-muscle')} />}
           />
           <OptionCard
             title={t('onboarding.goal.stayFit')}
             selected={selectedGoal === 'stay-fit'}
             onPress={() => setSelectedGoal('stay-fit')}
-            icon={<Ionicons name="walk-outline" size={24} color={selectedGoal === 'stay-fit' ? Colors.white : Colors.black} />}
+            icon={<Ionicons name="walk-outline" size={24} color={getIconColor(selectedGoal === 'stay-fit')} />}
           />
         </View>
       </View>

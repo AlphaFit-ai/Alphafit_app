@@ -7,6 +7,7 @@ import {
     View,
 } from 'react-native';
 import { Colors, Fonts, Spacing } from '../constants';
+import { useTheme } from '../context/ThemeContext';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -19,11 +20,21 @@ export const Input: React.FC<InputProps> = ({
   style,
   ...props
 }) => {
+  const { colors, isDarkMode } = useTheme();
+  
   return (
     <View style={styles.container}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && <Text style={[styles.label, { color: colors.text }]}>{label}</Text>}
       <TextInput
-        style={[styles.input, error && styles.inputError, style]}
+        style={[
+          styles.input, 
+          { 
+            backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100],
+            color: colors.text
+          },
+          error && styles.inputError, 
+          style
+        ]}
         placeholderTextColor={Colors.gray[400]}
         {...props}
       />
@@ -41,17 +52,14 @@ const styles = StyleSheet.create({
     fontSize: Fonts.sizes.sm,
     fontFamily: Fonts.semiBold,
     fontWeight: Fonts.weights.semiBold,
-    color: Colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   input: {
     height: Spacing.inputHeight,
     borderRadius: Spacing.radius.md,
-    backgroundColor: Colors.gray[100],
     paddingHorizontal: Spacing.md,
     fontSize: Fonts.sizes.base,
     fontFamily: Fonts.regular,
-    color: Colors.textPrimary,
     borderWidth: 1,
     borderColor: 'transparent',
   },

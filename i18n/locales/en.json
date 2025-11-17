@@ -170,5 +170,14 @@
       "successMessage": "Your account details have been updated successfully!",
       "ok": "OK"
     }
+  },
+  "tabs": {
+    "home": "Home",
+    "homeSubtitle": "Your personalized fitness journey starts here",
+    "scan": "Scan",
+    "scanSubtitle": "Scan your projections",
+    "diet": "Diet",
+    "workouts": "Workouts",
+    "profile": "Profile"
   }
 }

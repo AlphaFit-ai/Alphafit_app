@@ -1,19 +1,26 @@
 import { Stack } from 'expo-router';
-import { Colors, Fonts } from '../../constants';
+import { useTranslation } from 'react-i18next';
+import { Fonts } from '../../constants';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function ProfileLayout() {
+  const { t } = useTranslation();
+  const { colors, isDarkMode } = useTheme();
+  
   return (
     <Stack
       screenOptions={{
         headerStyle: {
-          backgroundColor: Colors.white,
+          backgroundColor: colors.background,
         },
         headerTitleStyle: {
           fontFamily: Fonts.bold,
           fontSize: 18,
           fontWeight: '700',
-          color: Colors.black,
+          color: colors.text,
         },
+        headerTitleAlign: 'center',
+        headerTintColor: colors.text,
         headerShadowVisible: false,
         headerShown: true,
       }}
@@ -21,19 +28,19 @@ export default function ProfileLayout() {
       <Stack.Screen
         name="account-details"
         options={{
-          title: 'Account Details',
+          title: t('profile.accountDetails'),
         }}
       />
       <Stack.Screen
         name="settings"
         options={{
-          title: 'Settings',
+          title: t('profile.appSettings'),
         }}
       />
       <Stack.Screen
         name="language"
         options={{
-          title: 'Language',
+          title: t('profile.language'),
         }}
       />
     </Stack>

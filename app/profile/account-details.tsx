@@ -5,6 +5,7 @@ import { Modal, NativeScrollEvent, NativeSyntheticEvent, Platform, ScrollView, S
 import CountryPicker, { Country, CountryCode } from 'react-native-country-picker-modal';
 import { Button } from '../../components';
 import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
+import { useTheme } from '../../context/ThemeContext';
 
 interface SuccessModalProps {
   visible: boolean;
@@ -38,6 +39,7 @@ const SuccessModal = ({ visible, onClose }: SuccessModalProps) => {
 
 export default function AccountDetailsScreen() {
   const { t } = useTranslation();
+  const { colors, isDarkMode } = useTheme();
   const [name, setName] = useState('John Doe');
   const [email, setEmail] = useState('john@example.com');
   const [countryCode, setCountryCode] = useState<CountryCode>('MA'); // Morocco by default
@@ -155,7 +157,7 @@ export default function AccountDetailsScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -164,9 +166,9 @@ export default function AccountDetailsScreen() {
       >
         <View style={styles.innerContent}>
           <View style={styles.formSection}>
-            <Text style={styles.label}>{t('profile.accountDetailsForm.fullName')}</Text>
+            <Text style={[styles.label, { color: colors.text }]}>{t('profile.accountDetailsForm.fullName')}</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100], color: colors.text }]}
               value={name}
               onChangeText={setName}
               placeholder={t('profile.accountDetailsForm.fullNamePlaceholder')}
@@ -175,9 +177,9 @@ export default function AccountDetailsScreen() {
           </View>
 
           <View style={styles.formSection}>
-            <Text style={styles.label}>{t('profile.accountDetailsForm.email')}</Text>
+            <Text style={[styles.label, { color: colors.text }]}>{t('profile.accountDetailsForm.email')}</Text>
             <TextInput
-              style={[styles.input, !validateEmail(email) && email.length > 0 && styles.inputError]}
+              style={[styles.input, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100], color: colors.text }, !validateEmail(email) && email.length > 0 && styles.inputError]}
               value={email}
               onChangeText={handleEmailChange}
               placeholder={t('profile.accountDetailsForm.emailPlaceholder')}
@@ -192,10 +194,10 @@ export default function AccountDetailsScreen() {
           </View>
 
           <View style={styles.formSection}>
-            <Text style={styles.label}>{t('profile.accountDetailsForm.phoneNumber')}</Text>
+            <Text style={[styles.label, { color: colors.text }]}>{t('profile.accountDetailsForm.phoneNumber')}</Text>
             <View style={styles.phoneContainer}>
               <TouchableOpacity 
-                style={styles.countryCodeContainer}
+                style={[styles.countryCodeContainer, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}
                 onPress={() => setShowCountryPicker(true)}
                 activeOpacity={0.7}
               >
@@ -210,10 +212,10 @@ export default function AccountDetailsScreen() {
                   onClose={() => setShowCountryPicker(false)}
                   containerButtonStyle={styles.countryPickerButton}
                 />
-                <Text style={styles.countryCode}>{callingCode}</Text>
+                <Text style={[styles.countryCode, { color: colors.text }]}>{callingCode}</Text>
               </TouchableOpacity>
               <TextInput
-                style={[styles.input, styles.phoneInput]}
+                style={[styles.input, styles.phoneInput, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100], color: colors.text }]}
                 value={phone}
                 onChangeText={handlePhoneChange}
                 placeholder={t('profile.accountDetailsForm.phonePlaceholder')}
@@ -225,9 +227,9 @@ export default function AccountDetailsScreen() {
           </View>
 
           <View style={styles.formSection}>
-            <Text style={styles.label}>{t('profile.accountDetailsForm.age')}</Text>
+            <Text style={[styles.label, { color: colors.text }]}>{t('profile.accountDetailsForm.age')}</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100], color: colors.text }]}
               value={age}
               onChangeText={handleAgeChange}
               placeholder={t('profile.accountDetailsForm.agePlaceholder')}
@@ -238,23 +240,23 @@ export default function AccountDetailsScreen() {
           </View>
 
           <View style={styles.switchContainer}>
-            <Text style={[styles.switchLabel, !isMetric && styles.switchLabelActive]}>
+            <Text style={[styles.switchLabel, !isMetric && [styles.switchLabelActive, { color: colors.text }]]}>
               {t('onboarding.height.imperial')}
             </Text>
             <Switch
               value={isMetric}
               onValueChange={setIsMetric}
               trackColor={{ false: Colors.gray[300], true: Colors.gray[300] }}
-              thumbColor={Colors.black}
+              thumbColor={colors.icon}
             />
-            <Text style={[styles.switchLabel, isMetric && styles.switchLabelActive]}>
+            <Text style={[styles.switchLabel, isMetric && [styles.switchLabelActive, { color: colors.text }]]}>
               {t('onboarding.height.metric')}
             </Text>
           </View>
 
           <View style={styles.pickerRow}>
             <View style={styles.column}>
-              <Text style={styles.columnLabel}>{t('onboarding.height.heightLabel')}</Text>
+              <Text style={[styles.columnLabel, { color: colors.text }]}>{t('onboarding.height.heightLabel')}</Text>
               <View style={styles.pickerContainer}>
                 {isMetric ? (
                   <View style={styles.pickerWrapper}>
@@ -341,7 +343,7 @@ export default function AccountDetailsScreen() {
             </View>
 
             <View style={styles.column}>
-              <Text style={styles.columnLabel}>{t('onboarding.height.weightLabel')}</Text>
+              <Text style={[styles.columnLabel, { color: colors.text }]}>{t('onboarding.height.weightLabel')}</Text>
               <View style={styles.pickerContainer}>
                 <View style={styles.pickerWrapper}>
                   <View style={styles.highlightBar} />

@@ -5,11 +5,13 @@ import { useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GradientText, ProPlanModal } from '../../components';
 import { Colors, Fonts } from '../../constants';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function TabsLayout() {
   const isWeb = Platform.OS === 'web';
   const pathname = usePathname();
   const router = useRouter();
+  const { colors, isDarkMode } = useTheme();
   const [showProModal, setShowProModal] = useState(false);
 
   const navItems = [
@@ -67,11 +69,11 @@ export default function TabsLayout() {
         screenOptions={{
           headerShown: !isWeb,
           headerStyle: {
-            backgroundColor: Colors.white,
+            backgroundColor: colors.background,
             elevation: 0,
             shadowOpacity: 0,
             borderBottomWidth: 1,
-            borderBottomColor: Colors.gray[100],
+            borderBottomColor: isDarkMode ? Colors.gray[700] : Colors.gray[100],
           },
           headerLeft: () => (
             <View style={styles.headerLeft}>
@@ -82,7 +84,7 @@ export default function TabsLayout() {
             <View style={styles.headerRight}>
               <TouchableOpacity style={styles.notificationButton} activeOpacity={0.7}>
                 <View style={styles.notificationContainer}>
-                  <Ionicons name="notifications-outline" size={24} color={Colors.black} />
+                  <Ionicons name="notifications-outline" size={24} color={colors.text} />
                   <View style={styles.notificationBadge} />
                 </View>
               </TouchableOpacity>
@@ -92,11 +94,11 @@ export default function TabsLayout() {
             </View>
           ),
           headerTitle: '',
-          tabBarActiveTintColor: Colors.black,
+          tabBarActiveTintColor: colors.text,
           tabBarInactiveTintColor: Colors.gray[400],
           tabBarStyle: isWeb ? { display: 'none' } : {
-            backgroundColor: Colors.white,
-            borderTopColor: Colors.gray[100],
+            backgroundColor: colors.background,
+            borderTopColor: isDarkMode ? Colors.gray[700] : Colors.gray[100],
             borderTopWidth: 1,
             height: Platform.OS === 'ios' ? 88 : 68,
             paddingBottom: Platform.OS === 'ios' ? 28 : 12,

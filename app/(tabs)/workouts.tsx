@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ProPlanModal } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
+import { useTheme } from '../../context/ThemeContext';
 
 type WorkoutDay = 'push' | 'pull' | 'leg';
 
@@ -158,21 +159,22 @@ const workoutPrograms: WorkoutProgram[] = [
 
 export default function WorkoutsScreen() {
   const { t } = useTranslation();
+  const { colors, isDarkMode } = useTheme();
   const [selectedDay, setSelectedDay] = useState<WorkoutDay | null>(null);
   const [showProModal, setShowProModal] = useState(false);
 
   const selectedProgram = selectedDay ? workoutPrograms.find(p => p.day === selectedDay) : null;
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <View style={styles.titleSection}>
           <View style={styles.titleIconContainer}>
-            <Ionicons name="fitness" size={32} color={Colors.black} />
+            <Ionicons name="fitness" size={32} color={colors.text} />
           </View>
-          <Text style={styles.title}>{t('workoutScreen.title')}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t('workoutScreen.title')}</Text>
         </View>
-        <Text style={styles.description}>
+        <Text style={[styles.description, { color: colors.textSecondary }]}>
           {t('workoutScreen.description')}
         </Text>
       </View>
@@ -198,6 +200,7 @@ export default function WorkoutsScreen() {
               />
               <Text style={[
                 styles.workoutTitle,
+                { color: selectedDay === program.day ? Colors.white : colors.text },
                 selectedDay === program.day && styles.workoutTitleActive,
               ]}>
                 {program.title}
@@ -207,8 +210,8 @@ export default function WorkoutsScreen() {
         </View>
 
         {selectedProgram && (
-          <View style={styles.programDetails}>
-            <Text style={styles.programTitle}>{selectedProgram.title} - {selectedProgram.subtitle.replace(/\n/g, ', ')}</Text>
+          <View style={[styles.programDetails, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.white }]}>
+            <Text style={[styles.programTitle, { color: colors.text }]}>{selectedProgram.title} - {selectedProgram.subtitle.replace(/\n/g, ', ')}</Text>
             
             <View style={styles.durationContainer}>
               <Ionicons name="time-outline" size={18} color={Colors.gray[400]} />

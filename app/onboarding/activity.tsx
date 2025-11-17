@@ -5,11 +5,13 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Button, OptionCard, ProgressBar } from '../../components';
 import { SharedStyles } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function ActivityLevelScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { updateOnboardingData, setCurrentStep } = useOnboarding();
+  const { colors } = useTheme();
   const [selectedLevel, setSelectedLevel] = useState<'low' | 'medium' | 'high' | null>(null);
 
   const handleContinue = () => {
@@ -21,13 +23,13 @@ export default function ActivityLevelScreen() {
   };
 
   return (
-    <View style={SharedStyles.container}>
+    <View style={[SharedStyles.container, { backgroundColor: colors.background }]}>
       <View style={SharedStyles.header}>
         <ProgressBar currentStep={6} totalSteps={10} />
       </View>
 
       <View style={SharedStyles.content}>
-        <Text style={SharedStyles.title}>{t('onboarding.activity.title')}</Text>
+        <Text style={[SharedStyles.title, { color: colors.text }]}>{t('onboarding.activity.title')}</Text>
 
         <View style={SharedStyles.optionsContainer}>
           <OptionCard

@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../components';
 import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
+import { useTheme } from '../../context/ThemeContext';
 
 const proteinOptions = [
   { label: '50-100g', value: 75 },
@@ -18,6 +19,7 @@ const proteinOptions = [
 export default function MealsScreen() {
   const { t } = useTranslation();
   const { updateDietData, setCurrentStep } = useDiet();
+  const { colors, isDarkMode } = useTheme();
   const [selectedProtein, setSelectedProtein] = useState<number | null>(null);
 
   const handleContinue = () => {
@@ -33,18 +35,18 @@ export default function MealsScreen() {
   };
 
   return (
-    <SafeAreaView style={SharedStyles.container}>
+    <SafeAreaView style={[SharedStyles.container, { backgroundColor: colors.background }]}>
       <TouchableOpacity 
         style={SharedStyles.backButton}
         onPress={() => router.back()}
         activeOpacity={0.7}
       >
-        <Ionicons name="arrow-back" size={24} color={Colors.black} />
+        <Ionicons name="arrow-back" size={24} color={colors.icon} />
       </TouchableOpacity>
 
       <View style={styles.content}>
         <View style={styles.innerContent}>
-          <Text style={SharedStyles.title}>{t('diet.meals.title')}</Text>
+          <Text style={[SharedStyles.title, { color: colors.text }]}>{t('diet.meals.title')}</Text>
 
           <Image 
             source={require('../../assets/images/diet/meals.png')} 
@@ -59,14 +61,17 @@ export default function MealsScreen() {
                   key={option.value}
                   style={[
                     styles.optionButton,
-                    selectedProtein === option.value && styles.optionButtonActive,
+                    { 
+                      backgroundColor: selectedProtein === option.value ? Colors.black : colors.card,
+                      borderColor: selectedProtein === option.value ? Colors.black : colors.border
+                    },
                   ]}
                   onPress={() => handleSelect(option.value)}
                   activeOpacity={0.7}
                 >
                   <Text style={[
                     styles.optionButtonText,
-                    selectedProtein === option.value && styles.optionButtonTextActive,
+                    { color: selectedProtein === option.value ? Colors.white : colors.text },
                   ]}>
                     {option.label}
                   </Text>
@@ -112,21 +117,11 @@ const styles = StyleSheet.create({
     width: '47%',
     paddingVertical: 20,
     borderRadius: 16,
-    backgroundColor: Colors.white,
     borderWidth: 2,
-    borderColor: Colors.gray[200],
     alignItems: 'center',
-  },
-  optionButtonActive: {
-    backgroundColor: Colors.black,
-    borderColor: Colors.black,
   },
   optionButtonText: {
     fontSize: Fonts.sizes['2xl'],
     fontFamily: Fonts.bold,
-    color: Colors.black,
-  },
-  optionButtonTextActive: {
-    color: Colors.white,
   },
 });

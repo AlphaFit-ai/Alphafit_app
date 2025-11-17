@@ -4,10 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { Button } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function IntroScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const { colors, isDarkMode } = useTheme();
   const [currentPhysique] = useState(6.2);
   const [projectedPhysique] = useState(8.4);
 
@@ -16,26 +18,26 @@ export default function IntroScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
-        <Text style={styles.title}>{t('onboarding.intro.title')}</Text>
-        <Text style={styles.subtitle}>{t('onboarding.intro.subtitle')}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('onboarding.intro.title')}</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('onboarding.intro.subtitle')}</Text>
 
-        <View style={styles.projectionContainer}>
+        <View style={[styles.projectionContainer, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[50] }]}>
           <View style={styles.scoreContainer}>
-            <Text style={styles.label}>{t('onboarding.intro.current')}</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('onboarding.intro.current')}</Text>
             <View style={styles.progressBar}>
               <View style={[styles.progressFill, { width: `${(currentPhysique / 10) * 100}%` }]} />
             </View>
-            <Text style={styles.score}>{currentPhysique}</Text>
+            <Text style={[styles.score, { color: colors.text }]}>{currentPhysique}</Text>
           </View>
 
           <View style={styles.scoreContainer}>
-            <Text style={styles.label}>{t('onboarding.intro.projected')}</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('onboarding.intro.projected')}</Text>
             <View style={styles.progressBar}>
               <View style={[styles.progressFill, { width: `${(projectedPhysique / 10) * 100}%` }]} />
             </View>
-            <Text style={styles.score}>{projectedPhysique}</Text>
+            <Text style={[styles.score, { color: colors.text }]}>{projectedPhysique}</Text>
           </View>
         </View>
 
@@ -58,7 +60,6 @@ export default function IntroScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
   },
   content: {
     flex: 1,
@@ -68,18 +69,15 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: Colors.black,
     marginBottom: 8,
     fontFamily: Fonts.bold,
   },
   subtitle: {
     fontSize: Fonts.sizes.base,
-    color: Colors.textSecondary,
     marginBottom: 40,
     fontFamily: Fonts.regular,
   },
   projectionContainer: {
-    backgroundColor: Colors.gray[50],
     borderRadius: Spacing.radius.lg,
     padding: Spacing.lg,
     marginBottom: 32,
@@ -89,7 +87,6 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: Fonts.sizes.sm,
-    color: Colors.textSecondary,
     marginBottom: 8,
     fontFamily: Fonts.regular,
   },
@@ -108,7 +105,6 @@ const styles = StyleSheet.create({
   score: {
     fontSize: 24,
     fontWeight: '700',
-    color: Colors.black,
     fontFamily: Fonts.bold,
   },
   illustration: {

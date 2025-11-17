@@ -14,6 +14,7 @@ import {
     View
 } from 'react-native';
 import { Colors, Fonts, Spacing } from '../constants';
+import { useTheme } from '../context/ThemeContext';
 
 interface ProPlanModalProps {
   visible: boolean;
@@ -25,6 +26,7 @@ const MODAL_HEIGHT = SCREEN_HEIGHT * 0.75;
 
 export const ProPlanModal: React.FC<ProPlanModalProps> = ({ visible, onClose }) => {
   const { t } = useTranslation();
+  const { colors, isDarkMode } = useTheme();
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
   const translateY = React.useRef(new Animated.Value(MODAL_HEIGHT)).current;
 
@@ -110,13 +112,14 @@ export const ProPlanModal: React.FC<ProPlanModalProps> = ({ visible, onClose }) 
           style={[
             styles.modalContainer,
             {
+              backgroundColor: colors.background,
               transform: [{ translateY }],
             },
           ]}
         >
           {/* Handle Bar */}
           <View {...panResponder.panHandlers} style={styles.handleContainer}>
-            <View style={styles.handle} />
+            <View style={[styles.handle, { backgroundColor: colors.border }]} />
           </View>
 
           <ScrollView
@@ -127,21 +130,21 @@ export const ProPlanModal: React.FC<ProPlanModalProps> = ({ visible, onClose }) 
             {/* Card 1: Title Card */}
             <View style={styles.cardContainer}>
               <LinearGradient
-                colors={['#EFBF04', '#FAFAFA']}
+                colors={isDarkMode ? ['#2D2D2D', '#1A1A1A'] : ['#EFBF04', '#FAFAFA']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={styles.card}
+                style={[styles.card, isDarkMode && { borderWidth: 1, borderColor: Colors.gray[700] }]}
               >
-                <View style={styles.proBadge}>
-                  <Ionicons name="trophy" size={14} color={Colors.gold} />
-                  <Text style={styles.proBadgeText}>FORGE PRO</Text>
+                <View style={[styles.proBadge, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.goldLight }]}>
+                  <Ionicons name="trophy" size={14} color={isDarkMode ? Colors.gold : Colors.gold} />
+                  <Text style={[styles.proBadgeText, { color: isDarkMode ? Colors.gold : Colors.goldDark }]}>FORGE PRO</Text>
                 </View>
                 
-                <Text style={styles.title}>
+                <Text style={[styles.title, { color: colors.text }]}>
                   <Text style={styles.titleUnlock}>Unlock</Text> Your Full{'\n'}Potential
                 </Text>
                 
-                <Text style={styles.subtitle}>
+                <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
                   Get AI-powered coaching and transform{'\n'}your physique faster
                 </Text>
               </LinearGradient>
@@ -150,13 +153,13 @@ export const ProPlanModal: React.FC<ProPlanModalProps> = ({ visible, onClose }) 
             {/* Card 2: Pricing Card */}
             <View style={styles.cardContainer}>
               <LinearGradient
-                colors={['#F9FAFB', '#EBE389']}
+                colors={isDarkMode ? ['#2D2D2D', '#1F1F1F'] : ['#F9FAFB', '#EBE389']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={styles.card}
+                style={[styles.card, isDarkMode && { borderWidth: 1, borderColor: Colors.gray[700] }]}
               >
                 {/* Limited Time Offer Badge */}
-                <View style={styles.offerBadge}>
+                <View style={[styles.offerBadge, isDarkMode && { backgroundColor: 'rgba(255, 107, 74, 0.15)' }]}>
                   <Ionicons name="sparkles" size={14} color={Colors.primary} />
                   <Text style={styles.offerText}>Limited Time Offer</Text>
                 </View>
@@ -164,8 +167,8 @@ export const ProPlanModal: React.FC<ProPlanModalProps> = ({ visible, onClose }) 
                 {/* Price */}
                 <View style={styles.priceRow}>
                   <View style={styles.priceContainer}>
-                    {selectedPlan === 'yearly' && <Text style={styles.oldPrice}>$120</Text>}
-                    <Text style={styles.newPrice}>
+                    {selectedPlan === 'yearly' && <Text style={[styles.oldPrice, { color: isDarkMode ? Colors.gray[600] : Colors.gray[300] }]}>$120</Text>}
+                    <Text style={[styles.newPrice, { color: isDarkMode ? Colors.primary : Colors.primary }]}>
                       {selectedPlan === 'monthly' ? '$9.99' : '$49.99'}
                     </Text>
                   </View>
@@ -175,7 +178,7 @@ export const ProPlanModal: React.FC<ProPlanModalProps> = ({ visible, onClose }) 
                     </View>
                   )}
                 </View>
-                <Text style={styles.perYear}>
+                <Text style={[styles.perYear, { color: isDarkMode ? Colors.gray[500] : Colors.gray[400] }]}>
                   {selectedPlan === 'monthly' ? 'per month' : 'per year'}
                 </Text>
 
@@ -184,6 +187,10 @@ export const ProPlanModal: React.FC<ProPlanModalProps> = ({ visible, onClose }) 
                   <TouchableOpacity
                     style={[
                       styles.planButton,
+                      { 
+                        backgroundColor: isDarkMode ? colors.card : Colors.white,
+                        borderColor: selectedPlan === 'monthly' ? Colors.primary : colors.border 
+                      },
                       selectedPlan === 'monthly' && styles.planButtonActive,
                     ]}
                     onPress={() => setSelectedPlan('monthly')}
@@ -191,13 +198,14 @@ export const ProPlanModal: React.FC<ProPlanModalProps> = ({ visible, onClose }) 
                   >
                     <Text style={[
                       styles.planButtonTitle,
-                      selectedPlan === 'monthly' && styles.planButtonTitleActive,
+                      { color: selectedPlan === 'monthly' ? colors.text : colors.textSecondary },
                     ]}>
                       Monthly
                     </Text>
                     <Text style={[
                       styles.planButtonPrice,
                       selectedPlan === 'monthly' && styles.planButtonPriceActive,
+                      { color: selectedPlan === 'monthly' ? Colors.primary : colors.textSecondary },
                     ]}>
                       $9.99/month
                     </Text>
@@ -206,6 +214,10 @@ export const ProPlanModal: React.FC<ProPlanModalProps> = ({ visible, onClose }) 
                   <TouchableOpacity
                     style={[
                       styles.planButton,
+                      { 
+                        backgroundColor: isDarkMode ? colors.card : Colors.white,
+                        borderColor: selectedPlan === 'yearly' ? Colors.primary : colors.border 
+                      },
                       selectedPlan === 'yearly' && styles.planButtonActive,
                     ]}
                     onPress={() => setSelectedPlan('yearly')}
@@ -218,13 +230,14 @@ export const ProPlanModal: React.FC<ProPlanModalProps> = ({ visible, onClose }) 
                     )}
                     <Text style={[
                       styles.planButtonTitle,
-                      selectedPlan === 'yearly' && styles.planButtonTitleActive,
+                      { color: selectedPlan === 'yearly' ? colors.text : colors.textSecondary },
                     ]}>
                       Yearly
                     </Text>
                     <Text style={[
                       styles.planButtonPrice,
                       selectedPlan === 'yearly' && styles.planButtonPriceActive,
+                      { color: selectedPlan === 'yearly' ? Colors.primary : colors.textSecondary },
                     ]}>
                       $49.99/year
                     </Text>
@@ -236,30 +249,40 @@ export const ProPlanModal: React.FC<ProPlanModalProps> = ({ visible, onClose }) 
             {/* Features */}
             <View style={styles.featuresSection}>
               <View style={styles.featuresHeader}>
-                <Ionicons name="flash" size={18} color={Colors.black} />
-                <Text style={styles.featuresTitle}>Premium Features</Text>
+                <Ionicons name="flash" size={18} color={colors.text} />
+                <Text style={[styles.featuresTitle, { color: colors.text }]}>Premium Features</Text>
               </View>
 
               <View style={styles.featuresList}>
                 {currentFeatures.map((feature, index) => (
                   <View key={index} style={styles.featureItem}>
                     <View style={styles.checkIconContainer}>
-                      <Ionicons name="checkmark-circle" size={22} color={Colors.black} />
+                      <Ionicons name="checkmark-circle" size={22} color={colors.text} />
                     </View>
-                    <Text style={styles.featureText}>{feature.text}</Text>
+                    <Text style={[styles.featureText, { color: colors.textSecondary }]}>{feature.text}</Text>
                   </View>
                 ))}
               </View>
             </View>
 
             {/* CTA Buttons */}
-            <TouchableOpacity activeOpacity={0.9} style={styles.freeTrialButton} disabled>
-              <Text style={styles.freeTrialButtonText}>Start Free Trial - 7 Days</Text>
+            <TouchableOpacity 
+              activeOpacity={0.9} 
+              style={[
+                styles.freeTrialButton, 
+                { 
+                  backgroundColor: isDarkMode ? Colors.gray[800] : colors.background,
+                  borderColor: isDarkMode ? Colors.gray[600] : colors.text 
+                }
+              ]} 
+              disabled
+            >
+              <Text style={[styles.freeTrialButtonText, { color: colors.text }]}>Start Free Trial - 7 Days</Text>
             </TouchableOpacity>
 
             <TouchableOpacity activeOpacity={0.9} disabled>
               <LinearGradient
-                colors={[Colors.black, Colors.gray[800]]}
+                colors={isDarkMode ? [Colors.primary, '#E85D3F'] : [Colors.black, Colors.gray[800]]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.ctaButton}
@@ -289,7 +312,6 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     height: MODAL_HEIGHT,
-    backgroundColor: Colors.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     shadowColor: Colors.black,
@@ -305,7 +327,6 @@ const styles = StyleSheet.create({
   handle: {
     width: 40,
     height: 4,
-    backgroundColor: Colors.gray[300],
     borderRadius: 2,
   },
   scrollView: {
@@ -325,17 +346,14 @@ const styles = StyleSheet.create({
     padding: 24,
     shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.12,
     shadowRadius: 12,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.05)',
+    elevation: 6,
   },
   proBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'center',
-    backgroundColor: Colors.goldLight,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -346,14 +364,12 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: Fonts.bold,
     fontWeight: '700',
-    color: Colors.goldDark,
     letterSpacing: 0.5,
   },
   title: {
     fontSize: 28,
     fontFamily: Fonts.bold,
     fontWeight: '700',
-    color: Colors.black,
     marginBottom: 12,
     lineHeight: 36,
     textAlign: 'center',
@@ -364,7 +380,6 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 15,
     fontFamily: Fonts.regular,
-    color: Colors.gray[600],
     lineHeight: 22,
     textAlign: 'center',
   },
@@ -396,14 +411,12 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontFamily: Fonts.bold,
     fontWeight: '700',
-    color: Colors.gray[300],
     textDecorationLine: 'line-through',
   },
   newPrice: {
     fontSize: 44,
     fontFamily: Fonts.bold,
     fontWeight: '700',
-    color: Colors.primary,
   },
   saveBadge: {
     backgroundColor: '#10B981',
@@ -420,7 +433,6 @@ const styles = StyleSheet.create({
   perYear: {
     fontSize: 14,
     fontFamily: Fonts.regular,
-    color: Colors.gray[400],
     marginBottom: 24,
     textAlign: 'center',
   },
@@ -430,15 +442,12 @@ const styles = StyleSheet.create({
   },
   planButton: {
     flex: 1,
-    backgroundColor: Colors.white,
     borderWidth: 2,
-    borderColor: Colors.gray[200],
     borderRadius: 14,
     padding: 16,
     position: 'relative',
   },
   planButtonActive: {
-    borderColor: Colors.primary,
     backgroundColor: 'rgba(255, 107, 74, 0.03)',
   },
   popularBadge: {
@@ -459,19 +468,13 @@ const styles = StyleSheet.create({
   planButtonTitle: {
     fontSize: 16,
     fontFamily: Fonts.semiBold,
-    color: Colors.gray[600],
     marginBottom: 4,
-  },
-  planButtonTitleActive: {
-    color: Colors.black,
   },
   planButtonPrice: {
     fontSize: 13,
     fontFamily: Fonts.regular,
-    color: Colors.gray[400],
   },
   planButtonPriceActive: {
-    color: Colors.primary,
     fontFamily: Fonts.semiBold,
   },
   featuresSection: {
@@ -487,7 +490,6 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontFamily: Fonts.bold,
     fontWeight: '700',
-    color: Colors.black,
   },
   featuresList: {
     gap: 14,
@@ -505,7 +507,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontFamily: Fonts.regular,
-    color: Colors.gray[700],
     lineHeight: 20,
   },
   ctaButton: {
@@ -532,14 +533,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
-    backgroundColor: Colors.white,
     borderWidth: 2,
-    borderColor: Colors.black,
   },
   freeTrialButtonText: {
     fontSize: 16,
     fontFamily: Fonts.bold,
     fontWeight: '700',
-    color: Colors.black,
   },
 });

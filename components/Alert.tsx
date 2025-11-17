@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Fonts } from '../constants';
+import { useTheme } from '../context/ThemeContext';
 
 interface AlertButton {
   text: string;
@@ -17,6 +18,7 @@ interface AlertProps {
 }
 
 export const Alert = ({ visible, title, message, buttons = [{ text: 'OK' }], onClose }: AlertProps) => {
+  const { colors, isDarkMode } = useTheme();
   const handleButtonPress = (button: AlertButton) => {
     if (button.onPress) {
       button.onPress();
@@ -32,18 +34,18 @@ export const Alert = ({ visible, title, message, buttons = [{ text: 'OK' }], onC
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={styles.container}>
-          <Text style={styles.title}>{title}</Text>
+        <View style={[styles.container, { backgroundColor: colors.card }]}>
+          <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
           {message && (
-            <Text style={styles.message}>{message}</Text>
+            <Text style={[styles.message, { color: colors.text }]}>{message}</Text>
           )}
-          <View style={styles.buttonContainer}>
+          <View style={[styles.buttonContainer, { borderTopColor: colors.border }]}>
             {buttons.map((button, index) => (
               <TouchableOpacity
                 key={index}
                 style={[
                   styles.button,
-                  index < buttons.length - 1 && styles.buttonBorder,
+                  index < buttons.length - 1 && { borderRightWidth: 0.5, borderRightColor: colors.border },
                   buttons.length === 2 && index === 0 && styles.buttonHalf,
                   buttons.length === 2 && index === 1 && styles.buttonHalf,
                 ]}
@@ -53,8 +55,8 @@ export const Alert = ({ visible, title, message, buttons = [{ text: 'OK' }], onC
                 <Text
                   style={[
                     styles.buttonText,
+                    { color: button.style === 'destructive' ? Colors.red : (isDarkMode ? colors.primary : '#007AFF') },
                     button.style === 'cancel' && styles.buttonTextBold,
-                    button.style === 'destructive' && styles.buttonTextDestructive,
                   ]}
                 >
                   {button.text}
@@ -76,7 +78,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   container: {
-    backgroundColor: Colors.white,
     borderRadius: 14,
     width: 270,
     overflow: 'hidden',
@@ -85,7 +86,6 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontFamily: Fonts.bold,
     fontWeight: '600',
-    color: Colors.black,
     textAlign: 'center',
     paddingTop: 20,
     paddingHorizontal: 16,
@@ -94,7 +94,6 @@ const styles = StyleSheet.create({
   message: {
     fontSize: 13,
     fontFamily: Fonts.regular,
-    color: Colors.black,
     textAlign: 'center',
     paddingHorizontal: 16,
     paddingBottom: 20,
@@ -102,7 +101,6 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     borderTopWidth: 0.5,
-    borderTopColor: Colors.gray[300],
     flexDirection: 'row',
   },
   button: {
@@ -114,20 +112,12 @@ const styles = StyleSheet.create({
   buttonHalf: {
     flex: 1,
   },
-  buttonBorder: {
-    borderRightWidth: 0.5,
-    borderRightColor: Colors.gray[300],
-  },
   buttonText: {
     fontSize: 17,
     fontFamily: Fonts.regular,
-    color: '#007AFF',
   },
   buttonTextBold: {
     fontFamily: Fonts.semiBold,
     fontWeight: '600',
-  },
-  buttonTextDestructive: {
-    color: Colors.red,
   },
 });

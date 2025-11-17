@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
+import { useTheme } from '../../context/ThemeContext';
 
 type Language = 'en' | 'es' | 'fr';
 
@@ -38,6 +39,7 @@ const languages: LanguageOption[] = [
 
 export default function LanguageScreen() {
   const { t, i18n } = useTranslation();
+  const { colors } = useTheme();
   const [selectedLanguage, setSelectedLanguage] = useState<Language>(
     (i18n.language as Language) || 'en'
   );
@@ -51,13 +53,13 @@ export default function LanguageScreen() {
   };
 
   return (
-    <SafeAreaView style={SharedStyles.container}>
+    <SafeAreaView style={[SharedStyles.container, { backgroundColor: colors.background }]}>
       <TouchableOpacity 
         style={SharedStyles.backButton}
         onPress={() => router.back()}
         activeOpacity={0.7}
       >
-        <Ionicons name="arrow-back" size={24} color={Colors.black} />
+        <Ionicons name="arrow-back" size={24} color={colors.icon} />
       </TouchableOpacity>
 
       <ScrollView 
@@ -66,7 +68,7 @@ export default function LanguageScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.innerContent}>
-          <Text style={SharedStyles.title}>{t('profile.language')}</Text>
+          <Text style={[SharedStyles.title, { color: colors.text }]}>{t('profile.language')}</Text>
 
           <View style={styles.languageList}>
             {languages.map((language) => (
@@ -74,6 +76,7 @@ export default function LanguageScreen() {
                 key={language.code}
                 style={[
                   styles.languageItem,
+                  { backgroundColor: colors.card, borderColor: colors.border },
                   selectedLanguage === language.code && styles.languageItemActive,
                 ]}
                 onPress={() => handleLanguageChange(language.code)}
@@ -82,12 +85,12 @@ export default function LanguageScreen() {
                 <View style={styles.languageLeft}>
                   <Text style={styles.flag}>{language.flag}</Text>
                   <View style={styles.languageText}>
-                    <Text style={styles.languageName}>{language.name}</Text>
+                    <Text style={[styles.languageName, { color: colors.text }]}>{language.name}</Text>
                     <Text style={styles.languageNative}>{language.nativeName}</Text>
                   </View>
                 </View>
                 {selectedLanguage === language.code && (
-                  <Ionicons name="checkmark-circle" size={24} color={Colors.black} />
+                  <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
                 )}
               </TouchableOpacity>
             ))}

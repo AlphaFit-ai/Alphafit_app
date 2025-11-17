@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../components';
 import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
+import { useTheme } from '../../context/ThemeContext';
 
 type DietType = 'vegetarian' | 'vegan' | 'non-veg' | 'flexible';
 
@@ -42,6 +43,7 @@ const getDietOptions = (t: any): DietOption[] => [
 export default function DietPreferenceScreen() {
   const { t } = useTranslation();
   const { updateDietData, setCurrentStep } = useDiet();
+  const { colors } = useTheme();
   const [selected, setSelected] = useState<DietType | null>(null);
   const dietOptions = getDietOptions(t);
 
@@ -54,18 +56,18 @@ export default function DietPreferenceScreen() {
   };
 
   return (
-    <SafeAreaView style={SharedStyles.container}>
+    <SafeAreaView style={[SharedStyles.container, { backgroundColor: colors.background }]}>
       <TouchableOpacity 
         style={SharedStyles.backButton}
         onPress={() => router.replace('/(tabs)/home')}
         activeOpacity={0.7}
       >
-        <Ionicons name="arrow-back" size={24} color={Colors.black} />
+        <Ionicons name="arrow-back" size={24} color={colors.icon} />
       </TouchableOpacity>
 
       <View style={styles.content}>
         <View style={styles.innerContent}>
-          <Text style={SharedStyles.title}>{t('diet.preference.title')}</Text>
+          <Text style={[SharedStyles.title, { color: colors.text }]}>{t('diet.preference.title')}</Text>
 
           <View style={styles.optionsGrid}>
           {dietOptions.map((option) => (
@@ -73,7 +75,7 @@ export default function DietPreferenceScreen() {
               key={option.type}
               style={[
                 styles.optionCard,
-                selected === option.type && styles.optionCardSelected,
+                { borderColor: selected === option.type ? Colors.primary : colors.border },
               ]}
               onPress={() => setSelected(option.type)}
               activeOpacity={0.7}
@@ -120,10 +122,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 3,
-    borderColor: Colors.gray[100],
-  },
-  optionCardSelected: {
-    borderColor: Colors.black,
   },
   optionImage: {
     width: '100%',

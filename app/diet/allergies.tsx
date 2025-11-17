@@ -7,10 +7,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../../components';
 import { Colors, SharedStyles } from '../../constants';
 import { useDiet } from '../../context/DietContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function AllergiesScreen() {
   const { t } = useTranslation();
   const { updateDietData, setCurrentStep } = useDiet();
+  const { colors, isDarkMode } = useTheme();
   const [hasAllergies, setHasAllergies] = useState<boolean | null>(null);
   const [allergiesText, setAllergiesText] = useState('');
 
@@ -27,13 +29,13 @@ export default function AllergiesScreen() {
   };
 
   return (
-    <SafeAreaView style={SharedStyles.container}>
+    <SafeAreaView style={[SharedStyles.container, { backgroundColor: colors.background }]}>
       <TouchableOpacity 
         style={SharedStyles.backButton}
         onPress={() => router.back()}
         activeOpacity={0.7}
       >
-        <Ionicons name="arrow-back" size={24} color={Colors.black} />
+        <Ionicons name="arrow-back" size={24} color={colors.icon} />
       </TouchableOpacity>
 
       <ScrollView 
@@ -42,7 +44,7 @@ export default function AllergiesScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={SharedStyles.innerContent}>
-          <Text style={SharedStyles.title}>{t('diet.allergies.title')}</Text>
+          <Text style={[SharedStyles.title, { color: colors.text }]}>{t('diet.allergies.title')}</Text>
 
           <Image 
             source={require('../../assets/images/diet/food allergy.png')} 
@@ -54,14 +56,14 @@ export default function AllergiesScreen() {
           <TouchableOpacity
             style={[
               SharedStyles.choiceButton,
-              hasAllergies === true && SharedStyles.choiceButtonActive,
+              { backgroundColor: hasAllergies === true ? Colors.black : (isDarkMode ? Colors.gray[800] : Colors.gray[100]), borderColor: hasAllergies === true ? Colors.black : colors.border },
             ]}
             onPress={() => setHasAllergies(true)}
             activeOpacity={0.7}
           >
             <Text style={[
               SharedStyles.choiceButtonText,
-              hasAllergies === true && SharedStyles.choiceButtonTextActive,
+              { color: hasAllergies === true ? Colors.white : colors.text },
             ]}>
               {t('diet.allergies.yes')}
             </Text>
@@ -70,7 +72,7 @@ export default function AllergiesScreen() {
           <TouchableOpacity
             style={[
               SharedStyles.choiceButton,
-              hasAllergies === false && SharedStyles.choiceButtonActive,
+              { backgroundColor: hasAllergies === false ? Colors.black : (isDarkMode ? Colors.gray[800] : Colors.gray[100]), borderColor: hasAllergies === false ? Colors.black : colors.border },
             ]}
             onPress={() => {
               setHasAllergies(false);
@@ -80,7 +82,7 @@ export default function AllergiesScreen() {
           >
             <Text style={[
               SharedStyles.choiceButtonText,
-              hasAllergies === false && SharedStyles.choiceButtonTextActive,
+              { color: hasAllergies === false ? Colors.white : colors.text },
             ]}>
               {t('diet.allergies.no')}
             </Text>
@@ -89,7 +91,7 @@ export default function AllergiesScreen() {
 
         {hasAllergies === true && (
           <TextInput
-            style={SharedStyles.textArea}
+            style={[SharedStyles.textArea, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100], color: colors.text, borderColor: colors.border }]}
             placeholder={t('diet.allergies.placeholder')}
             placeholderTextColor={Colors.gray[400]}
             value={allergiesText}

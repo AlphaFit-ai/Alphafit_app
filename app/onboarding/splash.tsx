@@ -2,10 +2,12 @@ import { useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { GradientText } from '../../components';
-import { Colors, Fonts } from '../../constants';
+import { Fonts } from '../../constants';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function SplashScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const fadeAnim = new Animated.Value(0);
   const scaleAnim = new Animated.Value(0.8);
 
@@ -33,7 +35,7 @@ export default function SplashScreen() {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Animated.View
         style={[
           styles.logoContainer,
@@ -52,7 +54,6 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
     justifyContent: 'center',
     alignItems: 'center',
   },

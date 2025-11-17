@@ -5,11 +5,13 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Button, OptionCard, ProgressBar } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function WorkoutsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { updateOnboardingData, setCurrentStep } = useOnboarding();
+  const { colors } = useTheme();
   const [selectedWorkouts, setSelectedWorkouts] = useState<'0-2' | '3-5' | '6+' | null>(null);
 
   const handleContinue = () => {
@@ -21,13 +23,13 @@ export default function WorkoutsScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <ProgressBar currentStep={7} totalSteps={10} />
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.title}>{t('onboarding.workouts.title')}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('onboarding.workouts.title')}</Text>
 
         <View style={styles.optionsContainer}>
           <OptionCard
