@@ -136,6 +136,14 @@
       "yes": "Sí",
       "no": "No",
       "placeholder": "Por favor especifica ..."
+    },
+    "foodScan": {
+      "title": "Plan de Dieta Inteligente",
+      "subtitle": "Orientación dietética impulsada por IA",
+      "barcode": "Código de Barras",
+      "scanFood": "Escanear Comida",
+      "library": "Biblioteca",
+      "generate": "Generar"
     }
   },
   "profile": {
@@ -170,5 +178,11 @@
       "successMessage": "¡Los detalles de tu cuenta se han actualizado correctamente!",
       "ok": "Aceptar"
     }
+  },
+  "tabs": {
+    "home": "Inicio",
+    "homeSubtitle": "Tu viaje personalizado de fitness comienza aquí",
+    "scan": "Escanear",
+    "scanSubtitle": "Escanea tus proyecciones"
   }
 }

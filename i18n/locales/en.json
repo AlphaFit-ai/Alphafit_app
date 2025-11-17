@@ -136,6 +136,14 @@
       "yes": "Yes",
       "no": "No",
       "placeholder": "Please specify ..."
+    },
+    "foodScan": {
+      "title": "Smart Diet Plan",
+      "subtitle": "AI-powered diet guidance",
+      "barcode": "Barcode",
+      "scanFood": "Scan Food",
+      "library": "Library",
+      "generate": "Generate"
     }
   },
   "profile": {
@@ -175,9 +183,6 @@
     "home": "Home",
     "homeSubtitle": "Your personalized fitness journey starts here",
     "scan": "Scan",
-    "scanSubtitle": "Scan your projections",
-    "diet": "Diet",
-    "workouts": "Workouts",
-    "profile": "Profile"
+    "scanSubtitle": "Scan your projections"
   }
 }

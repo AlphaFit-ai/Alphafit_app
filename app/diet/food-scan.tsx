@@ -1,12 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
 import { useTheme } from '../../context/ThemeContext';
 
 export default function FoodScanScreen() {
+  const { t } = useTranslation();
   const { updateDietData } = useDiet();
   const { colors } = useTheme();
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -72,15 +74,15 @@ export default function FoodScanScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.content}>
-          <Text style={[styles.title, { color: colors.text }]}>Smart Diet Plan</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>AI-powered diet guidance</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t('diet.foodScan.title')}</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('diet.foodScan.subtitle')}</Text>
 
-          <View style={styles.imageContainer}>
+                    <TouchableOpacity style={styles.imageContainer} onPress={takePhoto} activeOpacity={0.8}>
             {capturedImage ? (
               <Image source={{ uri: capturedImage }} style={styles.foodImage} />
             ) : (
               <Image 
-                source={require('../../assets/images/diet/Balanced.png')} 
+                source={require('../../assets/images/diet/scan_diet.png')} 
                 style={styles.foodImage}
                 resizeMode="cover"
               />
@@ -92,45 +94,30 @@ export default function FoodScanScreen() {
                 </TouchableOpacity>
               </View>
             )}
-          </View>
+          </TouchableOpacity>
 
           <View style={styles.scanOptions}>
-            <TouchableOpacity style={styles.scanOption} onPress={takePhoto}>
-              <View style={[styles.scanIconContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <Ionicons name="camera" size={24} color={colors.text} />
-              </View>
-              <Text style={[styles.scanOptionText, { color: colors.text }]}>Scan Food</Text>
-            </TouchableOpacity>
-
             <TouchableOpacity style={styles.scanOption} onPress={pickFromLibrary}>
               <View style={[styles.scanIconContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Ionicons name="barcode" size={24} color={colors.text} />
               </View>
-              <Text style={[styles.scanOptionText, { color: colors.text }]}>Barcode</Text>
+              <Text style={[styles.scanOptionText, { color: colors.text }]}>{t('diet.foodScan.barcode')}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.scanOption}>
+            <TouchableOpacity style={styles.scanOption} onPress={takePhoto}>
               <View style={[styles.scanIconContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <Ionicons name="pricetag" size={24} color={colors.text} />
+                <Ionicons name="camera" size={24} color={colors.text} />
               </View>
-              <Text style={[styles.scanOptionText, { color: colors.text }]}>Food Label</Text>
+              <Text style={[styles.scanOptionText, { color: colors.text }]}>{t('diet.foodScan.scanFood')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.scanOption} onPress={pickFromLibrary}>
               <View style={[styles.scanIconContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Ionicons name="image" size={24} color={colors.text} />
               </View>
-              <Text style={[styles.scanOptionText, { color: colors.text }]}>Library</Text>
+              <Text style={[styles.scanOptionText, { color: colors.text }]}>{t('diet.foodScan.library')}</Text>
             </TouchableOpacity>
           </View>
-
-          <TouchableOpacity style={styles.cameraButton} onPress={takePhoto}>
-            <View style={styles.cameraButtonOuter}>
-              <View style={styles.cameraButtonInner}>
-                <Ionicons name="camera" size={32} color={Colors.white} />
-              </View>
-            </View>
-          </TouchableOpacity>
 
           {capturedImage && (
             <TouchableOpacity 
@@ -138,7 +125,10 @@ export default function FoodScanScreen() {
               onPress={handleFinish}
               activeOpacity={0.7}
             >
-              <Text style={styles.finishButtonText}>Finish</Text>
+              <View style={styles.finishButtonContent}>
+                <Ionicons name="sparkles" size={20} color={Colors.white} />
+                <Text style={styles.finishButtonText}>{t('diet.foodScan.generate')}</Text>
+              </View>
             </TouchableOpacity>
           )}
         </View>
@@ -180,7 +170,9 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     overflow: 'hidden',
     marginBottom: 32,
-    backgroundColor: Colors.gray[100],
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   foodImage: {
     width: '100%',
@@ -203,7 +195,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
-    marginBottom: 40,
+    marginBottom: 24,
   },
   scanOption: {
     alignItems: 'center',
@@ -221,34 +213,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: Fonts.regular,
   },
-  cameraButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-  },
-  cameraButtonOuter: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    borderWidth: 4,
-    borderColor: Colors.black,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.white,
-  },
-  cameraButtonInner: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: Colors.black,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   finishButton: {
     width: '100%',
     paddingVertical: 16,
     borderRadius: 16,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  finishButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   finishButtonText: {
     fontSize: Fonts.sizes.lg,

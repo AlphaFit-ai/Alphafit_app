@@ -136,6 +136,14 @@
       "yes": "Oui",
       "no": "Non",
       "placeholder": "Veuillez préciser ..."
+    },
+    "foodScan": {
+      "title": "Plan Diététique Intelligent",
+      "subtitle": "Conseils nutritionnels alimentés par IA",
+      "barcode": "Code-barres",
+      "scanFood": "Scanner Nourriture",
+      "library": "Bibliothèque",
+      "generate": "Générer"
     }
   },
   "profile": {
@@ -170,5 +178,11 @@
       "successMessage": "Les détails de votre compte ont été mis à jour avec succès !",
       "ok": "OK"
     }
+  },
+  "tabs": {
+    "home": "Accueil",
+    "homeSubtitle": "Votre parcours fitness personnalisé commence ici",
+    "scan": "Scanner",
+    "scanSubtitle": "Scannez vos projections"
   }
 }
