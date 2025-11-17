@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
     ActivityIndicator,
@@ -5,6 +6,7 @@ import {
     Text,
     TextStyle,
     TouchableOpacity,
+    View,
     ViewStyle,
 } from 'react-native';
 import { Colors, Fonts, Spacing } from '../constants';
@@ -19,6 +21,8 @@ interface ButtonProps {
   disabled?: boolean;
   fullWidth?: boolean;
   floating?: boolean;
+  icon?: keyof typeof Ionicons.glyphMap;
+  iconPosition?: 'left' | 'right';
   style?: ViewStyle;
   textStyle?: TextStyle;
 }
@@ -32,6 +36,8 @@ export const Button: React.FC<ButtonProps> = ({
   disabled = false,
   fullWidth = true,
   floating = false,
+  icon,
+  iconPosition = 'right',
   style,
   textStyle,
 }) => {
@@ -108,7 +114,25 @@ export const Button: React.FC<ButtonProps> = ({
       {loading ? (
         <ActivityIndicator color={variant === 'primary' ? (isDarkMode ? Colors.black : Colors.white) : colors.text} />
       ) : (
-        <Text style={[getTextStyle(), textStyle]}>{title}</Text>
+        <View style={styles.content}>
+          {icon && iconPosition === 'left' && (
+            <Ionicons 
+              name={icon} 
+              size={20} 
+              color={variant === 'primary' ? (isDarkMode ? Colors.black : Colors.white) : colors.text} 
+              style={styles.iconLeft}
+            />
+          )}
+          <Text style={[getTextStyle(), textStyle]}>{title}</Text>
+          {icon && iconPosition === 'right' && (
+            <Ionicons 
+              name={icon} 
+              size={20} 
+              color={variant === 'primary' ? (isDarkMode ? Colors.black : Colors.white) : colors.text} 
+              style={styles.iconRight}
+            />
+          )}
+        </View>
       )}
     </TouchableOpacity>
   );
@@ -131,6 +155,17 @@ const styles = StyleSheet.create({
     right: Spacing.screenPaddingHorizontal,
     width: 'auto',
     zIndex: 10,
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconLeft: {
+    marginRight: 8,
+  },
+  iconRight: {
+    marginLeft: 8,
   },
   text: {
     fontSize: Fonts.sizes.base,

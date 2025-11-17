@@ -96,26 +96,16 @@ export default function TabsLayout() {
           headerTitle: '',
           tabBarActiveTintColor: colors.text,
           tabBarInactiveTintColor: Colors.gray[400],
+          sceneStyle: { backgroundColor: colors.background },
           tabBarStyle: isWeb ? { display: 'none' } : {
             backgroundColor: colors.background,
             borderTopColor: isDarkMode ? Colors.gray[700] : Colors.gray[100],
             borderTopWidth: 1,
-            height: Platform.OS === 'ios' ? 88 : 68,
-            paddingBottom: Platform.OS === 'ios' ? 28 : 12,
-            paddingTop: 12,
-            elevation: 8,
-            shadowColor: Colors.black,
-            shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
           },
           tabBarLabelStyle: {
             fontFamily: Fonts.semiBold,
             fontSize: 11,
-            marginTop: 4,
-          },
-          tabBarIconStyle: {
-            marginTop: 4,
+            marginTop: 2,
           },
           animation: 'shift',
           lazy: false,
@@ -164,11 +154,17 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => (
             <View style={styles.scanIconWrapper}>
               <View style={[styles.scanIconContainer, focused && styles.scanIconContainerActive, isWeb && styles.webScanIcon]}>
-                <Ionicons name="scan" size={isWeb ? 24 : 28} color={Colors.white} />
+                <Ionicons 
+                  name="scan" 
+                  size={isWeb ? 24 : 32} 
+                  color={Colors.white} />
               </View>
             </View>
           ),
           tabBarLabel: () => null,
+          tabBarItemStyle: {
+            top: 0,
+          },
           ...(isWeb && {
             tabBarLabel: ({ color }) => <Text style={[styles.webLabel, { color }]}>Scan</Text>,
           }),
@@ -257,21 +253,15 @@ export default function TabsLayout() {
   scanIconWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 56,
+    position: 'absolute',
   },
   scanIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 50,
+    height: 50,
+    borderRadius: 35,
     backgroundColor: Colors.black,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: -28,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
   scanIconContainerActive: {
     backgroundColor: Colors.primary,

@@ -1,26 +1,56 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, BackHandler, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
 import { useTheme } from '../../context/ThemeContext';
+import AllergiesScreen from '../diet/allergies';
+import DietPreferenceScreen from '../diet/diet-preference';
+import MealsScreen from '../diet/meals';
+import SupplementsScreen from '../diet/supplements';
 
 export default function DietScreen() {
-  const { dietData } = useDiet();
+  const { dietData, currentStep, setCurrentStep } = useDiet();
   const { colors } = useTheme();
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [cameraPermission, setCameraPermission] = useState<boolean>(false);
 
+  // Handle back button during onboarding
   useFocusEffect(
     useCallback(() => {
-      // Check if diet onboarding is completed
-      if (!dietData.isCompleted) {
-        router.replace('/diet/diet-preference');
-      }
-    }, [dietData.isCompleted])
+      const onBackPress = () => {
+        // If in onboarding and not at first step, go to previous step
+        if (!dietData.isCompleted && currentStep > 0) {
+          setCurrentStep(currentStep - 1);
+          return true; // Prevent default back behavior
+        }
+        // Otherwise, allow default back behavior (exit tab)
+        return false;
+      };
+
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => backHandler.remove();
+    }, [dietData.isCompleted, currentStep, setCurrentStep])
   );
+
+  // Show onboarding steps if not completed
+  if (!dietData.isCompleted) {
+    switch (currentStep) {
+      case 0:
+        return <DietPreferenceScreen />;
+      case 1:
+        return <AllergiesScreen />;
+      case 2:
+        return <MealsScreen />;
+      case 3:
+        return <SupplementsScreen />;
+      default:
+        return <DietPreferenceScreen />;
+    }
+  }
 
   const requestCameraPermission = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -74,17 +104,6 @@ export default function DietScreen() {
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
-        <View style={styles.titleSection}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="restaurant" size={32} color={Colors.white} />
-          </View>
-          <View>
-            <Text style={styles.headerTitle}>
-              <Text style={styles.forgeText}>FORGE</Text>{' '}
-              <Text style={styles.aiText}>AI</Text>
-            </Text>
-          </View>
-        </View>
         <Text style={[styles.title, { color: colors.text }]}>Smart Diet Plan</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>AI-powered diet guidance</Text>
       </View>

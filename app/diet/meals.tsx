@@ -1,10 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button } from '../../components';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -22,30 +18,22 @@ export default function MealsScreen() {
   const { colors, isDarkMode } = useTheme();
   const [selectedProtein, setSelectedProtein] = useState<number | null>(null);
 
-  const handleContinue = () => {
-    if (selectedProtein) {
-      updateDietData({ mealsPerDay: selectedProtein });
-      setCurrentStep(3);
-      router.push('/diet/supplements');
-    }
-  };
-
   const handleSelect = (value: number) => {
     setSelectedProtein(value);
+    updateDietData({ mealsPerDay: value });
+    setTimeout(() => {
+      setCurrentStep(3);
+    }, 300);
   };
 
   return (
-    <SafeAreaView style={[SharedStyles.container, { backgroundColor: colors.background }]}>
-      <TouchableOpacity 
-        style={SharedStyles.backButton}
-        onPress={() => router.back()}
-        activeOpacity={0.7}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        <Ionicons name="arrow-back" size={24} color={colors.icon} />
-      </TouchableOpacity>
-
-      <View style={styles.content}>
-        <View style={styles.innerContent}>
+        <View style={styles.content}>
           <Text style={[SharedStyles.title, { color: colors.text }]}>{t('diet.meals.title')}</Text>
 
           <Image 
@@ -80,32 +68,29 @@ export default function MealsScreen() {
             })}
           </View>
         </View>
-      </View>
-
-      <View style={SharedStyles.footer}>
-        <Button 
-          title={t('onboarding.continue')} 
-          onPress={handleContinue} 
-          disabled={!selectedProtein}
-        />
-      </View>
-    </SafeAreaView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
+  container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  innerContent: {
-    width: '100%',
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  content: {
     paddingHorizontal: Spacing.screenPaddingHorizontal,
   },
   image: {
     width: '100%',
-    height: 150,
+    height: 180,
     marginBottom: Spacing.lg,
   },
   optionsContainer: {

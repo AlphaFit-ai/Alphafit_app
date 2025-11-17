@@ -1,11 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button } from '../../components';
-import { Colors, SharedStyles } from '../../constants';
+import { Colors, SharedStyles, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -16,34 +13,37 @@ export default function AllergiesScreen() {
   const [hasAllergies, setHasAllergies] = useState<boolean | null>(null);
   const [allergiesText, setAllergiesText] = useState('');
 
-  const handleContinue = () => {
-    if (hasAllergies === true && !allergiesText.trim()) {
-      return; // Don't continue if Yes is selected but no text entered
-    }
+  const handleSelectNo = () => {
+    setHasAllergies(false);
+    setAllergiesText('');
     updateDietData({
-      hasAllergies: hasAllergies || false,
-      allergies: hasAllergies ? allergiesText : '',
+      hasAllergies: false,
+      allergies: '',
     });
-    setCurrentStep(2);
-    router.push('/diet/meals');
+    setTimeout(() => {
+      setCurrentStep(2);
+    }, 300);
+  };
+
+  const handleSubmitAllergies = () => {
+    if (!allergiesText.trim()) return;
+    updateDietData({
+      hasAllergies: true,
+      allergies: allergiesText,
+    });
+    setTimeout(() => {
+      setCurrentStep(2);
+    }, 300);
   };
 
   return (
-    <SafeAreaView style={[SharedStyles.container, { backgroundColor: colors.background }]}>
-      <TouchableOpacity 
-        style={SharedStyles.backButton}
-        onPress={() => router.back()}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="arrow-back" size={24} color={colors.icon} />
-      </TouchableOpacity>
-
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView 
-        style={SharedStyles.scrollView}
-        contentContainerStyle={SharedStyles.scrollContentCentered}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={SharedStyles.innerContent}>
+        <View style={styles.content}>
           <Text style={[SharedStyles.title, { color: colors.text }]}>{t('diet.allergies.title')}</Text>
 
           <Image 
@@ -74,10 +74,7 @@ export default function AllergiesScreen() {
               SharedStyles.choiceButton,
               { backgroundColor: hasAllergies === false ? Colors.black : (isDarkMode ? Colors.gray[800] : Colors.gray[100]), borderColor: hasAllergies === false ? Colors.black : colors.border },
             ]}
-            onPress={() => {
-              setHasAllergies(false);
-              setAllergiesText('');
-            }}
+            onPress={handleSelectNo}
             activeOpacity={0.7}
           >
             <Text style={[
@@ -90,28 +87,44 @@ export default function AllergiesScreen() {
         </View>
 
         {hasAllergies === true && (
-          <TextInput
-            style={[SharedStyles.textArea, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100], color: colors.text, borderColor: colors.border }]}
-            placeholder={t('diet.allergies.placeholder')}
-            placeholderTextColor={Colors.gray[400]}
-            value={allergiesText}
-            onChangeText={setAllergiesText}
-            multiline
-            numberOfLines={6}
-            textAlignVertical="top"
-          />
+          <>
+            <TextInput
+              style={[SharedStyles.textArea, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100], color: colors.text, borderColor: colors.border }]}
+              placeholder={t('diet.allergies.placeholder')}
+              placeholderTextColor={Colors.gray[400]}
+              value={allergiesText}
+              onChangeText={setAllergiesText}
+              multiline
+              numberOfLines={6}
+              textAlignVertical="top"
+            />
+            <Button 
+              title="Submit" 
+              onPress={handleSubmitAllergies} 
+              disabled={!allergiesText.trim()}
+              icon="checkmark"
+            />
+          </>
         )}
         </View>
       </ScrollView>
-
-      <View style={SharedStyles.footerFloating}>
-        <Button 
-          title={t('onboarding.continue')} 
-          onPress={handleContinue} 
-          disabled={hasAllergies === null || (hasAllergies === true && !allergiesText.trim())}
-          floating
-        />
-      </View>
-    </SafeAreaView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  content: {
+    paddingHorizontal: Spacing.screenPaddingHorizontal,
+  },
+});

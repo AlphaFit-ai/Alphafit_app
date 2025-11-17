@@ -1,4 +1,5 @@
-import React, { createContext, ReactNode, useContext, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { Colors } from '../constants';
 
 interface ThemeColors {
@@ -19,6 +20,7 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+const THEME_STORAGE_KEY = '@forge_ai_theme';
 
 const lightTheme: ThemeColors = {
   background: Colors.white,
@@ -44,13 +46,38 @@ const darkTheme: ThemeColors = {
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const toggleTheme = () => {
-    setIsDarkMode((prev) => !prev);
+  useEffect(() => {
+    loadTheme();
+  }, []);
+
+  const loadTheme = async () => {
+    try {
+      const savedTheme = await AsyncStorage.getItem(THEME_STORAGE_KEY);
+      if (savedTheme !== null) {
+        setIsDarkMode(savedTheme === 'dark');
+      }
+    } catch (error) {
+      console.error('Failed to load theme:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const toggleTheme = async () => {
+    try {
+      const newMode = !isDarkMode;
+      setIsDarkMode(newMode);
+      await AsyncStorage.setItem(THEME_STORAGE_KEY, newMode ? 'dark' : 'light');
+    } catch (error) {
+      console.error('Failed to save theme:', error);
+    }
   };
 
   const colors = isDarkMode ? darkTheme : lightTheme;
 
+  // Render children immediately with current theme (default or loaded)
   return (
     <ThemeContext.Provider value={{ isDarkMode, toggleTheme, colors }}>
       {children}

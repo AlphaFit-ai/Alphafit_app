@@ -9,7 +9,8 @@ function DietStack() {
     <Stack
       screenOptions={{
         headerShown: false,
-        animation: 'slide_from_right',
+        animation: 'fade',
+        animationDuration: 200,
         contentStyle: { backgroundColor: colors.background },
       }}
     >

@@ -3,7 +3,6 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -53,7 +52,7 @@ export default function LanguageScreen() {
   };
 
   return (
-    <SafeAreaView style={[SharedStyles.container, { backgroundColor: colors.background }]}>
+    <View style={[SharedStyles.container, { backgroundColor: colors.background }]}>
       <TouchableOpacity 
         style={SharedStyles.backButton}
         onPress={() => router.back()}
@@ -97,7 +96,7 @@ export default function LanguageScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

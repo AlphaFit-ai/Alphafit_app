@@ -23,6 +23,8 @@ export default function ProfileLayout() {
         headerTintColor: colors.text,
         headerShadowVisible: false,
         headerShown: true,
+        contentStyle: { backgroundColor: colors.background },
+        animation: 'fade',
       }}
     >
       <Stack.Screen

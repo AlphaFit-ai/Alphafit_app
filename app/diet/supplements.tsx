@@ -1,11 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button } from '../../components';
-import { Colors, SharedStyles } from '../../constants';
+import { Colors, SharedStyles, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -16,35 +13,33 @@ export default function SupplementsScreen() {
   const [takesSupplements, setTakesSupplements] = useState<boolean | null>(null);
   const [supplementsText, setSupplementsText] = useState('');
 
-  const handleContinue = () => {
-    if (takesSupplements === true && !supplementsText.trim()) {
-      return; // Don't continue if Yes is selected but no text entered
-    }
+  const handleSelectNo = () => {
+    setTakesSupplements(false);
+    setSupplementsText('');
     updateDietData({
-      takesSupplements: takesSupplements || false,
-      supplements: takesSupplements ? supplementsText : '',
+      takesSupplements: false,
+      supplements: '',
       isCompleted: true,
     });
-    setCurrentStep(4);
-    router.replace('/(tabs)/diet');
+  };
+
+  const handleSubmitSupplements = () => {
+    if (!supplementsText.trim()) return;
+    updateDietData({
+      takesSupplements: true,
+      supplements: supplementsText,
+      isCompleted: true,
+    });
   };
 
   return (
-    <SafeAreaView style={[SharedStyles.container, { backgroundColor: colors.background }]}>
-      <TouchableOpacity 
-        style={SharedStyles.backButton}
-        onPress={() => router.back()}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="arrow-back" size={24} color={colors.icon} />
-      </TouchableOpacity>
-
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView 
-        style={SharedStyles.scrollView}
-        contentContainerStyle={SharedStyles.scrollContentCentered}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={SharedStyles.innerContent}>
+        <View style={styles.content}>
           <Text style={[SharedStyles.title, { color: colors.text }]}>{t('diet.supplements.title')}</Text>
 
           <Image 
@@ -75,10 +70,7 @@ export default function SupplementsScreen() {
               SharedStyles.choiceButton,
               { backgroundColor: takesSupplements === false ? Colors.black : (isDarkMode ? Colors.gray[800] : Colors.gray[100]), borderColor: takesSupplements === false ? Colors.black : colors.border },
             ]}
-            onPress={() => {
-              setTakesSupplements(false);
-              setSupplementsText('');
-            }}
+            onPress={handleSelectNo}
             activeOpacity={0.7}
           >
             <Text style={[
@@ -91,28 +83,44 @@ export default function SupplementsScreen() {
         </View>
 
         {takesSupplements === true && (
-          <TextInput
-            style={[SharedStyles.textArea, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100], color: colors.text, borderColor: colors.border }]}
-            placeholder={t('diet.supplements.placeholder')}
-            placeholderTextColor={Colors.gray[400]}
-            value={supplementsText}
-            onChangeText={setSupplementsText}
-            multiline
-            numberOfLines={6}
-            textAlignVertical="top"
-          />
+          <>
+            <TextInput
+              style={[SharedStyles.textArea, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100], color: colors.text, borderColor: colors.border }]}
+              placeholder={t('diet.supplements.placeholder')}
+              placeholderTextColor={Colors.gray[400]}
+              value={supplementsText}
+              onChangeText={setSupplementsText}
+              multiline
+              numberOfLines={6}
+              textAlignVertical="top"
+            />
+            <Button 
+              title="Finish" 
+              onPress={handleSubmitSupplements} 
+              disabled={!supplementsText.trim()}
+              icon="checkmark"
+            />
+          </>
         )}
         </View>
       </ScrollView>
-
-      <View style={SharedStyles.footerFloating}>
-        <Button 
-          title={t('onboarding.continue')} 
-          onPress={handleContinue} 
-          disabled={takesSupplements === null || (takesSupplements === true && !supplementsText.trim())}
-          floating
-        />
-      </View>
-    </SafeAreaView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  content: {
+    paddingHorizontal: Spacing.screenPaddingHorizontal,
+  },
+});

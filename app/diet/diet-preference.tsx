@@ -1,10 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button } from '../../components';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -47,26 +43,22 @@ export default function DietPreferenceScreen() {
   const [selected, setSelected] = useState<DietType | null>(null);
   const dietOptions = getDietOptions(t);
 
-  const handleContinue = () => {
-    if (selected) {
-      updateDietData({ dietPreference: selected });
+  const handleSelect = (type: DietType) => {
+    setSelected(type);
+    updateDietData({ dietPreference: type });
+    setTimeout(() => {
       setCurrentStep(1);
-      router.push('/diet/allergies');
-    }
+    }, 300);
   };
 
   return (
-    <SafeAreaView style={[SharedStyles.container, { backgroundColor: colors.background }]}>
-      <TouchableOpacity 
-        style={SharedStyles.backButton}
-        onPress={() => router.replace('/(tabs)/home')}
-        activeOpacity={0.7}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        <Ionicons name="arrow-back" size={24} color={colors.icon} />
-      </TouchableOpacity>
-
-      <View style={styles.content}>
-        <View style={styles.innerContent}>
+        <View style={styles.content}>
           <Text style={[SharedStyles.title, { color: colors.text }]}>{t('diet.preference.title')}</Text>
 
           <View style={styles.optionsGrid}>
@@ -77,7 +69,7 @@ export default function DietPreferenceScreen() {
                 styles.optionCard,
                 { borderColor: selected === option.type ? Colors.primary : colors.border },
               ]}
-              onPress={() => setSelected(option.type)}
+              onPress={() => handleSelect(option.type)}
               activeOpacity={0.7}
             >
               <Image source={option.image} style={styles.optionImage} resizeMode="cover" />
@@ -88,27 +80,24 @@ export default function DietPreferenceScreen() {
           ))}
           </View>
         </View>
-      </View>
-
-      <View style={SharedStyles.footer}>
-        <Button 
-          title={t('onboarding.continue')} 
-          onPress={handleContinue} 
-          disabled={!selected}
-        />
-      </View>
-    </SafeAreaView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
+  container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  innerContent: {
-    width: '100%',
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  content: {
     paddingHorizontal: Spacing.screenPaddingHorizontal,
   },
   optionsGrid: {

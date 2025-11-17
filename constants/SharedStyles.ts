@@ -26,11 +26,10 @@ export const SharedStyles = StyleSheet.create({
 
   // Titles
   title: {
-    fontSize: Fonts.sizes['4xl'],
+    fontSize: 28,
     fontFamily: Fonts.bold,
     color: Colors.black,
-    marginBottom: 20,
-    marginTop: 30,
+    marginBottom: 24,
   },
 
   // Options Container
@@ -137,6 +136,28 @@ export const SharedStyles = StyleSheet.create({
     color: Colors.black,
     minHeight: 140,
     marginTop: 8,
-    marginBottom: 60,
+    marginBottom: 24,
+  },
+
+  // Button Row for Previous/Next
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+
+  previousButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+
+  previousButtonText: {
+    fontSize: 16,
+    fontFamily: Fonts.bold,
   },
 });
