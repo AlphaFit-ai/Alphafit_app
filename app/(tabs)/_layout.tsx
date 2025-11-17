@@ -117,6 +117,8 @@ export default function TabsLayout() {
           tabBarIconStyle: {
             marginTop: 4,
           },
+          animation: 'shift',
+          lazy: false,
         }}
       >
       <Tabs.Screen
@@ -160,8 +162,10 @@ export default function TabsLayout() {
         options={{
           title: '',
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.scanIconContainer, focused && styles.scanIconContainerActive, isWeb && styles.webScanIcon]}>
-              <Ionicons name="scan" size={isWeb ? 24 : 28} color={Colors.white} />
+            <View style={styles.scanIconWrapper}>
+              <View style={[styles.scanIconContainer, focused && styles.scanIconContainerActive, isWeb && styles.webScanIcon]}>
+                <Ionicons name="scan" size={isWeb ? 24 : 28} color={Colors.white} />
+              </View>
             </View>
           ),
           tabBarLabel: () => null,
@@ -249,6 +253,11 @@ export default function TabsLayout() {
   },
   iconWrapperActive: {
     transform: [{ scale: 1.1 }],
+  },
+  scanIconWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 56,
   },
   scanIconContainer: {
     width: 56,

@@ -169,7 +169,7 @@ export default function WorkoutsScreen() {
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <View style={styles.titleSection}>
-          <View style={styles.titleIconContainer}>
+          <View style={[styles.titleIconContainer, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}>
             <Ionicons name="fitness" size={32} color={colors.text} />
           </View>
           <Text style={[styles.title, { color: colors.text }]}>{t('workoutScreen.title')}</Text>
@@ -185,7 +185,14 @@ export default function WorkoutsScreen() {
               key={program.day}
               style={[
                 styles.workoutCard,
-                selectedDay === program.day && styles.workoutCardActive,
+                { 
+                  backgroundColor: isDarkMode ? Colors.gray[800] : Colors.white,
+                  borderColor: selectedDay === program.day ? (isDarkMode ? Colors.primary : Colors.black) : (isDarkMode ? Colors.gray[700] : Colors.gray[100])
+                },
+                selectedDay === program.day && [
+                  styles.workoutCardActive,
+                  { backgroundColor: isDarkMode ? Colors.primary : Colors.black }
+                ],
               ]}
               onPress={() => setSelectedDay(program.day)}
               activeOpacity={0.7}
@@ -210,37 +217,52 @@ export default function WorkoutsScreen() {
         </View>
 
         {selectedProgram && (
-          <View style={[styles.programDetails, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.white }]}>
+          <View style={[styles.programDetails, { backgroundColor: colors.background }]}>
             <Text style={[styles.programTitle, { color: colors.text }]}>{selectedProgram.title} - {selectedProgram.subtitle.replace(/\n/g, ', ')}</Text>
             
             <View style={styles.durationContainer}>
-              <Ionicons name="time-outline" size={18} color={Colors.gray[400]} />
-              <Text style={styles.durationText}>{selectedProgram.duration}</Text>
+              <Ionicons name="time-outline" size={18} color={isDarkMode ? Colors.gray[500] : Colors.gray[400]} />
+              <Text style={[styles.durationText, { color: colors.textSecondary }]}>{selectedProgram.duration}</Text>
             </View>
 
             <View style={styles.exercisesList}>
               {selectedProgram.exercises.map((exercise, index) => (
-                <View key={index} style={styles.exerciseCard}>
+                <View 
+                  key={index} 
+                  style={[
+                    styles.exerciseCard,
+                    { 
+                      backgroundColor: isDarkMode ? Colors.gray[800] : Colors.white,
+                      borderColor: isDarkMode ? Colors.gray[700] : Colors.gray[100]
+                    }
+                  ]}
+                >
                   <View style={styles.exerciseHeader}>
-                    <Text style={styles.exerciseName}>{exercise.name}</Text>
+                    <Text style={[styles.exerciseName, { color: colors.text }]}>{exercise.name}</Text>
                     {exercise.tag && (
-                      <View style={styles.exerciseTag}>
+                      <View style={[styles.exerciseTag, { backgroundColor: isDarkMode ? Colors.primary : Colors.black }]}>
                         <Text style={styles.exerciseTagText}>{exercise.tag}</Text>
                       </View>
                     )}
                   </View>
                   
                   <View style={styles.exerciseInfo}>
-                    <Text style={styles.exerciseStats}>
-                      Sets: <Text style={styles.exerciseStatsValue}>{exercise.sets}</Text>
+                    <Text style={[styles.exerciseStats, { color: colors.textSecondary }]}>
+                      Sets: <Text style={[styles.exerciseStatsValue, { color: colors.text }]}>{exercise.sets}</Text>
                       {'  '}
-                      Reps: <Text style={styles.exerciseStatsValue}>{exercise.reps}</Text>
+                      Reps: <Text style={[styles.exerciseStatsValue, { color: colors.text }]}>{exercise.reps}</Text>
                     </Text>
                   </View>
 
-                  <Text style={styles.exerciseDescription}>{exercise.description}</Text>
+                  <Text style={[styles.exerciseDescription, { color: colors.textSecondary }]}>{exercise.description}</Text>
 
-                  <TouchableOpacity style={styles.demoButton} disabled>
+                  <TouchableOpacity 
+                    style={[
+                      styles.demoButton,
+                      { backgroundColor: isDarkMode ? Colors.primary : Colors.black }
+                    ]} 
+                    disabled
+                  >
                     <Ionicons name="play-circle" size={16} color={Colors.white} />
                     <Text style={styles.demoButtonText}>{exercise.demo}</Text>
                   </TouchableOpacity>
@@ -251,11 +273,11 @@ export default function WorkoutsScreen() {
         )}
 
         <View style={styles.proSection}>
-          <View style={styles.lockIconContainer}>
-            <Ionicons name="lock-closed" size={28} color={Colors.black} />
+          <View style={[styles.lockIconContainer, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}>
+            <Ionicons name="lock-closed" size={28} color={colors.text} />
           </View>
-          <Text style={styles.proTitle}>{t('workoutScreen.unlockProTitle')}</Text>
-          <Text style={styles.proDescription}>
+          <Text style={[styles.proTitle, { color: colors.text }]}>{t('workoutScreen.unlockProTitle')}</Text>
+          <Text style={[styles.proDescription, { color: colors.textSecondary }]}>
             {t('workoutScreen.unlockProDescription')}
           </Text>
 
@@ -293,6 +315,7 @@ export default function WorkoutsScreen() {
   titleIconContainer: {
     width: 40,
     height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -317,16 +340,19 @@ export default function WorkoutsScreen() {
   },
   workoutCard: {
     flex: 1,
-    backgroundColor: Colors.white,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: Colors.gray[100],
     padding: 20,
     alignItems: 'center',
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   workoutCardActive: {
-    backgroundColor: Colors.black,
-    borderColor: Colors.black,
+    shadowOpacity: 0.15,
+    elevation: 4,
   },
   workoutIcon: {
     width: 62,
@@ -383,11 +409,14 @@ export default function WorkoutsScreen() {
     gap: 16,
   },
   exerciseCard: {
-    backgroundColor: Colors.white,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.gray[100],
     padding: 16,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
   exerciseHeader: {
     flexDirection: 'row',
@@ -399,11 +428,9 @@ export default function WorkoutsScreen() {
     fontSize: 16,
     fontFamily: Fonts.bold,
     fontWeight: '700',
-    color: Colors.black,
     flex: 1,
   },
   exerciseTag: {
-    backgroundColor: Colors.black,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
@@ -419,23 +446,19 @@ export default function WorkoutsScreen() {
   exerciseStats: {
     fontSize: 13,
     fontFamily: Fonts.regular,
-    color: Colors.gray[500],
   },
   exerciseStatsValue: {
     fontFamily: Fonts.semiBold,
-    color: Colors.black,
   },
   exerciseDescription: {
     fontSize: 13,
     fontFamily: Fonts.regular,
-    color: Colors.gray[400],
     lineHeight: 18,
     marginBottom: 12,
   },
   demoButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.black,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 16,
@@ -453,20 +476,23 @@ export default function WorkoutsScreen() {
     paddingVertical: 32,
   },
   lockIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 16,
   },
   proTitle: {
     fontSize: 22,
     fontFamily: Fonts.bold,
     fontWeight: '700',
-    color: Colors.black,
     marginBottom: 12,
     textAlign: 'center',
   },
   proDescription: {
     fontSize: 14,
     fontFamily: Fonts.regular,
-    color: Colors.gray[400],
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 24,
