@@ -97,7 +97,7 @@ export default function FoodScanScreen() {
           </TouchableOpacity>
 
           <View style={styles.scanOptions}>
-            <TouchableOpacity style={styles.scanOption} onPress={pickFromLibrary}>
+            <TouchableOpacity style={styles.scanOption} onPress={takePhoto}>
               <View style={[styles.scanIconContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Ionicons name="barcode" size={24} color={colors.text} />
               </View>
