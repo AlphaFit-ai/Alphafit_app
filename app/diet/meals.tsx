@@ -5,21 +5,21 @@ import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
 import { useTheme } from '../../context/ThemeContext';
 
-const proteinOptions = [
-  { label: '50-100g', value: 75 },
-  { label: '100-150g', value: 125 },
-  { label: '150-200g', value: 175 },
-  { label: '200g+', value: 200 },
+const mealOptions = [
+  { label: '2 meals', value: 2 },
+  { label: '3 meals', value: 3 },
+  { label: '4 meals', value: 4 },
+  { label: '5+ meals', value: 5 },
 ];
 
 export default function MealsScreen() {
   const { t } = useTranslation();
   const { updateDietData, setCurrentStep } = useDiet();
   const { colors, isDarkMode } = useTheme();
-  const [selectedProtein, setSelectedProtein] = useState<number | null>(null);
+  const [selectedMeals, setSelectedMeals] = useState<number | null>(null);
 
   const handleSelect = (value: number) => {
-    setSelectedProtein(value);
+    setSelectedMeals(value);
     updateDietData({ mealsPerDay: value });
     setTimeout(() => {
       setCurrentStep(3);
@@ -43,15 +43,15 @@ export default function MealsScreen() {
           />
 
           <View style={styles.optionsContainer}>
-            {proteinOptions.map((option) => {
+            {mealOptions.map((option) => {
               return (
                 <TouchableOpacity
                   key={option.value}
                   style={[
                     styles.optionButton,
                     { 
-                      backgroundColor: selectedProtein === option.value ? Colors.black : colors.card,
-                      borderColor: selectedProtein === option.value ? Colors.black : colors.border
+                      backgroundColor: selectedMeals === option.value ? Colors.black : colors.card,
+                      borderColor: selectedMeals === option.value ? Colors.black : colors.border
                     },
                   ]}
                   onPress={() => handleSelect(option.value)}
@@ -59,7 +59,7 @@ export default function MealsScreen() {
                 >
                   <Text style={[
                     styles.optionButtonText,
-                    { color: selectedProtein === option.value ? Colors.white : colors.text },
+                    { color: selectedMeals === option.value ? Colors.white : colors.text },
                   ]}>
                     {option.label}
                   </Text>

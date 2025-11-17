@@ -7,6 +7,7 @@ export interface DietOnboardingData {
   mealsPerDay?: number;
   supplements?: string;
   takesSupplements?: boolean;
+  foodImage?: string;
   isCompleted?: boolean;
 }
 
@@ -34,7 +35,7 @@ const initialDietData: DietOnboardingData = {
 export const DietProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [dietData, setDietData] = useState<DietOnboardingData>(initialDietData);
   const [currentStep, setCurrentStep] = useState(0);
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   const updateDietData = (data: Partial<DietOnboardingData>) => {
     setDietData((prev) => ({ ...prev, ...data }));

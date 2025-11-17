@@ -193,7 +193,7 @@ export default function TabsLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.profileIconContainer, focused && styles.profileIconContainerActive, isWeb && styles.webProfileIcon]}>
+            <View style={[styles.profileIconContainer, focused && styles.iconWrapperActive, isWeb && styles.webProfileIcon]}>
               <Ionicons 
                 name={focused ? "person" : "person-outline"} 
                 size={isWeb ? 24 : 20} 
@@ -271,12 +271,8 @@ export default function TabsLayout() {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: Colors.gray[200],
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  profileIconContainerActive: {
-    backgroundColor: Colors.black,
   },
   // Web-specific styles
   webTabBar: {
@@ -406,8 +402,5 @@ export default function TabsLayout() {
     backgroundColor: Colors.gray[200],
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  webProfileIconContainerActive: {
-    backgroundColor: Colors.black,
   },
 });

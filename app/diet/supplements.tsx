@@ -19,8 +19,10 @@ export default function SupplementsScreen() {
     updateDietData({
       takesSupplements: false,
       supplements: '',
-      isCompleted: true,
     });
+    setTimeout(() => {
+      setCurrentStep(4);
+    }, 300);
   };
 
   const handleSubmitSupplements = () => {
@@ -28,8 +30,8 @@ export default function SupplementsScreen() {
     updateDietData({
       takesSupplements: true,
       supplements: supplementsText,
-      isCompleted: true,
     });
+    setCurrentStep(4);
   };
 
   return (
