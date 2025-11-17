@@ -44,7 +44,7 @@ export default function IntroScreen() {
         <View style={styles.illustration}>
           <Image 
             source={require('../../assets/images/projection.png')}
-            style={styles.illustrationImage}
+            style={[styles.illustrationImage, { tintColor: colors.text }]}
             resizeMode="contain"
           />
         </View>
@@ -115,6 +115,7 @@ const styles = StyleSheet.create({
   illustrationImage: {
     width: '100%',
     height: '100%',
+    tintColor: Colors.white,
   },
   footer: {
     paddingHorizontal: Spacing.screenPaddingHorizontal,

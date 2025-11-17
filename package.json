@@ -8,8 +8,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint",
-    "postinstall": "node scripts/fix-react-async-hook.js"
+    "lint": "expo lint"
   },
   "dependencies": {
     "@expo-google-fonts/urbanist": "^0.2.3",

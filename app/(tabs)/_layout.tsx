@@ -4,6 +4,7 @@ import { Tabs, usePathname, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GradientText, ProPlanModal } from '../../components';
+import NotificationModal from '../../components/NotificationModal';
 import { Colors, Fonts } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -13,6 +14,7 @@ export default function TabsLayout() {
   const router = useRouter();
   const { colors, isDarkMode } = useTheme();
   const [showProModal, setShowProModal] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const navItems = [
     { name: 'home', route: '/(tabs)/home', label: 'Home', icon: 'home' as const, iconSet: 'feather' as const },
@@ -82,7 +84,11 @@ export default function TabsLayout() {
           ),
           headerRight: () => (
             <View style={styles.headerRight}>
-              <TouchableOpacity style={styles.notificationButton} activeOpacity={0.7}>
+              <TouchableOpacity 
+                style={styles.notificationButton} 
+                activeOpacity={0.7}
+                onPress={() => setShowNotifications(true)}
+              >
                 <View style={styles.notificationContainer}>
                   <Ionicons name="notifications-outline" size={24} color={colors.text} />
                   <View style={styles.notificationBadge} />
@@ -208,6 +214,7 @@ export default function TabsLayout() {
         />
       </Tabs>
       <ProPlanModal visible={showProModal} onClose={() => setShowProModal(false)} />
+      <NotificationModal visible={showNotifications} onClose={() => setShowNotifications(false)} />
     </>
   );
 }const styles = StyleSheet.create({

@@ -184,5 +184,11 @@
     "homeSubtitle": "Votre parcours fitness personnalisé commence ici",
     "scan": "Scanner",
     "scanSubtitle": "Scannez vos projections"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "unread": "non lues",
+    "markAllRead": "Tout marquer comme lu",
+    "empty": "Aucune notification pour le moment"
   }
 }

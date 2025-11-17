@@ -184,5 +184,11 @@
     "homeSubtitle": "Tu viaje personalizado de fitness comienza aquí",
     "scan": "Escanear",
     "scanSubtitle": "Escanea tus proyecciones"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "unread": "sin leer",
+    "markAllRead": "Marcar todo como leído",
+    "empty": "Aún no hay notificaciones"
   }
 }

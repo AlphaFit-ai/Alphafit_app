@@ -184,5 +184,11 @@
     "homeSubtitle": "Your personalized fitness journey starts here",
     "scan": "Scan",
     "scanSubtitle": "Scan your projections"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "unread": "unread",
+    "markAllRead": "Mark all read",
+    "empty": "No notifications yet"
   }
 }
