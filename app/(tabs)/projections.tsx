@@ -1,16 +1,49 @@
-import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
-import { Colors, Fonts, Spacing } from '../../constants';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback } from 'react';
+import { BackHandler, StyleSheet, View } from 'react-native';
+import { useProjection } from '../../context/ProjectionContext';
 import { useTheme } from '../../context/ThemeContext';
+import SleepScreen from '../projection/sleep';
+import StepsScreen from '../projection/steps';
+import StressScreen from '../projection/stress';
 
 export default function ProjectionsScreen() {
-  const { t } = useTranslation();
+  const router = useRouter();
   const { colors } = useTheme();
-  
+  const { currentStep, setCurrentStep } = useProjection();
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (currentStep > 0) {
+          setCurrentStep(currentStep - 1);
+          return true;
+        }
+        return false;
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => subscription.remove();
+    }, [currentStep, setCurrentStep])
+  );
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case 0:
+        return <SleepScreen />;
+      case 1:
+        return <StepsScreen />;
+      case 2:
+        return <StressScreen />;
+      default:
+        return <SleepScreen />;
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.text }]}>{t('tabs.scan')}</Text>
-      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('tabs.scanSubtitle')}</Text>
+      {renderStep()}
     </View>
   );
 }
@@ -18,21 +51,5 @@ export default function ProjectionsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.white,
-    paddingHorizontal: Spacing.screenPaddingHorizontal,
-  },
-  title: {
-    fontSize: 32,
-    fontFamily: Fonts.bold,
-    fontWeight: '700',
-    color: Colors.black,
-    marginBottom: 12,
-  },
-  subtitle: {
-    fontSize: Fonts.sizes.base,
-    fontFamily: Fonts.regular,
-    color: Colors.textSecondary,
   },
 });

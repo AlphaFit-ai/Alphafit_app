@@ -1,4 +1,8 @@
 {
+  "common": {
+    "continue": "Continue",
+    "back": "Back"
+  },
   "welcome": {
     "title": "WELCOME TO",
     "subtitle": "Sign in to start forging your best physique",
@@ -190,5 +194,16 @@
     "unread": "unread",
     "markAllRead": "Mark all read",
     "empty": "No notifications yet"
+  },
+  "projection": {
+    "sleep": {
+      "title": "On average, how many hours of sleep do you get per night?"
+    },
+    "steps": {
+      "title": "Approximately how many steps do you take daily?"
+    },
+    "stress": {
+      "title": "How would you rate your daily stress level?"
+    }
   }
 }

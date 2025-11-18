@@ -1,4 +1,8 @@
 {
+  "common": {
+    "continue": "Continuer",
+    "back": "Retour"
+  },
   "welcome": {
     "title": "BIENVENUE CHEZ",
     "subtitle": "Connectez-vous pour commencer à forger votre meilleur physique",
@@ -189,6 +193,17 @@
     "title": "Notifications",
     "unread": "non lues",
     "markAllRead": "Tout marquer comme lu",
-    "empty": "Aucune notification pour le moment"
+    "empty": "Pas encore de notifications"
+  },
+  "projection": {
+    "sleep": {
+      "title": "En moyenne, combien d'heures de sommeil avez-vous par nuit ?"
+    },
+    "steps": {
+      "title": "Environ combien de pas faites-vous quotidiennement ?"
+    },
+    "stress": {
+      "title": "Comment évalueriez-vous votre niveau de stress quotidien ?"
+    }
   }
 }

@@ -1,4 +1,8 @@
 {
+  "common": {
+    "continue": "Continuar",
+    "back": "Atrás"
+  },
   "welcome": {
     "title": "BIENVENIDO A",
     "subtitle": "Inicia sesión para comenzar a forjar tu mejor físico",
@@ -185,10 +189,21 @@
     "scan": "Escanear",
     "scanSubtitle": "Escanea tus proyecciones"
   },
-  "notifications": {
+    "notifications": {
     "title": "Notificaciones",
-    "unread": "sin leer",
+    "unread": "no leídas",
     "markAllRead": "Marcar todo como leído",
-    "empty": "Aún no hay notificaciones"
+    "empty": "No hay notificaciones aún"
+  },
+  "projection": {
+    "sleep": {
+      "title": "En promedio, ¿cuántas horas de sueño tienes por noche?"
+    },
+    "steps": {
+      "title": "¿Aproximadamente cuántos pasos das diariamente?"
+    },
+    "stress": {
+      "title": "¿Cómo calificarías tu nivel de estrés diario?"
+    }
   }
 }

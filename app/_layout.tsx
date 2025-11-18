@@ -11,6 +11,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DietProvider } from '../context/DietContext';
+import { ProjectionProvider } from '../context/ProjectionContext';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import '../i18n/config';
 
@@ -34,6 +35,7 @@ function RootContent() {
         <Stack.Screen name="onboarding" options={{ contentStyle: { backgroundColor: colors.background } }} />
         <Stack.Screen name="(tabs)" options={{ contentStyle: { backgroundColor: colors.background } }} />
         <Stack.Screen name="diet" options={{ contentStyle: { backgroundColor: colors.background } }} />
+        <Stack.Screen name="projection" options={{ contentStyle: { backgroundColor: colors.background } }} />
         <Stack.Screen name="index" options={{ contentStyle: { backgroundColor: colors.background } }} />
       </Stack>
     </>
@@ -62,7 +64,9 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider>
         <DietProvider>
-          <RootContent />
+          <ProjectionProvider>
+            <RootContent />
+          </ProjectionProvider>
         </DietProvider>
       </ThemeProvider>
     </SafeAreaProvider>
