@@ -24,7 +24,7 @@ export default function SleepScreen() {
   const handleContinue = () => {
     if (selected) {
       updateProjectionData({ sleepHours: selected });
-      setCurrentStep(1);
+      setCurrentStep(2);
     }
   };
 
@@ -193,6 +193,7 @@ const styles = StyleSheet.create({
     height: '50%',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 0.3,
   },
   topLeft: {
     borderTopLeftRadius: 140,

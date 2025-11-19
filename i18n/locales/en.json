@@ -205,5 +205,25 @@
     "stress": {
       "title": "How would you rate your daily stress level?"
     }
+  },
+  "bodyScan": {
+    "sparkles": "AI-powered muscle analysis",
+    "speedometer": "Instant physique rating (0-100)",
+    "arrow-forward": "Personalized improvement plan",
+    "startScan": "Start Physique Scan",
+    "uploadTitle": "Please upload 3 pictures for physique analysis",
+    "frontView": "Front view",
+    "sideView": "Side view",
+    "backView": "Back view",
+    "tapToUpload": "Tap to upload",
+    "uploaded": "image.jpg",
+    "uploadMore": "Upload more {{count}} photos",
+    "startAnalysis": "Start AI Analysis"
+  },
+  "statistics": {
+    "title": "Body Analysis",
+    "lastScan": "Last scan: Today",
+    "aiRecommendations": "AI Recommendations",
+    "rescan": "Rescan Body"
   }
 }

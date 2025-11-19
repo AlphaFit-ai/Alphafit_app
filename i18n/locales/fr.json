@@ -205,5 +205,25 @@
     "stress": {
       "title": "Comment évalueriez-vous votre niveau de stress quotidien ?"
     }
+  },
+  "bodyScan": {
+    "sparkles": "Analyse musculaire alimentée par l'IA",
+    "speedometer": "Évaluation instantanée du physique (0-100)",
+    "arrow-forward": "Plan d'amélioration personnalisé",
+    "startScan": "Démarrer le Scan du Physique",
+    "uploadTitle": "Veuillez télécharger 3 photos pour l'analyse du physique",
+    "frontView": "Vue de face",
+    "sideView": "Vue de côté",
+    "backView": "Vue de dos",
+    "tapToUpload": "Appuyez pour télécharger",
+    "uploaded": "image.jpg",
+    "uploadMore": "Télécharger {{count}} photos de plus",
+    "startAnalysis": "Démarrer l'Analyse IA"
+  },
+  "statistics": {
+    "title": "Analyse Corporelle",
+    "lastScan": "Dernier scan: Aujourd'hui",
+    "aiRecommendations": "Recommandations IA",
+    "rescan": "Rescanner le Corps"
   }
 }

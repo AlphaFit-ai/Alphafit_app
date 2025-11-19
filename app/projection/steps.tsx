@@ -24,9 +24,9 @@ export default function StepsScreen() {
   const handleSelect = (value: string) => {
     setSelected(value);
     updateProjectionData({ dailySteps: value });
-    setTimeout(() => {
-      setCurrentStep(2);
-    }, 300);
+      setTimeout(() => {
+        setCurrentStep(3);
+      }, 300);
   };
 
   useEffect(() => {

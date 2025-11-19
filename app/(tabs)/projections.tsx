@@ -3,9 +3,12 @@ import React, { useCallback } from 'react';
 import { BackHandler, StyleSheet, View } from 'react-native';
 import { useProjection } from '../../context/ProjectionContext';
 import { useTheme } from '../../context/ThemeContext';
+import ScanBodyScreen from '../projection/scan-body';
 import SleepScreen from '../projection/sleep';
+import StatisticsScreen from '../projection/statistics';
 import StepsScreen from '../projection/steps';
 import StressScreen from '../projection/stress';
+import UploadPhotosScreen from '../projection/upload-photos';
 
 export default function ProjectionsScreen() {
   const router = useRouter();
@@ -31,13 +34,19 @@ export default function ProjectionsScreen() {
   const renderStep = () => {
     switch (currentStep) {
       case 0:
-        return <SleepScreen />;
+        return <StatisticsScreen />;
       case 1:
-        return <StepsScreen />;
-      case 2:
-        return <StressScreen />;
-      default:
         return <SleepScreen />;
+      case 2:
+        return <StepsScreen />;
+      case 3:
+        return <StressScreen />;
+      case 4:
+        return <ScanBodyScreen />;
+      case 5:
+        return <UploadPhotosScreen />;
+      default:
+        return <StatisticsScreen />;
     }
   };
 

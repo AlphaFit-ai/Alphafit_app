@@ -26,7 +26,7 @@ const initialProjectionData: ProjectionData = {
 export const ProjectionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [projectionData, setProjectionData] = useState<ProjectionData>(initialProjectionData);
   const [currentStep, setCurrentStep] = useState(0);
-  const totalSteps = 3;
+  const totalSteps = 6;
 
   const updateProjectionData = (data: Partial<ProjectionData>) => {
     setProjectionData((prev) => ({ ...prev, ...data }));

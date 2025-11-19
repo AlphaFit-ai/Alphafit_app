@@ -25,7 +25,7 @@ export default function StressScreen() {
     setSelected(value);
     updateProjectionData({ stressLevel: value });
     setTimeout(() => {
-      setCurrentStep(0);
+      setCurrentStep(4);
     }, 300);
   };
 

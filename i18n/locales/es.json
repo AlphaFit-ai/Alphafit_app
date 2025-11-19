@@ -205,5 +205,25 @@
     "stress": {
       "title": "¿Cómo calificarías tu nivel de estrés diario?"
     }
+  },
+  "bodyScan": {
+    "sparkles": "Análisis muscular impulsado por IA",
+    "speedometer": "Calificación instantánea de físico (0-100)",
+    "arrow-forward": "Plan de mejora personalizado",
+    "startScan": "Iniciar Escaneo de Físico",
+    "uploadTitle": "Por favor sube 3 fotos para el análisis de físico",
+    "frontView": "Vista frontal",
+    "sideView": "Vista lateral",
+    "backView": "Vista trasera",
+    "tapToUpload": "Toca para subir",
+    "uploaded": "imagen.jpg",
+    "uploadMore": "Subir {{count}} fotos más",
+    "startAnalysis": "Iniciar Análisis IA"
+  },
+  "statistics": {
+    "title": "Análisis Corporal",
+    "lastScan": "Último escaneo: Hoy",
+    "aiRecommendations": "Recomendaciones de IA",
+    "rescan": "Reescanear Cuerpo"
   }
 }
