@@ -193,7 +193,6 @@ const styles = StyleSheet.create({
     height: '50%',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
   },
   topLeft: {
     borderTopLeftRadius: 140,

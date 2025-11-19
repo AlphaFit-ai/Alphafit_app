@@ -110,17 +110,18 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 60,
   },
   image: {
     width: 200,
     height: 200,
   },
   optionsContainer: {
-    gap: 16,
+    gap: 12,
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   optionCard: {
-    flexDirection: 'row',
     alignItems: 'center',
     padding: 20,
     borderRadius: Spacing.radius.lg,
@@ -132,9 +133,9 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
-  },
+    marginBottom: 12,},
   optionLabel: {
+    textAlign: 'center',
     fontSize: Fonts.sizes.lg,
     fontFamily: Fonts.semiBold,
   },
