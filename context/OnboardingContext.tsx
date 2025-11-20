@@ -8,6 +8,8 @@ interface OnboardingContextType {
   currentStep: number;
   setCurrentStep: (step: number) => void;
   totalSteps: number;
+  isUpdateMode: boolean;
+  setIsUpdateMode: (isUpdate: boolean) => void;
 }
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
@@ -32,6 +34,7 @@ const initialOnboardingData: UserOnboardingData = {
 export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [onboardingData, setOnboardingData] = useState<UserOnboardingData>(initialOnboardingData);
   const [currentStep, setCurrentStep] = useState(0);
+  const [isUpdateMode, setIsUpdateMode] = useState(false);
   const totalSteps = 10;
 
   const updateOnboardingData = (data: Partial<UserOnboardingData>) => {
@@ -52,6 +55,8 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
         currentStep,
         setCurrentStep,
         totalSteps,
+        isUpdateMode,
+        setIsUpdateMode,
       }}
     >
       {children}

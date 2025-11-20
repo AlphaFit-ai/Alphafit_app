@@ -10,6 +10,7 @@ export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
   const { isDarkMode, toggleTheme, colors } = useTheme();
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const currentLanguage = i18n.language || 'en';
@@ -63,6 +64,24 @@ export default function SettingsScreen() {
             <Switch
               value={isDarkMode}
               onValueChange={toggleTheme}
+              trackColor={{ false: Colors.gray[300], true: Colors.primary }}
+              thumbColor={Colors.white}
+            />
+          </View>
+
+          <View style={[styles.settingItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.settingLeft}>
+              <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}>
+                <Ionicons name="notifications-outline" size={22} color={colors.icon} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.settingTitle, { color: colors.text }]}>{t('profile.notifications')}</Text>
+                <Text style={[styles.settingSubtitle, { color: colors.textSecondary }]}>{t('profile.notificationsSubtitle')}</Text>
+              </View>
+            </View>
+            <Switch
+              value={notificationsEnabled}
+              onValueChange={setNotificationsEnabled}
               trackColor={{ false: Colors.gray[300], true: Colors.primary }}
               thumbColor={Colors.white}
             />
@@ -122,6 +141,12 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: Fonts.semiBold,
     color: Colors.black,
+  },
+  settingSubtitle: {
+    fontSize: 13,
+    fontFamily: Fonts.regular,
+    color: Colors.gray[400],
+    marginTop: 2,
   },
   settingRight: {
     flexDirection: 'row',

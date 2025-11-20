@@ -22,7 +22,6 @@ export default function ProfileScreen() {
   const { t, i18n } = useTranslation();
   const { colors, isDarkMode, toggleTheme } = useTheme();
   const [showProModal, setShowProModal] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{ visible: boolean; title: string; message?: string; buttons?: any[] }>({ visible: false, title: '' });
 
@@ -38,14 +37,6 @@ export default function ProfileScreen() {
       onPress: () => router.push('/profile/account-details'),
     },
     {
-      icon: 'notifications-outline',
-      title: t('profile.notifications'),
-      subtitle: t('profile.notificationsSubtitle'),
-      type: 'toggle',
-      value: notificationsEnabled,
-      onToggle: setNotificationsEnabled,
-    },
-    {
       icon: 'trophy-outline',
       title: t('profile.subscription'),
       subtitle: t('profile.subscriptionSubtitle'),
@@ -56,7 +47,7 @@ export default function ProfileScreen() {
     {
       icon: 'settings-outline',
       title: 'Settings',
-      subtitle: 'Language, Theme',
+      subtitle: 'Language, Theme, Notifications',
       type: 'navigation',
       onPress: () => router.push('/profile/settings'),
     },
@@ -64,23 +55,11 @@ export default function ProfileScreen() {
 
   const supportSettings: SettingItem[] = [
     {
-      icon: 'help-circle-outline',
-      title: t('profile.support'),
-      subtitle: t('profile.supportSubtitle'),
+      icon: 'information-circle-outline',
+      title: t('profile.helpAndSupport', 'Help & Support'),
+      subtitle: t('profile.helpAndSupportSubtitle', 'FAQs, Privacy, Terms'),
       type: 'navigation',
-      onPress: () => setAlertConfig({ visible: true, title: 'Support', message: 'Contact us at support@forgeai.com', buttons: [{ text: 'OK' }] }),
-    },
-    {
-      icon: 'shield-checkmark-outline',
-      title: t('profile.privacyPolicy'),
-      type: 'navigation',
-      onPress: () => setAlertConfig({ visible: true, title: 'Privacy Policy', message: 'View our privacy policy', buttons: [{ text: 'OK' }] }),
-    },
-    {
-      icon: 'document-text-outline',
-      title: t('profile.termsOfService'),
-      type: 'navigation',
-      onPress: () => setAlertConfig({ visible: true, title: 'Terms of Service', message: 'View our terms of service', buttons: [{ text: 'OK' }] }),
+      onPress: () => router.push('/profile/help-support'),
     },
   ];
 
