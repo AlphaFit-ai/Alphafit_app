@@ -1,8 +1,8 @@
 import {
-  Urbanist_400Regular,
-  Urbanist_500Medium,
-  Urbanist_600SemiBold,
-  Urbanist_700Bold,
+    Urbanist_400Regular,
+    Urbanist_500Medium,
+    Urbanist_600SemiBold,
+    Urbanist_700Bold,
 } from '@expo-google-fonts/urbanist';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
@@ -11,6 +11,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DietProvider } from '../context/DietContext';
+import { OnboardingProvider } from '../context/OnboardingContext';
 import { ProjectionProvider } from '../context/ProjectionContext';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import '../i18n/config';
@@ -63,11 +64,13 @@ export default function RootLayout() {
   const content = (
     <SafeAreaProvider>
       <ThemeProvider>
-        <DietProvider>
-          <ProjectionProvider>
-            <RootContent />
-          </ProjectionProvider>
-        </DietProvider>
+        <OnboardingProvider>
+          <DietProvider>
+            <ProjectionProvider>
+              <RootContent />
+            </ProjectionProvider>
+          </DietProvider>
+        </OnboardingProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

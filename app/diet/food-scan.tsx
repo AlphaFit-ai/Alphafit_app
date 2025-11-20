@@ -9,7 +9,7 @@ import { useTheme } from '../../context/ThemeContext';
 
 export default function FoodScanScreen() {
   const { t } = useTranslation();
-  const { updateDietData } = useDiet();
+  const { updateDietData, setCurrentStep } = useDiet();
   const { colors } = useTheme();
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [cameraPermission, setCameraPermission] = useState<boolean>(false);
@@ -60,9 +60,8 @@ export default function FoodScanScreen() {
 
   const handleFinish = () => {
     if (capturedImage) {
-      updateDietData({ foodImage: capturedImage, isCompleted: true });
-    } else {
-      updateDietData({ isCompleted: true });
+      updateDietData({ foodImage: capturedImage });
+      setCurrentStep(5); // Navigate to diet statistics screen
     }
   };
 
@@ -146,7 +145,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingVertical: 40,
+    paddingVertical: 20,
   },
   content: {
     paddingHorizontal: Spacing.screenPaddingHorizontal,

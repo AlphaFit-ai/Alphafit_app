@@ -4,6 +4,7 @@ import { BackHandler } from 'react-native';
 import { useDiet } from '../../context/DietContext';
 import AllergiesScreen from '../diet/allergies';
 import DietPreferenceScreen from '../diet/diet-preference';
+import DietStatisticsScreen from '../diet/diet-statistics';
 import FoodScanScreen from '../diet/food-scan';
 import MealsScreen from '../diet/meals';
 import SupplementsScreen from '../diet/supplements';
@@ -42,6 +43,8 @@ export default function DietScreen() {
       return <SupplementsScreen />;
     case 4:
       return <FoodScanScreen />;
+    case 5:
+      return <DietStatisticsScreen />;
     default:
       return <DietPreferenceScreen />;
   }
