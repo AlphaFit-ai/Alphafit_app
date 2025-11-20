@@ -13,13 +13,13 @@ import UploadPhotosScreen from '../projection/upload-photos';
 export default function ProjectionsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { currentStep, setCurrentStep } = useProjection();
+  const { currentStep, goBack } = useProjection();
 
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
         if (currentStep > 0) {
-          setCurrentStep(currentStep - 1);
+          goBack();
           return true;
         }
         return false;
@@ -28,7 +28,7 @@ export default function ProjectionsScreen() {
       const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
 
       return () => subscription.remove();
-    }, [currentStep, setCurrentStep])
+    }, [currentStep, goBack])
   );
 
   const renderStep = () => {

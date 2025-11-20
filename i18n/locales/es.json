@@ -223,6 +223,14 @@
   "statistics": {
     "title": "Análisis Corporal",
     "lastScan": "Último escaneo: Hoy",
+    "physiqueRating": "Calificación Física",
+    "generalScore": "Puntuación General",
+    "chest": "Pecho",
+    "abs": "Abdominales",
+    "shoulders": "Hombros",
+    "arms": "Brazos",
+    "back": "Espalda",
+    "legs": "Piernas",
     "aiRecommendations": "Recomendaciones de IA",
     "rescan": "Reescanear Cuerpo"
   }

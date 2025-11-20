@@ -223,6 +223,14 @@
   "statistics": {
     "title": "Body Analysis",
     "lastScan": "Last scan: Today",
+    "physiqueRating": "Physique Rating",
+    "generalScore": "General Score",
+    "chest": "Chest",
+    "abs": "Abs",
+    "shoulders": "Shoulders",
+    "arms": "Arms",
+    "back": "Back",
+    "legs": "Legs",
     "aiRecommendations": "AI Recommendations",
     "rescan": "Rescan Body"
   }

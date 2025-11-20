@@ -1,10 +1,15 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { Ionicons, Octicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useProjection } from '../../context/ProjectionContext';
 import { useTheme } from '../../context/ThemeContext';
+
+interface BodyPartScore {
+  label: string;
+  score: number;
+}
 
 interface StatCard {
   label: string;
@@ -27,20 +32,32 @@ export default function StatisticsScreen() {
   const { setCurrentStep } = useProjection();
 
   // Mock data - will be replaced with actual backend data
+  const generalScore = 97;
+  const physiqueLevel = 'Intermediate';
+
+  const bodyPartScores: BodyPartScore[] = [
+    { label: 'chest', score: 96 },
+    { label: 'abs', score: 97 },
+    { label: 'shoulders', score: 93 },
+    { label: 'arms', score: 45 },
+    { label: 'back', score: 97 },
+    { label: 'legs', score: 61 },
+  ];
+
   const stats: StatCard[] = [
     {
-      label: 'Physique Score',
-      value: '78',
-      unit: '/100',
-      icon: 'trophy',
-      color: Colors.warning,
+      label: 'Weight',
+      value: '75',
+      unit: 'kg',
+      icon: 'barbell',
+      color: Colors.primary,
     },
     {
       label: 'Body Fat',
       value: '18',
       unit: '%',
       icon: 'analytics',
-      color: Colors.primary,
+      color: Colors.warning,
     },
     {
       label: 'Muscle Mass',
@@ -98,8 +115,27 @@ export default function StatisticsScreen() {
     }
   };
 
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return Colors.success;
+    if (score >= 60) return Colors.warning;
+    return Colors.error;
+  };
+
+  const getLevelColor = (level: string) => {
+    switch (level.toLowerCase()) {
+      case 'beginner':
+        return Colors.info;
+      case 'intermediate':
+        return Colors.warning;
+      case 'advanced':
+        return Colors.success;
+      default:
+        return Colors.primary;
+    }
+  };
+
   const handleRescan = () => {
-    setCurrentStep(4); // Go to scan-body screen
+    setCurrentStep(5);
   };
 
   return (
@@ -109,14 +145,108 @@ export default function StatisticsScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>
-            {t('statistics.title', 'Body Analysis')}
+
+        {/* Physique Rating Card */}
+        <View style={styles.sectionHeader}>
+          <Octicons name="goal" size={24} color={Colors.warning} />
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              {t('statistics.physiqueRating')}
           </Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            {t('statistics.lastScan', 'Last scan: Today')}
-          </Text>
+        </View>
+        
+        <View
+          style={[
+            styles.physiqueCard,
+            {
+              backgroundColor: isDarkMode ? Colors.gray[800] : Colors.white,
+              borderColor: isDarkMode ? Colors.gray[700] : Colors.gray[200],
+            },
+          ]}
+        >
+          <View style={styles.header}>
+            <View style={styles.headerTitleRow}>
+              <View style={styles.physiqueImageContainer}>
+                <View style={[styles.imageCircle, { borderColor: colors.text }]}>
+                  <Image
+                    source={require('../../assets/images/projection/physique.png')}
+                    style={[styles.physiqueImage, { tintColor: colors.text }]}
+                    resizeMode="contain"
+                  />
+                </View>
+              </View>
+
+              <View
+                style={[
+                  styles.levelBadge,
+                  { backgroundColor: getLevelColor(physiqueLevel) },
+                ]}
+              >
+                <Text style={styles.levelBadgeText}>{physiqueLevel}</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.bodyPartsContainer}>
+            <View style={styles.bodyPartsGrid}>
+              {bodyPartScores.map((part, index) => (
+                <View key={index} style={styles.bodyPartItem}>
+                  <Text style={[styles.bodyPartLabel, { color: colors.text }]}>
+                    {t(`statistics.${part.label}`)}
+                  </Text>
+                  <Text style={[styles.bodyPartScore, { color: colors.text }]}>
+                    {part.score}
+                  </Text>
+                  <View
+                    style={[
+                      styles.progressBarContainer,
+                      {
+                        backgroundColor: isDarkMode
+                          ? Colors.gray[700]
+                          : Colors.gray[200],
+                      },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.progressBarFill,
+                        {
+                          width: `${part.score}%`,
+                          backgroundColor: getScoreColor(part.score),
+                        },
+                      ]}
+                    />
+                  </View>
+                </View>
+              ))}
+            </View>
+
+            <View style={styles.generalScoreContainer}>
+              <Text style={[styles.generalScoreLabel, { color: colors.text }]}>
+                {t('statistics.generalScore')}
+              </Text>
+              <Text style={[styles.generalScoreValue, { color: colors.text }]}>
+                {generalScore}/100
+              </Text>
+              <View
+                style={[
+                  styles.generalProgressBar,
+                  {
+                    backgroundColor: isDarkMode ? Colors.gray[700] : Colors.gray[200],
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.generalProgressFill,
+                    {
+                      width: `${generalScore}%`,
+                      backgroundColor: getScoreColor(generalScore),
+                    },
+                  ]}
+                />
+              </View>
+            </View>
+          </View>
         </View>
 
         {/* Stats Grid */}
@@ -230,21 +360,109 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 60,
     paddingHorizontal: Spacing.screenPaddingHorizontal,
-    paddingBottom: 40,
+    paddingVertical: 20,
   },
   header: {
+    marginBottom: 24,
+  },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  },
+  headerTitle: {
+    fontSize: Fonts.sizes['xl'],
+    fontFamily: Fonts.bold,
+    flex: 1,
+  },
+  levelBadge: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: Spacing.radius.full,
+  },
+  levelBadgeText: {
+    fontSize: Fonts.sizes.base,
+    fontFamily: Fonts.semiBold,
+    color: Colors.white,
+  },
+  physiqueCard: {
+    borderRadius: Spacing.radius.lg,
+    borderWidth: 1,
+    padding: 24,
     marginBottom: 32,
   },
-  title: {
+  physiqueImageContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  imageCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 90,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
+  },
+  physiqueImage: {
+    width: '100%',
+    height: '100%',
+  },
+  bodyPartsContainer: {
+    gap: 24,
+  },
+  bodyPartsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 20,
+  },
+  bodyPartItem: {
+    width: '48%',
+  },
+  bodyPartLabel: {
+    fontSize: Fonts.sizes.base,
+    fontFamily: Fonts.regular,
+    marginBottom: 4,
+  },
+  bodyPartScore: {
     fontSize: Fonts.sizes['3xl'],
     fontFamily: Fonts.bold,
     marginBottom: 8,
   },
-  subtitle: {
-    fontSize: Fonts.sizes.base,
+  progressBarContainer: {
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  generalScoreContainer: {
+    paddingTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: Colors.gray[700],
+  },
+  generalScoreLabel: {
+    fontSize: Fonts.sizes.lg,
     fontFamily: Fonts.regular,
+    marginBottom: 8,
+  },
+  generalScoreValue: {
+    fontSize: Fonts.sizes['4xl'],
+    fontFamily: Fonts.bold,
+    marginBottom: 12,
+  },
+  generalProgressBar: {
+    height: 12,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  generalProgressFill: {
+    height: '100%',
+    borderRadius: 6,
   },
   statsGrid: {
     flexDirection: 'row',

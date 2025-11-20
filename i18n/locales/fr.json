@@ -223,6 +223,14 @@
   "statistics": {
     "title": "Analyse Corporelle",
     "lastScan": "Dernier scan: Aujourd'hui",
+    "physiqueRating": "Évaluation Physique",
+    "generalScore": "Score Général",
+    "chest": "Poitrine",
+    "abs": "Abdominaux",
+    "shoulders": "Épaules",
+    "arms": "Bras",
+    "back": "Dos",
+    "legs": "Jambes",
     "aiRecommendations": "Recommandations IA",
     "rescan": "Rescanner le Corps"
   }
