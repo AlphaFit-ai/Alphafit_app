@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Feather from '@expo/vector-icons/Feather';
 import { Tabs, usePathname, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GradientText, ProPlanModal } from '../../components';
 import NotificationModal from '../../components/NotificationModal';
 import { Colors, Fonts } from '../../constants';
@@ -29,7 +29,13 @@ export default function TabsLayout() {
       {isWeb && (
         <View style={styles.webSidebar as any}>
           <View style={styles.webSidebarHeader as any}>
-            <GradientText text="ALPHAFIT AI" style={styles.webLogoText as any} />
+            <View style={styles.webLogoContainer as any}>
+              <Image 
+                source={require('../../assets/images/favicon.png')} 
+                style={styles.faviconImage as any}
+              />
+              <GradientText text="ALPHAFIT AI" style={styles.webLogoText as any} />
+            </View>
             <TouchableOpacity style={styles.webNotificationButton as any} activeOpacity={0.7}>
               <View style={styles.webNotificationContainer as any}>
                 <Ionicons name="notifications-outline" size={24} color={Colors.black} />
@@ -79,6 +85,10 @@ export default function TabsLayout() {
           },
           headerLeft: () => (
             <View style={styles.headerLeft}>
+              <Image 
+                source={require('../../assets/images/favicon.png')} 
+                style={styles.faviconImage}
+              />
               <GradientText text="ALPHAFIT AI" style={styles.logoText} />
             </View>
           ),
@@ -219,7 +229,10 @@ export default function TabsLayout() {
   );
 }const styles = StyleSheet.create({
   headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginLeft: 16,
+    gap: 10,
   },
   logoText: {
     fontSize: 18,
@@ -347,6 +360,16 @@ export default function TabsLayout() {
     padding: 24,
     borderBottomWidth: 1,
     borderBottomColor: Colors.gray[100],
+  },
+  webLogoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  faviconImage: {
+    width: 28,
+    height: 28,
+    resizeMode: 'contain',
   },
   webLogoText: {
     fontSize: 20,
