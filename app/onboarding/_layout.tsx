@@ -15,6 +15,7 @@ function OnboardingStack() {
     >
       <Stack.Screen name="splash" />
       <Stack.Screen name="login" />
+      <Stack.Screen name="register" />
       <Stack.Screen name="age" />
       <Stack.Screen name="gender" />
       <Stack.Screen name="height" />

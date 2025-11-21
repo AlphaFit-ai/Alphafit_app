@@ -4,16 +4,52 @@
     "back": "Retour"
   },
   "welcome": {
-    "title": "BIENVENUE CHEZ",
+    "title": "BIENVENUE DANS",
     "subtitle": "Connectez-vous pour commencer à forger votre meilleur physique",
     "continueWithGoogle": "Continuer avec Google",
     "continueWithApple": "Continuer avec Apple",
     "or": "OU",
-    "email": "Email",
+    "email": "E-mail",
     "emailPlaceholder": "exemple@gmail.com",
     "continue": "Continuer",
     "terms": "En continuant, vous acceptez nos Conditions d'utilisation et notre Politique de confidentialité",
-    "invalidEmail": "Veuillez entrer une adresse email valide"
+    "invalidEmail": "Veuillez entrer une adresse e-mail valide",
+    "noAccount": "Vous n'avez pas de compte?",
+    "signUp": "S'inscrire"
+  },
+  "register": {
+    "title": "CRÉER UN COMPTE",
+    "subtitle": "Commencez votre voyage de transformation physique",
+    "fullName": "Nom complet",
+    "fullNamePlaceholder": "Jean Dupont",
+    "email": "E-mail",
+    "emailPlaceholder": "exemple@gmail.com",
+    "password": "Mot de passe",
+    "passwordPlaceholder": "Min. 8 caractères",
+    "confirmPassword": "Confirmer le mot de passe",
+    "confirmPasswordPlaceholder": "Ressaisir le mot de passe",
+    "agreeToTerms": "J'accepte les",
+    "termsOfService": "Conditions d'utilisation",
+    "and": "et la",
+    "privacyPolicy": "Politique de confidentialité",
+    "createAccount": "Créer un compte",
+    "alreadyHaveAccount": "Vous avez déjà un compte?",
+    "signIn": "Se connecter",
+    "errors": {
+      "nameRequired": "Le nom complet est obligatoire",
+      "nameMinLength": "Le nom doit contenir au moins 2 caractères",
+      "emailRequired": "L'e-mail est obligatoire",
+      "emailInvalid": "Veuillez entrer une adresse e-mail valide",
+      "passwordRequired": "Le mot de passe est obligatoire",
+      "passwordWeak": "Le mot de passe doit contenir 8+ caractères avec majuscules, minuscules et chiffre",
+      "passwordMissing": "Manquant: ",
+      "passwordMinLength": "Au moins 8 caractères",
+      "passwordLowercase": "Une lettre minuscule",
+      "passwordUppercase": "Une lettre majuscule",
+      "passwordNumber": "Un chiffre",
+      "confirmPasswordRequired": "Veuillez confirmer votre mot de passe",
+      "passwordMismatch": "Les mots de passe ne correspondent pas"
+    }
   },
   "onboarding": {
     "age": {

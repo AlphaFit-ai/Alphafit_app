@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from './apiClient';
 
 export interface UserOnboardingData {
+  fullName?: string;
   email?: string;
   authProvider?: 'google' | 'apple' | 'email';
   source?: 'instagram' | 'facebook' | 'tiktok' | 'threads' | 'x' | 'youtube' | 'google' | 'others';

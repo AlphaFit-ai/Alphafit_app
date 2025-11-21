@@ -184,6 +184,18 @@ export default function LoginScreen() {
 
             {/* Terms */}
             <Text style={[styles.terms, { color: colors.textSecondary }]}>{t('welcome.terms')}</Text>
+
+            {/* Register Link */}
+            <View style={styles.registerContainer}>
+              <Text style={[styles.registerText, { color: colors.textSecondary }]}>
+                {t('welcome.noAccount', "Don't have an account?")}{' '}
+              </Text>
+              <TouchableOpacity onPress={() => router.push('/onboarding/register')}>
+                <Text style={[styles.registerLink, { color: Colors.primary }]}>
+                  {t('welcome.signUp', 'Sign Up')}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -333,5 +345,20 @@ const styles = StyleSheet.create({
   link: {
     color: Colors.black,
     textDecorationLine: 'underline',
+  },
+  registerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  registerText: {
+    fontSize: Fonts.sizes.base,
+    fontFamily: Fonts.regular,
+  },
+  registerLink: {
+    fontSize: Fonts.sizes.base,
+    fontFamily: Fonts.semiBold,
+    fontWeight: '600',
   },
 });

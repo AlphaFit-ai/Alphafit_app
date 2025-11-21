@@ -15,6 +15,7 @@ interface OnboardingContextType {
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
 
 const initialOnboardingData: UserOnboardingData = {
+  fullName: undefined,
   email: undefined,
   authProvider: undefined,
   source: undefined,

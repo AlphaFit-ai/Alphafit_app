@@ -13,7 +13,43 @@
     "emailPlaceholder": "example@gmail.com",
     "continue": "Continue",
     "terms": "By continuing, you agree to our Terms of Service and Privacy Policy",
-    "invalidEmail": "Please enter a valid email address"
+    "invalidEmail": "Please enter a valid email address",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign Up"
+  },
+  "register": {
+    "title": "CREATE ACCOUNT",
+    "subtitle": "Start your fitness transformation journey",
+    "fullName": "Full Name",
+    "fullNamePlaceholder": "John Doe",
+    "email": "Email",
+    "emailPlaceholder": "example@gmail.com",
+    "password": "Password",
+    "passwordPlaceholder": "Min. 8 characters",
+    "confirmPassword": "Confirm Password",
+    "confirmPasswordPlaceholder": "Re-enter password",
+    "agreeToTerms": "I agree to the",
+    "termsOfService": "Terms of Service",
+    "and": "and",
+    "privacyPolicy": "Privacy Policy",
+    "createAccount": "Create Account",
+    "alreadyHaveAccount": "Already have an account?",
+    "signIn": "Sign In",
+    "errors": {
+      "nameRequired": "Full name is required",
+      "nameMinLength": "Name must be at least 2 characters",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Please enter a valid email address",
+      "passwordRequired": "Password is required",
+      "passwordWeak": "Password must be 8+ characters with uppercase, lowercase, and number",
+      "passwordMissing": "Missing: ",
+      "passwordMinLength": "At least 8 characters",
+      "passwordLowercase": "One lowercase letter",
+      "passwordUppercase": "One uppercase letter",
+      "passwordNumber": "One number",
+      "confirmPasswordRequired": "Please confirm your password",
+      "passwordMismatch": "Passwords do not match"
+    }
   },
   "onboarding": {
     "age": {
