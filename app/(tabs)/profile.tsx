@@ -55,9 +55,16 @@ export default function ProfileScreen() {
 
   const supportSettings: SettingItem[] = [
     {
+      icon: 'help-circle-outline',
+      title: t('profile.faq', 'FAQs'),
+      subtitle: t('profile.faqSubtitle', 'Common questions & answers'),
+      type: 'navigation',
+      onPress: () => router.push('/profile/faq'),
+    },
+    {
       icon: 'information-circle-outline',
       title: t('profile.helpAndSupport', 'Help & Support'),
-      subtitle: t('profile.helpAndSupportSubtitle', 'FAQs, Privacy, Terms'),
+      subtitle: t('profile.helpAndSupportSubtitle', 'Privacy, Terms, Contact'),
       type: 'navigation',
       onPress: () => router.push('/profile/help-support'),
     },

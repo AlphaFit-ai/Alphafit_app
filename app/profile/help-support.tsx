@@ -46,15 +46,6 @@ export default function HelpSupportScreen() {
         onPress: () => Linking.openURL('https://forgeai.com/terms'),
       },
     },
-    {
-      icon: 'chatbubble-ellipses-outline',
-      title: 'FAQs',
-      content: 'Find answers to common questions about workouts, nutrition tracking, subscriptions, and app features. Visit our help center for detailed guides and tutorials.',
-      action: {
-        label: 'View FAQs',
-        onPress: () => Linking.openURL('https://forgeai.com/faq'),
-      },
-    },
   ];
 
   return (
