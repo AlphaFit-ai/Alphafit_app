@@ -21,7 +21,7 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-const THEME_STORAGE_KEY = '@forge_ai_theme';
+const THEME_STORAGE_KEY = '@alphafit_ai_theme';
 
 const lightTheme: ThemeColors = {
   background: Colors.white,

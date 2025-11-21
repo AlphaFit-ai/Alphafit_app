@@ -177,7 +177,7 @@ export default function RegisterScreen() {
             <Text style={[styles.welcomeText, { color: colors.text }]}>
               {t('register.title', 'CREATE ACCOUNT')}
             </Text>
-            <GradientText text="FORGE AI" style={styles.brandContainer} />
+            <GradientText text="ALPHAFIT AI" style={styles.brandContainer} />
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               {t('register.subtitle', 'Start your fitness transformation journey')}
             </Text>

@@ -29,7 +29,7 @@ export default function TabsLayout() {
       {isWeb && (
         <View style={styles.webSidebar as any}>
           <View style={styles.webSidebarHeader as any}>
-            <GradientText text="FORGE AI" style={styles.webLogoText as any} />
+            <GradientText text="ALPHAFIT AI" style={styles.webLogoText as any} />
             <TouchableOpacity style={styles.webNotificationButton as any} activeOpacity={0.7}>
               <View style={styles.webNotificationContainer as any}>
                 <Ionicons name="notifications-outline" size={24} color={Colors.black} />
@@ -79,7 +79,7 @@ export default function TabsLayout() {
           },
           headerLeft: () => (
             <View style={styles.headerLeft}>
-              <GradientText text="FORGE AI" style={styles.logoText} />
+              <GradientText text="ALPHAFIT AI" style={styles.logoText} />
             </View>
           ),
           headerRight: () => (

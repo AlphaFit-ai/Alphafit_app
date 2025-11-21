@@ -45,7 +45,7 @@ export default function SplashScreen() {
           },
         ]}
       >
-        <GradientText text="FORGE AI" style={styles.logoText} />
+        <GradientText text="ALPHAFIT AI" style={styles.logoText} />
       </Animated.View>
     </View>
   );

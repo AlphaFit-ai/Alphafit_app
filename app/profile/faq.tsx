@@ -34,7 +34,7 @@ export default function FAQScreen() {
     },
     {
       question: 'How do I cancel my subscription?',
-      answer: 'You can manage your subscription in your device settings under Subscriptions, or contact our support team at support@forgeai.com for assistance.',
+      answer: 'You can manage your subscription in your device settings under Subscriptions, or contact our support team at support@alphafitai.com for assistance.',
     },
     {
       question: 'Is my data secure and private?',
@@ -50,7 +50,7 @@ export default function FAQScreen() {
     },
     {
       question: 'What should I do if I encounter a bug?',
-      answer: 'Please contact our support team at support@forgeai.com with details about the issue. Include screenshots if possible, and we\'ll work quickly to resolve it.',
+      answer: 'Please contact our support team at support@alphafitai.com with details about the issue. Include screenshots if possible, and we\'ll work quickly to resolve it.',
     },
     {
       question: 'Can I change my fitness goals after setup?',
@@ -67,7 +67,7 @@ export default function FAQScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           <Text style={[styles.headerText, { color: colors.textSecondary }]}>
-            Find answers to commonly asked questions about Forge AI
+            Find answers to commonly asked questions about AlphaFit AI
           </Text>
 
           {faqItems.map((item, index) => (
@@ -115,7 +115,7 @@ export default function FAQScreen() {
               Still have questions?
             </Text>
             <Text style={[styles.contactSubtitle, { color: colors.textSecondary }]}>
-              Contact us at support@forgeai.com
+              Contact us at support@alphafitai.com
             </Text>
           </View>
 

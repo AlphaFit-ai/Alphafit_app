@@ -131,7 +131,7 @@ export default function LoginScreen() {
         <View style={styles.bottomWrapper}>
           <View style={styles.header}>
             <Text style={[styles.welcomeText, { color: colors.text }]}>{t('welcome.title')}</Text>
-            <GradientText text="FORGE AI" style={styles.brandContainer} />
+            <GradientText text="ALPHAFIT AI" style={styles.brandContainer} />
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('welcome.subtitle')}</Text>
           </View>
 
