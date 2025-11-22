@@ -1,53 +1,84 @@
-# 🔥 Forge AI - AI-Powered Fitness Mobile Application
+# AlphaFit AI - Mobile App
 
-<div align="center">
+React Native fitness application with Firebase authentication.
 
-![Forge AI Logo](https://via.placeholder.com/200x200/FF6B4A/FFFFFF?text=FORGE+AI)
+## Features
 
-**Your Personal AI Fitness Coach**
+- 🔐 Firebase Authentication (Email, Google, Apple)
+- 🏋️ Workout & nutrition tracking
+- 📊 Progress analytics
+- 🎨 Dark mode support
+- 🌍 Multi-language (EN, ES, FR)
 
-[![React Native](https://img.shields.io/badge/React%20Native-0.81-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-54-black.svg)](https://expo.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-Backend-green.svg)](https://spring.io/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-Database-green.svg)](https://www.mongodb.com/)
+## Setup
 
-</div>
+### Prerequisites
+- Node.js 18+
+- Expo CLI
+- Backend running on port 8080
 
----
+### Installation
 
-## 📱 About
+```bash
+npm install
+```
 
-Forge AI is a professional mobile fitness application that uses AI to provide personalized workout and nutrition plans. The app features a comprehensive 10-step onboarding flow that collects user data and integrates with a Spring Boot backend and MongoDB database.
+### Configuration
 
-### ✨ Key Features
+Create `.env`:
+```env
+EXPO_PUBLIC_API_URL=http://localhost:8080/api
+```
 
-- 🚀 **Smooth Onboarding Flow** - 10 intuitive screens to collect user fitness data
-- 🔐 **Multi-Provider Authentication** - Google, Apple, and Email login
-- 📊 **AI Physique Analysis** - Current state analysis and 6-month projection
-- 🎨 **Professional Design** - Clean, modern UI with consistent theme system
-- 🔄 **Real-time Sync** - Seamless data collection and backend integration
-- 📱 **Cross-Platform** - Works on iOS and Android
-- 🌍 **Unit System** - Imperial and Metric measurement support
+**Note**: Firebase config files `google-services.json` and `GoogleService-Info.plist` are already in the root directory.
 
----
+### Run
 
-## 🏗️ Tech Stack
+```bash
+npm start
+# Press 'i' for iOS, 'a' for Android
+```
 
-### Frontend
-- **React Native** - Cross-platform mobile development
-- **Expo** - Development platform and build system
-- **TypeScript** - Type-safe code
-- **Expo Router** - File-based navigation
-- **Axios** - HTTP client for API calls
-- **AsyncStorage** - Local data persistence
-- **Context API** - State management
+## Authentication
 
-### Backend (Requirements)
-- **Spring Boot** - REST API framework
-- **MongoDB** - NoSQL database
-- **JWT** - Authentication tokens
-- **BCrypt** - Password hashing
+Uses Firebase for authentication, then syncs with Spring Boot backend.
+
+### Email/Password
+```typescript
+import { userService } from './services';
+await userService.registerWithEmail(email, password, fullName);
+await userService.loginWithEmail(email, password);
+```
+
+### Google Sign-In
+```tsx
+import { GoogleSignInButton } from './components';
+<GoogleSignInButton onSuccess={() => {}} onError={(e) => {}} />
+```
+
+### Apple Sign-In (iOS)
+```tsx
+import { AppleSignInButton } from './components';
+<AppleSignInButton onSuccess={() => {}} onError={(e) => {}} />
+```
+
+## Project Structure
+
+```
+app/          # Screens (Expo Router)
+components/   # Reusable components
+services/     # API & Firebase services
+context/      # State management
+constants/    # App constants
+```
+
+## Tech Stack
+
+- React Native (Expo)
+- TypeScript
+- Firebase SDK
+- Axios
+- Context API
 
 ### DevOps
 - **Azure** - Cloud hosting

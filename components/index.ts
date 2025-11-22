@@ -7,4 +7,6 @@ export { default as NotificationModal } from './NotificationModal';
 export { OptionCard } from './OptionCard';
 export { ProgressBar } from './ProgressBar';
 export { ProPlanModal } from './ProPlanModal';
+export { GoogleSignInButton } from './GoogleSignInButton';
+export { AppleSignInButton } from './AppleSignInButton';
 

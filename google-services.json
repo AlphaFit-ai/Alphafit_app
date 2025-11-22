@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "972624920920",
+    "project_id": "alphafit-ai-app",
+    "storage_bucket": "alphafit-ai-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:972624920920:android:a4b5bae7be1ce6e423652d",
+        "android_client_info": {
+          "package_name": "com.app.alphafit"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "972624920920-jnpd9hrt779avgkiv01hpf1ghabo4esu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAg6a0C3vIQSVXMAOkKD6ysl7nKZQ0M1KM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "972624920920-jnpd9hrt779avgkiv01hpf1ghabo4esu.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "972624920920-s0r51ubufl4271hublj74bni1rdmei90.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.app.alphafit"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
