@@ -27,8 +27,8 @@ export default function TabsLayout() {
   return (
     <>
       {isWeb && (
-        <View style={styles.webSidebar as any}>
-          <View style={styles.webSidebarHeader as any}>
+        <View style={[styles.webSidebar as any, { backgroundColor: colors.card }]}>
+          <View style={[styles.webSidebarHeader as any, { borderBottomColor: colors.border }]}>
             <View style={styles.webLogoContainer as any}>
               <Image 
                 source={require('../../assets/images/favicon.png')} 
@@ -38,7 +38,7 @@ export default function TabsLayout() {
             </View>
             <TouchableOpacity style={styles.webNotificationButton as any} activeOpacity={0.7}>
               <View style={styles.webNotificationContainer as any}>
-                <Ionicons name="notifications-outline" size={24} color={Colors.black} />
+                <Ionicons name="notifications-outline" size={24} color={colors.icon} />
                 <View style={styles.webNotificationBadge as any} />
               </View>
             </TouchableOpacity>
@@ -52,18 +52,18 @@ export default function TabsLayout() {
                   onPress={() => router.push(item.route as any)}
                   style={({ pressed }) => [
                     styles.webNavItem as any,
-                    isActive && (styles.webNavItemActive as any),
+                    isActive && { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] },
                     pressed && (styles.webNavItemPressed as any),
                   ]}
                 >
                   {item.iconSet === 'feather' ? (
-                    <Feather name={item.icon} size={24} color={isActive ? Colors.black : Colors.gray[400]} />
+                    <Feather name={item.icon} size={24} color={isActive ? colors.text : Colors.gray[400]} />
                   ) : (
-                    <Ionicons name={item.icon} size={24} color={isActive ? Colors.black : Colors.gray[400]} />
+                    <Ionicons name={item.icon} size={24} color={isActive ? colors.text : Colors.gray[400]} />
                   )}
                   <Text style={[
                     styles.webNavLabel as any,
-                    { color: isActive ? Colors.black : Colors.gray[400] }
+                    { color: isActive ? colors.text : Colors.gray[400] }
                   ]}>
                     {item.label}
                   </Text>
@@ -112,7 +112,13 @@ export default function TabsLayout() {
           headerTitle: '',
           tabBarActiveTintColor: colors.text,
           tabBarInactiveTintColor: Colors.gray[400],
-          sceneStyle: { backgroundColor: colors.background },
+          sceneStyle: { 
+            backgroundColor: colors.background,
+            ...(isWeb && { 
+              marginLeft: 240,
+              paddingHorizontal: 40,
+            })
+          },
           tabBarStyle: isWeb ? { display: 'none' } : {
             backgroundColor: colors.background,
             borderTopColor: isDarkMode ? Colors.gray[700] : Colors.gray[100],

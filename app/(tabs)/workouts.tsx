@@ -201,7 +201,6 @@ export default function WorkoutsScreen() {
                 source={program.icon} 
                 style={[
                   styles.workoutIcon,
-                  selectedDay === program.day && styles.workoutIconActive,
                 ]}
                 resizeMode="contain"
               />
@@ -358,9 +357,6 @@ export default function WorkoutsScreen() {
     width: 62,
     height: 62,
     marginBottom: 12,
-  },
-  workoutIconActive: {
-    tintColor: Colors.white,
   },
   workoutTitle: {
     fontSize: 15,
