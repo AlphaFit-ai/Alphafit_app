@@ -2,11 +2,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Button, GradientText, Input } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
+import { firebaseAuthService, userService } from '../../services';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
+import * as AppleAuthentication from 'expo-apple-authentication';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -14,8 +20,20 @@ export default function LoginScreen() {
   const { updateOnboardingData } = useOnboarding();
   const { isDarkMode, toggleTheme, colors } = useTheme();
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Google OAuth setup with account selection
+  const [googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
+    androidClientId: '972624920920-jnpd9hrt779avgkiv01hpf1ghabo4esu.apps.googleusercontent.com',
+    iosClientId: '972624920920-s0r51ubufl4271hublj74bni1rdmei90.apps.googleusercontent.com',
+    webClientId: '972624920920-jnpd9hrt779avgkiv01hpf1ghabo4esu.apps.googleusercontent.com',
+    selectAccount: true, // Force account selection on Android
+  });
 
   const toggleLanguageMenu = () => {
     setShowLanguageMenu(!showLanguageMenu);
@@ -26,33 +44,169 @@ export default function LoginScreen() {
     setShowLanguageMenu(false);
   };
 
+  // Handle Google OAuth response
+  React.useEffect(() => {
+    if (googleResponse?.type === 'success') {
+      handleGoogleSignIn(googleResponse.authentication?.idToken);
+    } else if (googleResponse?.type === 'error') {
+      console.error('Google OAuth error:', googleResponse.error);
+      
+      // Show user-friendly error for OAuth configuration issues
+      if (googleResponse.error?.message?.includes('Access blocked') || 
+          googleResponse.error?.message?.includes('Authorization')) {
+        Alert.alert(
+          'Configuration Error',
+          'Google Sign-In needs additional setup. Please use Email/Password sign-in for now, or contact support.'
+        );
+      }
+    }
+  }, [googleResponse]);
+
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  const handleContinueWithGoogle = () => {
-    updateOnboardingData({ authProvider: 'google' });
-    router.push('/onboarding/source');
+  const handleAuthSuccess = async (user: any, idToken: string, provider: string) => {
+    try {
+      // Send to backend
+      const response = await userService.authenticateUser(idToken);
+      
+      // Update onboarding context
+      updateOnboardingData({ 
+        email: user.email || '',
+        authProvider: provider,
+        userId: response.userId 
+      });
+
+      // Check if user needs onboarding
+      if (response.needsOnboarding) {
+        router.replace('/onboarding/source');
+      } else {
+        router.replace('/(tabs)/home');
+      }
+    } catch (error: any) {
+      console.error('Backend authentication error:', error);
+      Alert.alert(
+        t('welcome.error', 'Error'),
+        error.message || t('welcome.authError', 'Authentication failed. Please try again.')
+      );
+    }
   };
 
-  const handleContinueWithApple = () => {
-    updateOnboardingData({ authProvider: 'apple' });
-    router.push('/onboarding/source');
+  const handleGoogleSignIn = async (idToken?: string) => {
+    if (!idToken) {
+      Alert.alert(t('welcome.error', 'Error'), t('welcome.noToken', 'No authentication token received'));
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const result = await firebaseAuthService.signInWithGoogleCredential(idToken);
+      await handleAuthSuccess(result.user, result.idToken, 'google');
+    } catch (error: any) {
+      console.error('Google Sign-In error:', error);
+      
+      let errorMessage = error.message || t('welcome.googleError', 'Google sign-in failed');
+      
+      // Handle specific OAuth errors
+      if (error.message?.includes('Access blocked') || error.message?.includes('Authorization')) {
+        errorMessage = 'Google Sign-In is not properly configured. Please contact support or try Email sign-in instead.';
+      } else if (error.code === 'auth/popup-closed-by-user' || error.code === 'ERR_CANCELED') {
+        // User cancelled, don't show error
+        return;
+      }
+      
+      Alert.alert(
+        t('welcome.error', 'Error'),
+        errorMessage
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleContinueWithEmail = () => {
+  const handleContinueWithGoogle = async () => {
+    if (loading) return;
+    
+    try {
+      // Use showInRecents to force account picker on Android
+      await promptGoogleAsync({ 
+        showInRecents: true,
+        useProxy: true,
+      });
+    } catch (error) {
+      console.error('Error prompting Google sign in:', error);
+    }
+  };
+
+  const handleContinueWithApple = async () => {
+    if (loading) return;
+    
+    // Check if Apple Sign-In is available
+    try {
+      const isAvailable = await AppleAuthentication.isAvailableAsync();
+      
+      if (!isAvailable) {
+        Alert.alert(
+          t('welcome.notAvailable', 'Not Available'),
+          t('welcome.appleNotAvailableMessage', 'Apple Sign-In is only available on iOS 13+ devices. Please use Google or Email sign-in instead.')
+        );
+        return;
+      }
+
+      setLoading(true);
+      const result = await firebaseAuthService.signInWithApple();
+      await handleAuthSuccess(result.user, result.idToken, 'apple');
+    } catch (error: any) {
+      if (error.code !== 'ERR_CANCELED') {
+        console.error('Apple Sign-In error:', error);
+        Alert.alert(
+          t('welcome.error', 'Error'),
+          error.message || t('welcome.appleError', 'Apple sign-in failed. Please try another method.')
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleContinueWithEmail = async () => {
+    // Reset errors
+    setEmailError('');
+    setPasswordError('');
+
+    // Validate
     if (!email) {
-      setEmailError(t('welcome.invalidEmail'));
+      setEmailError(t('welcome.emailRequired', 'Email is required'));
       return;
     }
     if (!validateEmail(email)) {
-      setEmailError(t('welcome.invalidEmail'));
+      setEmailError(t('welcome.invalidEmail', 'Please enter a valid email'));
       return;
     }
-    setEmailError('');
-    updateOnboardingData({ email, authProvider: 'email' });
-    router.push('/onboarding/source');
+    if (!password) {
+      setPasswordError(t('welcome.passwordRequired', 'Password is required'));
+      return;
+    }
+    if (password.length < 6) {
+      setPasswordError(t('welcome.passwordTooShort', 'Password must be at least 6 characters'));
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const result = await firebaseAuthService.loginWithEmail(email, password);
+      await handleAuthSuccess(result.user, result.idToken, 'email');
+    } catch (error: any) {
+      console.error('Email login error:', error);
+      Alert.alert(
+        t('welcome.error', 'Error'),
+        error.message || t('welcome.loginError', 'Login failed. Please check your credentials.')
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -140,21 +294,35 @@ export default function LoginScreen() {
             <TouchableOpacity 
               style={[styles.socialButton, { backgroundColor: colors.card, borderColor: colors.border }]} 
               onPress={handleContinueWithGoogle}
+              disabled={loading || !googleRequest}
             >
-              <Image 
-                source={require('../../assets/images/logo/google.png')} 
-                style={styles.socialIcon}
-              />
-              <Text style={[styles.socialButtonText, { color: colors.text }]}>{t('welcome.continueWithGoogle')}</Text>
+              {loading ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <>
+                  <Image 
+                    source={require('../../assets/images/logo/google.png')} 
+                    style={styles.socialIcon}
+                  />
+                  <Text style={[styles.socialButtonText, { color: colors.text }]}>{t('welcome.continueWithGoogle')}</Text>
+                </>
+              )}
             </TouchableOpacity>
 
             {/* Apple Button */}
             <TouchableOpacity 
               style={[styles.socialButton, { backgroundColor: colors.card, borderColor: colors.border }]} 
               onPress={handleContinueWithApple}
+              disabled={loading}
             >
-              <Ionicons name="logo-apple" size={20} color={colors.icon} style={styles.socialIcon} />
-              <Text style={[styles.socialButtonText, { color: colors.text }]}>{t('welcome.continueWithApple')}</Text>
+              {loading ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <>
+                  <Ionicons name="logo-apple" size={20} color={colors.icon} style={styles.socialIcon} />
+                  <Text style={[styles.socialButtonText, { color: colors.text }]}>{t('welcome.continueWithApple')}</Text>
+                </>
+              )}
             </TouchableOpacity>
 
             {/* Divider */}
@@ -179,8 +347,35 @@ export default function LoginScreen() {
               style={{ marginBottom: 10 }}
             />
 
+            {/* Password Input */}
+            <Input
+              label={t('welcome.password', 'Password')}
+              placeholder={t('welcome.passwordPlaceholder', 'Enter your password')}
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                setPasswordError('');
+              }}
+              secureTextEntry={!showPassword}
+              error={passwordError}
+              style={{ marginBottom: 10 }}
+              rightIcon={
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  <Ionicons 
+                    name={showPassword ? 'eye-off' : 'eye'} 
+                    size={20} 
+                    color={colors.icon} 
+                  />
+                </TouchableOpacity>
+              }
+            />
+
             {/* Continue Button */}
-            <Button title={t('welcome.continue')} onPress={handleContinueWithEmail} />
+            <Button 
+              title={loading ? t('welcome.loading', 'Loading...') : t('welcome.login', 'Log In')} 
+              onPress={handleContinueWithEmail}
+              disabled={loading}
+            />
 
             {/* Terms */}
             <Text style={[styles.terms, { color: colors.textSecondary }]}>{t('welcome.terms')}</Text>

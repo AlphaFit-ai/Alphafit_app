@@ -2,12 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, GradientText, Input } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
+import { firebaseAuthService, userService } from '../../services';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -32,6 +33,7 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -120,25 +122,64 @@ export default function RegisterScreen() {
     return isValid;
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!validateForm()) {
       return;
     }
 
     if (!agreedToTerms) {
-      // Show alert or error
+      Alert.alert(
+        t('register.termsRequired', 'Terms Required'),
+        t('register.termsMessage', 'Please agree to the Terms & Conditions and Privacy Policy to continue')
+      );
       return;
     }
 
-    // Update onboarding data
-    updateOnboardingData({
-      fullName: formData.fullName,
-      email: formData.email,
-      authProvider: 'email',
-    });
+    try {
+      setLoading(true);
+      
+      // Register with Firebase
+      const result = await firebaseAuthService.registerWithEmail(
+        formData.email,
+        formData.password,
+        formData.fullName
+      );
 
-    // Navigate to next onboarding step
-    router.push('/onboarding/source');
+      // Send to backend
+      const response = await userService.authenticateUser(result.idToken);
+
+      // Update onboarding context
+      updateOnboardingData({
+        fullName: formData.fullName,
+        email: formData.email,
+        authProvider: 'email',
+        userId: response.userId
+      });
+
+      // Navigate to onboarding flow
+      router.replace('/onboarding/source');
+      
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      
+      let errorMessage = t('register.errors.registrationFailed', 'Registration failed. Please try again.');
+      
+      // Handle specific Firebase errors
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = t('register.errors.emailInUse', 'This email is already registered. Please log in instead.');
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = t('register.errors.weakPassword', 'Password is too weak. Please use a stronger password.');
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = t('register.errors.invalidEmail', 'Invalid email address.');
+      }
+      
+      Alert.alert(
+        t('register.error', 'Registration Error'),
+        errorMessage
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBackToLogin = () => {
@@ -276,9 +317,9 @@ export default function RegisterScreen() {
 
             {/* Register Button */}
             <Button 
-              title={t('register.createAccount', 'Create Account')} 
+              title={loading ? t('register.creating', 'Creating Account...') : t('register.createAccount', 'Create Account')} 
               onPress={handleRegister}
-              disabled={!agreedToTerms}
+              disabled={!agreedToTerms || loading}
             />
 
             {/* Login Link */}
