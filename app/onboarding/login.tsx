@@ -8,11 +8,7 @@ import { Colors, Fonts, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
 import { firebaseAuthService, userService } from '../../services';
-import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
 import * as AppleAuthentication from 'expo-apple-authentication';
-
-WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -27,13 +23,6 @@ export default function LoginScreen() {
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Google OAuth setup
-  const [googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
-    androidClientId: '972624920920-jnpd9hrt779avgkiv01hpf1ghabo4esu.apps.googleusercontent.com',
-    iosClientId: '972624920920-s0r51ubufl4271hublj74bni1rdmei90.apps.googleusercontent.com',
-    webClientId: '972624920920-jnpd9hrt779avgkiv01hpf1ghabo4esu.apps.googleusercontent.com',
-  });
-
   const toggleLanguageMenu = () => {
     setShowLanguageMenu(!showLanguageMenu);
   };
@@ -43,11 +32,7 @@ export default function LoginScreen() {
     setShowLanguageMenu(false);
   };
 
-  // Handle Google OAuth response
-  React.useEffect(() => {
-    if (googleResponse?.type === 'success') {
-      handleGoogleSignIn(googleResponse.authentication?.idToken);
-    }
+
   }, [googleResponse]);
 
   const validateEmail = (email: string) => {
@@ -82,28 +67,22 @@ export default function LoginScreen() {
     }
   };
 
-  const handleGoogleSignIn = async (idToken?: string) => {
-    if (!idToken) {
-      Alert.alert(t('welcome.error', 'Error'), t('welcome.noToken', 'No authentication token received'));
-      return;
-    }
-
+  const handleContinueWithGoogle = async () => {
+    if (loading) return;
+    
     try {
       setLoading(true);
-      const result = await firebaseAuthService.signInWithGoogleCredential(idToken);
+      const result = await firebaseAuthService.signInWithGoogle();
       await handleAuthSuccess(result.user, result.idToken, 'google');
     } catch (error: any) {
       console.error('Google Sign-In error:', error);
       
-      let errorMessage = error.message || t('welcome.googleError', 'Google sign-in failed');
-      
-      // Handle specific OAuth errors
-      if (error.message?.includes('Access blocked') || error.message?.includes('Authorization')) {
-        errorMessage = 'Google Sign-In is not properly configured. Please contact support or try Email sign-in instead.';
-      } else if (error.code === 'auth/popup-closed-by-user' || error.code === 'ERR_CANCELED') {
-        // User cancelled, don't show error
+      // User cancelled, don't show error
+      if (error.code === 'ERR_CANCELED' || error.message?.includes('cancelled') || error.message?.includes('canceled')) {
         return;
       }
+      
+      let errorMessage = error.message || t('welcome.googleError', 'Google sign-in failed');
       
       Alert.alert(
         t('welcome.error', 'Error'),
@@ -111,16 +90,6 @@ export default function LoginScreen() {
       );
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleContinueWithGoogle = async () => {
-    if (loading || !googleRequest) return;
-    
-    try {
-      await promptGoogleAsync();
-    } catch (error) {
-      console.error('Error prompting Google sign in:', error);
     }
   };
 

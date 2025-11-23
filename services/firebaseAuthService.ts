@@ -13,7 +13,14 @@ import {
   User
 } from 'firebase/auth';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { config } from '../config';
+
+// Configure Google Sign-In
+GoogleSignin.configure({
+  webClientId: config.googleAuth.webClientId,
+  offlineAccess: true,
+});
 
 // Initialize Firebase (only once)
 const app = getApps().length === 0 ? initializeApp(config.firebase) : getApp();
@@ -40,7 +47,42 @@ export interface AuthResult {
 
 class FirebaseAuthService {
   /**
-   * Sign in with Google using ID token from expo-auth-session
+   * Sign in with Google using native Google Sign-In
+   */
+  async signInWithGoogle(): Promise<AuthResult> {
+    try {
+      // Check if device supports Google Play Services
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      
+      // Trigger Google Sign-In flow (native UI)
+      const userInfo = await GoogleSignin.signIn();
+      
+      // Get ID token from Google Sign-In
+      const idToken = userInfo.data?.idToken;
+      
+      if (!idToken) {
+        throw new Error('No ID token received from Google Sign-In');
+      }
+      
+      // Create Firebase credential
+      const credential = GoogleAuthProvider.credential(idToken);
+      
+      // Sign in to Firebase
+      const userCredential = await signInWithCredential(getAuthInstance(), credential);
+      const token = await userCredential.user.getIdToken();
+      
+      return {
+        user: userCredential.user,
+        idToken: token
+      };
+    } catch (error: any) {
+      console.error('Firebase Google sign-in error:', error);
+      throw new Error(error.message || 'Failed to sign in with Google');
+    }
+  }
+
+  /**
+   * Sign in with Google using ID token from expo-auth-session (legacy)
    */
   async signInWithGoogleCredential(idToken: string): Promise<AuthResult> {
     try {
@@ -148,7 +190,7 @@ class FirebaseAuthService {
   /**
    * Create account with email and password
    */
-  async createUserWithEmailPassword(
+  async registerWithEmail(
     email: string, 
     password: string, 
     displayName?: string

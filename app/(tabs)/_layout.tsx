@@ -31,7 +31,7 @@ export default function TabsLayout() {
           <View style={[styles.webSidebarHeader as any, { borderBottomColor: colors.border }]}>
             <View style={styles.webLogoContainer as any}>
               <Image 
-                source={require('../../assets/images/favicon.png')} 
+                source={require('../../assets/images/logo.png')} 
                 style={styles.faviconImage as any}
               />
               <GradientText text="ALPHAFIT AI" style={styles.webLogoText as any} />
@@ -86,7 +86,7 @@ export default function TabsLayout() {
           headerLeft: () => (
             <View style={styles.headerLeft}>
               <Image 
-                source={require('../../assets/images/favicon.png')} 
+                source={require('../../assets/images/logo.png')} 
                 style={styles.faviconImage}
               />
               <GradientText text="ALPHAFIT AI" style={styles.logoText} />
