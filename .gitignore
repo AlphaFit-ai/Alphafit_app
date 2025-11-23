@@ -38,8 +38,9 @@ yarn-error.*
 *.env
 
 # Firebase (Sensitive - DO NOT COMMIT)
-GoogleService-Info.plist
-google-services.json
+# Note: google-services.json and GoogleService-Info.plist are now tracked for EAS Build
+# GoogleService-Info.plist
+# google-services.json
 firebase-service-account.json
 **/firebase-config.ts
 
