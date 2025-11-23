@@ -11,11 +11,11 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.alphafit.ai",
+      "bundleIdentifier": "com.app.alphafit",
       "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
-      "package": "com.alphafit.ai",
+      "package": "com.app.alphafit",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
