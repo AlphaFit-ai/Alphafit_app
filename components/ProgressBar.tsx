@@ -19,8 +19,11 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ currentStep, totalStep
   const handleBack = () => {
     if (onBack) {
       onBack();
-    } else {
+    } else if (router.canGoBack()) {
       router.back();
+    } else {
+      // If can't go back, go to login screen
+      router.replace('/onboarding/login');
     }
   };
 

@@ -152,8 +152,7 @@ export default function RegisterScreen() {
       updateOnboardingData({
         fullName: formData.fullName,
         email: formData.email,
-        authProvider: 'email',
-        userId: response.userId
+        authProvider: 'email'
       });
 
       // Navigate to onboarding flow
@@ -183,7 +182,7 @@ export default function RegisterScreen() {
   };
 
   const handleBackToLogin = () => {
-    router.back();
+    router.replace('/onboarding/login');
   };
 
   return (

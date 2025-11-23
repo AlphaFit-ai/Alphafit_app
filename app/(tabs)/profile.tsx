@@ -6,6 +6,7 @@ import { Image, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } f
 import { Alert, LanguageSelector, ProPlanModal } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
+import { firebaseAuthService } from '../../services';
 
 interface SettingItem {
   icon: keyof typeof Ionicons.glyphMap;
@@ -72,6 +73,22 @@ export default function ProfileScreen() {
 
   const handleLanguageSelect = (language: { code: string; name: string; flag: string }) => {
     i18n.changeLanguage(language.code);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await firebaseAuthService.signOut();
+      // Navigate to login screen
+      router.replace('/onboarding/login');
+    } catch (error: any) {
+      console.error('Logout error:', error);
+      setAlertConfig({
+        visible: true,
+        title: 'Logout Failed',
+        message: error.message || 'Failed to logout. Please try again.',
+        buttons: [{ text: 'OK', style: 'cancel' }]
+      });
+    }
   };
 
   const appSettings: SettingItem[] = [
@@ -185,7 +202,7 @@ export default function ProfileScreen() {
           message: 'Are you sure you want to logout?',
           buttons: [
             { text: 'Cancel', style: 'cancel' },
-            { text: 'Logout', style: 'destructive', onPress: () => console.log('Logged out') }
+            { text: 'Logout', style: 'destructive', onPress: handleLogout }
           ]
         })}
       >

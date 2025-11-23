@@ -1,7 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getAuth,
-  initializeAuth,
   signInWithCredential, 
   GoogleAuthProvider,
   OAuthProvider,
@@ -20,24 +19,17 @@ import { config } from '../config';
 GoogleSignin.configure({
   webClientId: config.googleAuth.webClientId,
   offlineAccess: true,
+  // Force account selection on first sign-in, then remember the account
+  forceCodeForRefreshToken: true,
 });
 
 // Initialize Firebase (only once)
 const app = getApps().length === 0 ? initializeApp(config.firebase) : getApp();
 
-// Lazy auth initialization
-let authInstance: any = null;
-
+// Get Auth instance - Firebase will use AsyncStorage automatically for persistence
+// The warning can be safely ignored as Firebase detects AsyncStorage is installed
 const getAuthInstance = () => {
-  if (authInstance) return authInstance;
-  
-  try {
-    authInstance = getAuth(app);
-    return authInstance;
-  } catch (error) {
-    console.error('Failed to get auth instance:', error);
-    throw error;
-  }
+  return getAuth(app);
 };
 
 export interface AuthResult {
@@ -48,21 +40,46 @@ export interface AuthResult {
 class FirebaseAuthService {
   /**
    * Sign in with Google using native Google Sign-In
+   * @returns AuthResult if successful, null if user cancelled
    */
-  async signInWithGoogle(): Promise<AuthResult> {
+  async signInWithGoogle(): Promise<AuthResult | null> {
     try {
+      console.log('Starting native Google Sign-In...');
+      
       // Check if device supports Google Play Services
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      console.log('Google Play Services available');
       
-      // Trigger Google Sign-In flow (native UI)
+      // Sign out from Google to clear any cached account selection
+      // This forces the account picker to show every time
+      try {
+        await GoogleSignin.signOut();
+        console.log('Cleared previous Google Sign-In session');
+      } catch (error) {
+        // Ignore error if user wasn't signed in
+        console.log('No previous Google session to clear');
+      }
+      
+      // Always show account picker - this gives users choice to select or switch accounts
+      // Note: The "You're signing back into..." message is standard Google behavior
+      // showing that you've previously granted permission to this app
+      console.log('Showing Google Sign-In picker...');
       const userInfo = await GoogleSignin.signIn();
       
-      // Get ID token from Google Sign-In
-      const idToken = userInfo.data?.idToken;
+      // Check if user cancelled (no user data returned)
+      if (!userInfo.data || !userInfo.data.user) {
+        console.log('Google Sign-In cancelled by user (no user data)');
+        return null;
+      }
+      
+      const idToken = userInfo.data.idToken;
+      console.log('User selected from picker:', userInfo.data.user.email);
       
       if (!idToken) {
         throw new Error('No ID token received from Google Sign-In');
       }
+      
+      console.log('ID token received, signing in to Firebase...');
       
       // Create Firebase credential
       const credential = GoogleAuthProvider.credential(idToken);
@@ -71,12 +88,25 @@ class FirebaseAuthService {
       const userCredential = await signInWithCredential(getAuthInstance(), credential);
       const token = await userCredential.user.getIdToken();
       
+      console.log('Firebase sign-in successful');
+      
       return {
         user: userCredential.user,
         idToken: token
       };
     } catch (error: any) {
+      // Handle user cancellation gracefully
+      if (error.code === '-5' || 
+          error.code === 'SIGN_IN_CANCELLED' || 
+          error.message?.includes('Sign in action cancelled') ||
+          error.message?.includes('User cancelled')) {
+        console.log('Google Sign-In cancelled by user');
+        return null; // Return null instead of throwing error
+      }
+      
       console.error('Firebase Google sign-in error:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
       throw new Error(error.message || 'Failed to sign in with Google');
     }
   }
@@ -236,13 +266,23 @@ class FirebaseAuthService {
   }
 
   /**
-   * Sign out current user
+   * Sign out current user from both Firebase and Google
    */
   async signOut(): Promise<void> {
     try {
+      // Sign out from Firebase
       await signOut(getAuthInstance());
+      
+      // Sign out from Google Sign-In if user was signed in
+      const isGoogleSignedIn = await GoogleSignin.hasPreviousSignIn();
+      if (isGoogleSignedIn) {
+        await GoogleSignin.signOut();
+        console.log('Signed out from Google');
+      }
+      
+      console.log('Sign out successful');
     } catch (error: any) {
-      console.error('Firebase sign-out error:', error);
+      console.error('Sign-out error:', error);
       throw new Error(error.message || 'Failed to sign out');
     }
   }

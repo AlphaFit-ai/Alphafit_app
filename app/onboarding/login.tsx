@@ -32,15 +32,12 @@ export default function LoginScreen() {
     setShowLanguageMenu(false);
   };
 
-
-  }, [googleResponse]);
-
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  const handleAuthSuccess = async (user: any, idToken: string, provider: string) => {
+  const handleAuthSuccess = async (user: any, idToken: string, provider: 'email' | 'google' | 'apple') => {
     try {
       // Send to backend
       const response = await userService.authenticateUser(idToken);
@@ -48,8 +45,7 @@ export default function LoginScreen() {
       // Update onboarding context
       updateOnboardingData({ 
         email: user.email || '',
-        authProvider: provider,
-        userId: response.userId 
+        authProvider: provider
       });
 
       // Check if user needs onboarding
@@ -73,14 +69,16 @@ export default function LoginScreen() {
     try {
       setLoading(true);
       const result = await firebaseAuthService.signInWithGoogle();
+      
+      // User cancelled - result will be null
+      if (!result) {
+        console.log('User cancelled Google Sign-In');
+        return;
+      }
+      
       await handleAuthSuccess(result.user, result.idToken, 'google');
     } catch (error: any) {
       console.error('Google Sign-In error:', error);
-      
-      // User cancelled, don't show error
-      if (error.code === 'ERR_CANCELED' || error.message?.includes('cancelled') || error.message?.includes('canceled')) {
-        return;
-      }
       
       let errorMessage = error.message || t('welcome.googleError', 'Google sign-in failed');
       
@@ -149,7 +147,7 @@ export default function LoginScreen() {
 
     try {
       setLoading(true);
-      const result = await firebaseAuthService.loginWithEmail(email, password);
+      const result = await firebaseAuthService.signInWithEmailPassword(email, password);
       await handleAuthSuccess(result.user, result.idToken, 'email');
     } catch (error: any) {
       console.error('Email login error:', error);
@@ -247,7 +245,7 @@ export default function LoginScreen() {
             <TouchableOpacity 
               style={[styles.socialButton, { backgroundColor: colors.card, borderColor: colors.border }]} 
               onPress={handleContinueWithGoogle}
-              disabled={loading || !googleRequest}
+              disabled={loading}
             >
               {loading ? (
                 <ActivityIndicator size="small" color={colors.primary} />
@@ -423,7 +421,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bottomWrapper: {
-    paddingVertical: 40,
+    paddingTop: 60,
   },
   header: {
     paddingHorizontal: Spacing.screenPaddingHorizontal,

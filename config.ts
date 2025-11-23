@@ -1,8 +1,10 @@
 // Configuration for AlphaFit AI App
 export const config = {
   // Backend API Configuration
+  // Physical device: Using detected device IP
+  // If backend is unreachable, replace with your computer's local IP (run ipconfig)
   API_BASE_URL: __DEV__ 
-    ? 'http://localhost:8080/api' 
+    ? 'http://100.91.176.251:8080/api' 
     : 'https://your-production-api.com/api',
   API_TIMEOUT: 30000,
 
