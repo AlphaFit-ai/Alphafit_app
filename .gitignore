@@ -30,8 +30,26 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# local env files (Sensitive)
+.env
 .env*.local
+.env.production
+.env.development
+*.env
+
+# Firebase (Sensitive - DO NOT COMMIT)
+GoogleService-Info.plist
+google-services.json
+firebase-service-account.json
+**/firebase-config.ts
+
+# API Keys & Secrets (Sensitive)
+secrets/
+credentials/
+config.local.ts
+*.key
+*.pem
+*.p12
 
 # typescript
 *.tsbuildinfo
@@ -41,3 +59,11 @@ app-example
 # generated native folders
 /ios
 /android
+
+# Logs
+*.log
+logs/
+
+# Backup files
+*.backup
+*.bak

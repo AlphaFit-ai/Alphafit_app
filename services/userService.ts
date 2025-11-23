@@ -38,6 +38,7 @@ export interface AuthResponse {
   token: string;
   userId: string;
   user: any;
+  needsOnboarding?: boolean;
 }
 
 export interface UserProfile extends UserOnboardingData {
@@ -47,40 +48,59 @@ export interface UserProfile extends UserOnboardingData {
 }
 
 class UserService {
-  // Authentication endpoints
-  async registerWithEmail(email: string, password: string): Promise<AuthResponse> {
-    const response = await apiClient.post('/auth/register', { email, password });
+  // Authentication endpoints - All auth handled through Firebase ID tokens
+  
+  /**
+   * Authenticate user with Firebase ID token
+   * Backend will verify the token and create/return user session
+   */
+  async authenticateUser(firebaseIdToken: string): Promise<AuthResponse> {
+    const response = await apiClient.post('/auth/firebase', { 
+      idToken: firebaseIdToken 
+    });
+    
     if (response.data.token) {
       await AsyncStorage.setItem('authToken', response.data.token);
       await AsyncStorage.setItem('userId', response.data.userId);
     }
+    
     return response.data;
   }
 
+  /**
+   * Legacy email/password registration (for backward compatibility)
+   * Prefer using Firebase auth with authenticateUser instead
+   */
+  async registerWithEmail(email: string, password: string, fullName?: string): Promise<AuthResponse> {
+    const response = await apiClient.post('/auth/register', { 
+      email, 
+      password,
+      fullName 
+    });
+    
+    if (response.data.token) {
+      await AsyncStorage.setItem('authToken', response.data.token);
+      await AsyncStorage.setItem('userId', response.data.userId);
+    }
+    
+    return response.data;
+  }
+
+  /**
+   * Legacy email/password login (for backward compatibility)
+   * Prefer using Firebase auth with authenticateUser instead
+   */
   async loginWithEmail(email: string, password: string): Promise<AuthResponse> {
-    const response = await apiClient.post('/auth/login', { email, password });
+    const response = await apiClient.post('/auth/login', { 
+      email, 
+      password 
+    });
+    
     if (response.data.token) {
       await AsyncStorage.setItem('authToken', response.data.token);
       await AsyncStorage.setItem('userId', response.data.userId);
     }
-    return response.data;
-  }
-
-  async loginWithGoogle(googleToken: string): Promise<AuthResponse> {
-    const response = await apiClient.post('/auth/google', { token: googleToken });
-    if (response.data.token) {
-      await AsyncStorage.setItem('authToken', response.data.token);
-      await AsyncStorage.setItem('userId', response.data.userId);
-    }
-    return response.data;
-  }
-
-  async loginWithApple(appleToken: string): Promise<AuthResponse> {
-    const response = await apiClient.post('/auth/apple', { token: appleToken });
-    if (response.data.token) {
-      await AsyncStorage.setItem('authToken', response.data.token);
-      await AsyncStorage.setItem('userId', response.data.userId);
-    }
+    
     return response.data;
   }
 
