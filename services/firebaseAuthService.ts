@@ -10,13 +10,10 @@ import {
   signOut,
   sendPasswordResetEmail,
   updateProfile,
-  User,
-  UserCredential
+  User
 } from 'firebase/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { config } from '../config';
-import { Platform } from 'react-native';
 
 // Initialize Firebase (only once)
 const app = getApps().length === 0 ? initializeApp(config.firebase) : getApp();

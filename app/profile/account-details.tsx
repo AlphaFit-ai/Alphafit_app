@@ -6,18 +6,6 @@ import { Button } from '../../components';
 import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
 
-// Web-compatible country picker component
-let CountryPicker: any;
-let Country: any;
-let CountryCode: any;
-
-if (Platform.OS !== 'web') {
-  const CountryPickerModule = require('react-native-country-picker-modal');
-  CountryPicker = CountryPickerModule.default;
-  Country = CountryPickerModule.Country;
-  CountryCode = CountryPickerModule.CountryCode;
-}
-
 interface SuccessModalProps {
   visible: boolean;
   onClose: () => void;
@@ -53,11 +41,9 @@ export default function AccountDetailsScreen() {
   const { colors, isDarkMode } = useTheme();
   const [name, setName] = useState('John Doe');
   const [email, setEmail] = useState('john@example.com');
-  const [countryCode, setCountryCode] = useState<any>('MA'); // Morocco by default
   const [callingCode, setCallingCode] = useState('+212');
   const [phone, setPhone] = useState('');
   const [age, setAge] = useState('28');
-  const [showCountryPicker, setShowCountryPicker] = useState(false);
   
   const [isMetric, setIsMetric] = useState(true);
   const [selectedFeet, setSelectedFeet] = useState(5);
@@ -117,12 +103,7 @@ export default function AccountDetailsScreen() {
     }
   };
 
-  const onSelectCountry = (country: any) => {
-    if (Platform.OS !== 'web') {
-      setCountryCode(country.cca2);
-      setCallingCode(`+${country.callingCode[0]}`);
-    }
-  };
+
 
   const handleCmScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const yOffset = event.nativeEvent.contentOffset.y;
@@ -209,34 +190,13 @@ export default function AccountDetailsScreen() {
           <View style={styles.formSection}>
             <Text style={[styles.label, { color: colors.text }]}>{t('profile.accountDetailsForm.phoneNumber')}</Text>
             <View style={styles.phoneContainer}>
-              {Platform.OS === 'web' ? (
-                <TouchableOpacity 
-                  style={[styles.countryCodeContainer, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.countryFlag, { color: colors.text }]}>🇲🇦</Text>
-                  <Text style={[styles.countryCode, { color: colors.text }]}>{callingCode}</Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity 
-                  style={[styles.countryCodeContainer, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}
-                  onPress={() => setShowCountryPicker(true)}
-                  activeOpacity={0.7}
-                >
-                  <CountryPicker
-                    countryCode={countryCode}
-                    withFilter
-                    withFlag
-                    withCallingCode
-                    withEmoji
-                    onSelect={onSelectCountry}
-                    visible={showCountryPicker}
-                    onClose={() => setShowCountryPicker(false)}
-                    containerButtonStyle={styles.countryPickerButton}
-                  />
-                  <Text style={[styles.countryCode, { color: colors.text }]}>{callingCode}</Text>
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity 
+                style={[styles.countryCodeContainer, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.countryFlag, { color: colors.text }]}>🇲🇦</Text>
+                <Text style={[styles.countryCode, { color: colors.text }]}>{callingCode}</Text>
+              </TouchableOpacity>
               <TextInput
                 style={[styles.input, styles.phoneInput, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100], color: colors.text }]}
                 value={phone}
