@@ -6,7 +6,7 @@ import {
   OAuthProvider,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signOut,
+  signOut as firebaseSignOut,
   sendPasswordResetEmail,
   updateProfile,
   User
@@ -26,8 +26,8 @@ GoogleSignin.configure({
 // Initialize Firebase (only once)
 const app = getApps().length === 0 ? initializeApp(config.firebase) : getApp();
 
-// Get Auth instance - Firebase will use AsyncStorage automatically for persistence
-// The warning can be safely ignored as Firebase detects AsyncStorage is installed
+// Get Auth instance - Firebase 12.x auto-detects AsyncStorage if package is installed
+// The warning can be safely ignored as persistence still works
 const getAuthInstance = () => {
   return getAuth(app);
 };
@@ -50,19 +50,16 @@ class FirebaseAuthService {
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       console.log('Google Play Services available');
       
-      // Sign out from Google to clear any cached account selection
-      // This forces the account picker to show every time
+      // Sign out first to clear any cached account and force account picker
+      // This ensures users can always choose which account to use
       try {
         await GoogleSignin.signOut();
-        console.log('Cleared previous Google Sign-In session');
+        console.log('Cleared cached Google account');
       } catch (error) {
-        // Ignore error if user wasn't signed in
-        console.log('No previous Google session to clear');
+        console.log('No cached account to clear');
       }
       
-      // Always show account picker - this gives users choice to select or switch accounts
-      // Note: The "You're signing back into..." message is standard Google behavior
-      // showing that you've previously granted permission to this app
+      // Show account picker - users can select any Google account
       console.log('Showing Google Sign-In picker...');
       const userInfo = await GoogleSignin.signIn();
       
@@ -101,6 +98,12 @@ class FirebaseAuthService {
           error.message?.includes('Sign in action cancelled') ||
           error.message?.includes('User cancelled')) {
         console.log('Google Sign-In cancelled by user');
+        // Clear any cached state so next attempt shows account picker
+        try {
+          await GoogleSignin.signOut();
+        } catch (signOutError) {
+          // Ignore sign out errors
+        }
         return null; // Return null instead of throwing error
       }
       
@@ -271,7 +274,7 @@ class FirebaseAuthService {
   async signOut(): Promise<void> {
     try {
       // Sign out from Firebase
-      await signOut(getAuthInstance());
+      await firebaseSignOut(getAuthInstance());
       
       // Sign out from Google Sign-In if user was signed in
       const isGoogleSignedIn = await GoogleSignin.hasPreviousSignIn();
