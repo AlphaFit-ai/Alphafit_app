@@ -7,8 +7,12 @@ import { Button, GradientText, Input } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
-import { firebaseAuthService, nativeGoogleSignIn, userService } from '../../services';
+import { firebaseAuthService, userService } from '../../services';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
 import * as AppleAuthentication from 'expo-apple-authentication';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -23,6 +27,13 @@ export default function LoginScreen() {
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Google OAuth setup
+  const [googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
+    androidClientId: '972624920920-jnpd9hrt779avgkiv01hpf1ghabo4esu.apps.googleusercontent.com',
+    iosClientId: '972624920920-s0r51ubufl4271hublj74bni1rdmei90.apps.googleusercontent.com',
+    webClientId: '972624920920-jnpd9hrt779avgkiv01hpf1ghabo4esu.apps.googleusercontent.com',
+  });
+
   const toggleLanguageMenu = () => {
     setShowLanguageMenu(!showLanguageMenu);
   };
@@ -31,6 +42,13 @@ export default function LoginScreen() {
     i18n.changeLanguage(lang);
     setShowLanguageMenu(false);
   };
+
+  // Handle Google OAuth response
+  React.useEffect(() => {
+    if (googleResponse?.type === 'success') {
+      handleGoogleSignIn(googleResponse.authentication?.idToken);
+    }
+  }, [googleResponse]);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -97,28 +115,12 @@ export default function LoginScreen() {
   };
 
   const handleContinueWithGoogle = async () => {
-    if (loading) return;
+    if (loading || !googleRequest) return;
     
     try {
-      setLoading(true);
-      
-      // Use native Google Sign-In (with account picker)
-      const idToken = await nativeGoogleSignIn.signIn();
-      
-      // Sign in with Firebase using the ID token
-      await handleGoogleSignIn(idToken);
-    } catch (error: any) {
-      console.error('Native Google sign in error:', error);
-      
-      // Don't show error if user cancelled
-      if (error.message !== 'Sign-in cancelled') {
-        Alert.alert(
-          t('welcome.error', 'Error'),
-          error.message || t('welcome.googleError', 'Google sign-in failed')
-        );
-      }
-    } finally {
-      setLoading(false);
+      await promptGoogleAsync();
+    } catch (error) {
+      console.error('Error prompting Google sign in:', error);
     }
   };
 
@@ -276,7 +278,7 @@ export default function LoginScreen() {
             <TouchableOpacity 
               style={[styles.socialButton, { backgroundColor: colors.card, borderColor: colors.border }]} 
               onPress={handleContinueWithGoogle}
-              disabled={loading}
+              disabled={loading || !googleRequest}
             >
               {loading ? (
                 <ActivityIndicator size="small" color={colors.primary} />

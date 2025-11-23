@@ -9,13 +9,9 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.app.alphafit",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "supportsTablet": true
     },
     "android": {
-      "package": "com.app.alphafit",
-      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/foregroundImage.png",
@@ -31,14 +27,6 @@
     },
     "plugins": [
       "expo-router",
-      "expo-dev-client",
-      "expo-apple-authentication",
-      [
-        "@react-native-google-signin/google-signin",
-        {
-          "iosUrlScheme": "com.googleusercontent.apps.972624920920-s0r51ubufl4271hublj74bni1rdmei90"
-        }
-      ],
       [
         "expo-splash-screen",
         {
@@ -55,12 +43,6 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    },
-    "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "d7146861-9354-47f7-9b92-e8a2a6f53095"
-      }
     }
   }
 }
