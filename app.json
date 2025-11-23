@@ -1,8 +1,9 @@
 {
   "expo": {
     "name": "AlphaFit AI",
-    "slug": "AlphaFit_AI",
+    "slug": "alphafit-ai",
     "version": "1.0.0",
+    "owner": "alpha_fit",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
     "scheme": "alphafitai",
@@ -48,6 +49,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "d4d7ef19-1d48-44d1-bdeb-ff217fb0f617"
+      }
     }
   }
 }

@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "972624920920-k85arpfc6rq6b94qn4opsa719qqjjtbv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.app.alphafit",
+            "certificate_hash": "959b43d00729a02514472250e1bec5b9e47d5242"
+          }
+        },
+        {
           "client_id": "972624920920-jnpd9hrt779avgkiv01hpf1ghabo4esu.apps.googleusercontent.com",
           "client_type": 3
         }
