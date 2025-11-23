@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Modal, Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, GradientText, Input } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
@@ -34,6 +34,11 @@ export default function RegisterScreen() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [verificationError, setVerificationError] = useState('');
+  const [sendingCode, setSendingCode] = useState(false);
+  const [verifyingCode, setVerifyingCode] = useState(false);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -135,9 +140,73 @@ export default function RegisterScreen() {
       return;
     }
 
+    // Check if email already exists
     try {
-      setLoading(true);
+      setSendingCode(true);
+      const emailExists = await userService.checkEmailExists(formData.email);
       
+      if (emailExists) {
+        Alert.alert(
+          t('register.error', 'Registration Error'),
+          t('register.errors.emailInUse', 'This email is already registered. Please log in instead.')
+        );
+        return;
+      }
+
+      // Send verification code to email
+      const response = await fetch('http://100.91.176.251:8080/api/auth/send-verification-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send verification code');
+      }
+
+      // Show verification modal
+      setShowVerificationModal(true);
+      
+    } catch (error: any) {
+      Alert.alert(
+        t('register.error', 'Error'),
+        error.message || t('register.errors.sendCodeFailed', 'Failed to send verification code. Please try again.')
+      );
+    } finally {
+      setSendingCode(false);
+    }
+  };
+
+  const handleVerifyAndRegister = async () => {
+    if (!verificationCode.trim()) {
+      setVerificationError(t('register.errors.codeRequired', 'Verification code is required'));
+      return;
+    }
+
+    if (verificationCode.length !== 6) {
+      setVerificationError(t('register.errors.codeInvalid', 'Code must be 6 digits'));
+      return;
+    }
+
+    try {
+      setVerifyingCode(true);
+      
+      // Verify code with backend
+      const verifyResponse = await fetch('http://100.91.176.251:8080/api/auth/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email: formData.email,
+          code: verificationCode 
+        })
+      });
+
+      if (!verifyResponse.ok) {
+        setVerificationError(t('register.errors.codeIncorrect', 'Invalid verification code'));
+        return;
+      }
+
+      // Code is valid, proceed with registration
       // Register with Firebase
       const result = await firebaseAuthService.registerWithEmail(
         formData.email,
@@ -155,12 +224,11 @@ export default function RegisterScreen() {
         authProvider: 'email'
       });
 
-      // Navigate to onboarding flow
+      // Close modal and navigate
+      setShowVerificationModal(false);
       router.replace('/onboarding/source');
       
     } catch (error: any) {
-      console.error('Registration error:', error);
-      
       let errorMessage = t('register.errors.registrationFailed', 'Registration failed. Please try again.');
       
       // Handle specific Firebase errors
@@ -177,8 +245,44 @@ export default function RegisterScreen() {
         errorMessage
       );
     } finally {
-      setLoading(false);
+      setVerifyingCode(false);
     }
+  };
+
+  const handleResendCode = async () => {
+    try {
+      setSendingCode(true);
+      setVerificationError('');
+      
+      const response = await fetch('http://100.91.176.251:8080/api/auth/send-verification-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to resend verification code');
+      }
+
+      Alert.alert(
+        t('register.success', 'Success'),
+        t('register.codeSent', 'Verification code sent to your email')
+      );
+      
+    } catch (error: any) {
+      Alert.alert(
+        t('register.error', 'Error'),
+        error.message || t('register.errors.resendFailed', 'Failed to resend code. Please try again.')
+      );
+    } finally {
+      setSendingCode(false);
+    }
+  };
+
+  const handleCloseVerificationModal = () => {
+    setShowVerificationModal(false);
+    setVerificationCode('');
+    setVerificationError('');
   };
 
   const handleBackToLogin = () => {
@@ -227,7 +331,7 @@ export default function RegisterScreen() {
             {/* Full Name Input */}
             <Input
               label={t('register.fullName', 'Full Name')}
-              placeholder={t('register.fullNamePlaceholder', 'John Doe')}
+              placeholder={t('register.fullNamePlaceholder', 'yassir amraoui')}
               value={formData.fullName}
               onChangeText={(text) => handleFieldChange('fullName', text)}
               autoCapitalize="words"
@@ -316,9 +420,9 @@ export default function RegisterScreen() {
 
             {/* Register Button */}
             <Button 
-              title={loading ? t('register.creating', 'Creating Account...') : t('register.createAccount', 'Create Account')} 
+              title={sendingCode ? t('register.sendingCode', 'Sending Code...') : t('register.createAccount', 'Create Account')} 
               onPress={handleRegister}
-              disabled={!agreedToTerms || loading}
+              disabled={!agreedToTerms || sendingCode}
             />
 
             {/* Login Link */}
@@ -335,6 +439,67 @@ export default function RegisterScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Verification Modal */}
+      <Modal
+        visible={showVerificationModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleCloseVerificationModal}
+      >
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalKeyboardView}
+          >
+            <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+              <TouchableOpacity 
+                style={styles.modalCloseButton}
+                onPress={handleCloseVerificationModal}
+              >
+                <Ionicons name="close" size={24} color={colors.text} />
+              </TouchableOpacity>
+
+              <Text style={[styles.modalTitle, { color: colors.text }]}>
+                {t('register.verifyEmail', 'Verify Your Email')}
+              </Text>
+              <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+                {t('register.verifyEmailMessage', 'We sent a 6-digit code to')} {formData.email}
+              </Text>
+
+              <Input
+                label={t('register.verificationCode', 'Verification Code')}
+                placeholder="000000"
+                value={verificationCode}
+                onChangeText={(text) => {
+                  setVerificationCode(text.replace(/[^0-9]/g, ''));
+                  setVerificationError('');
+                }}
+                keyboardType="number-pad"
+                maxLength={6}
+                error={verificationError}
+              />
+
+              <Button 
+                title={verifyingCode ? t('register.verifying', 'Verifying...') : t('register.verify', 'Verify & Create Account')} 
+                onPress={handleVerifyAndRegister}
+                disabled={verifyingCode || sendingCode}
+                style={{ marginTop: 8 }}
+              />
+
+              <TouchableOpacity 
+                onPress={handleResendCode}
+                disabled={sendingCode}
+                style={styles.resendContainer}
+              >
+                <Text style={[styles.resendText, { color: sendingCode ? colors.textSecondary : Colors.primary }]}>
+                  {sendingCode ? t('register.sending', 'Sending...') : t('register.resendCode', 'Resend Code')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -439,5 +604,55 @@ const styles = StyleSheet.create({
     fontSize: Fonts.sizes.base,
     fontFamily: Fonts.semiBold,
     fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalKeyboardView: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    maxWidth: 400,
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  modalCloseButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    zIndex: 1,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: Fonts.weights.bold,
+    fontFamily: Fonts.bold,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: Fonts.sizes.sm,
+    fontFamily: Fonts.regular,
+    marginBottom: 24,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  resendContainer: {
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  resendText: {
+    fontSize: Fonts.sizes.sm,
+    fontFamily: Fonts.semiBold,
+    fontWeight: Fonts.weights.semiBold,
   },
 });

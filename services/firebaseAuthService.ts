@@ -305,16 +305,13 @@ class FirebaseAuthService {
       );
       
       if (!response.ok) {
-        console.error('Failed to check email existence');
         return false;
       }
       
       const exists = await response.json();
-      console.log('Email exists in database:', email, '=', exists);
       
       return exists;
     } catch (error: any) {
-      console.error('Error checking email existence:', error);
       // On error, return false (assume email doesn't exist)
       return false;
     }

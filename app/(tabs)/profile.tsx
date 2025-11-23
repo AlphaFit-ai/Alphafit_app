@@ -33,7 +33,7 @@ export default function ProfileScreen() {
     {
       icon: 'person-outline',
       title: t('profile.accountDetails'),
-      subtitle: 'John Doe • john@example.com',
+      subtitle: 'Yassir • yassir@example.com',
       type: 'navigation',
       onPress: () => router.push('/profile/account-details'),
     },
@@ -175,7 +175,7 @@ export default function ProfileScreen() {
             <Ionicons name="camera" size={16} color={Colors.white} />
           </TouchableOpacity>
         </View>
-        <Text style={[styles.userName, { color: colors.text }]}>John Doe</Text>
+        <Text style={[styles.userName, { color: colors.text }]}>Yassir</Text>
         <Text style={[styles.userEmail, { color: colors.textSecondary }]}>john@example.com</Text>
       </View>
 

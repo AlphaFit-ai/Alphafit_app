@@ -39,8 +39,8 @@ const SuccessModal = ({ visible, onClose }: SuccessModalProps) => {
 export default function AccountDetailsScreen() {
   const { t } = useTranslation();
   const { colors, isDarkMode } = useTheme();
-  const [name, setName] = useState('John Doe');
-  const [email, setEmail] = useState('john@example.com');
+  const [name, setName] = useState('Yassir');
+  const [email, setEmail] = useState('yassir@example.com');
   const [callingCode, setCallingCode] = useState('+212');
   const [phone, setPhone] = useState('');
   const [age, setAge] = useState('28');

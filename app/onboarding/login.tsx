@@ -136,11 +136,11 @@ export default function LoginScreen() {
       return;
     }
 
-    // Check if email exists using Firebase API
+    // Check if email exists using backend API
     try {
       setEmailLoading(true);
       
-      const emailExists = await firebaseAuthService.checkEmailExists(email);
+      const emailExists = await userService.checkEmailExists(email);
       
       if (emailExists) {
         // Email exists, show password modal
@@ -459,6 +459,14 @@ export default function LoginScreen() {
                 </Text>
               </TouchableOpacity>
 
+              {/* Login Button */}
+              <Button 
+                title={emailLoading ? t('welcome.loading', 'Loading...') : t('welcome.login', 'Log In')} 
+                onPress={handlePasswordSubmit}
+                disabled={emailLoading}
+                style={{ marginTop: 8 }}
+              />
+
               {/* Forgot Password Link */}
               <TouchableOpacity 
                 onPress={handleForgotPassword}
@@ -468,14 +476,6 @@ export default function LoginScreen() {
                   {t('welcome.forgotPassword', 'Forgot password?')}
                 </Text>
               </TouchableOpacity>
-
-              {/* Login Button */}
-              <Button 
-                title={emailLoading ? t('welcome.loading', 'Loading...') : t('welcome.login', 'Log In')} 
-                onPress={handlePasswordSubmit}
-                disabled={emailLoading}
-                style={{ marginTop: 8 }}
-              />
             </View>
           </KeyboardAvoidingView>
         </View>
@@ -556,7 +556,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bottomWrapper: {
-    paddingVertical: 40,
+    paddingTop: 40,
+    paddingBottom: 30,
   },
   header: {
     paddingHorizontal: Spacing.screenPaddingHorizontal,
@@ -703,7 +704,7 @@ const styles = StyleSheet.create({
   },
   forgotPasswordContainer: {
     alignItems: 'center',
-    marginBottom: 16,
+    paddingVertical: 16,
   },
   forgotPasswordText: {
     fontSize: Fonts.sizes.sm,

@@ -68,6 +68,15 @@ class UserService {
   }
 
   /**
+   * Check if email exists in the system
+   * Returns true if user is registered, false otherwise
+   */
+  async checkEmailExists(email: string): Promise<boolean> {
+    const response = await apiClient.get(`/auth/check-email?email=${encodeURIComponent(email)}`);
+    return response.data;
+  }
+
+  /**
    * Legacy email/password registration (for backward compatibility)
    * Prefer using Firebase auth with authenticateUser instead
    */
