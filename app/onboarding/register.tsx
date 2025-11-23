@@ -365,7 +365,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bottomWrapper: {
-    paddingVertical: 40,
+    paddingVertical: 80,
+    paddingBottom: 20,
   },
   header: {
     paddingHorizontal: Spacing.screenPaddingHorizontal,

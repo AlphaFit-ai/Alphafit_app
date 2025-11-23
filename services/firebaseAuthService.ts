@@ -44,39 +44,30 @@ class FirebaseAuthService {
    */
   async signInWithGoogle(): Promise<AuthResult | null> {
     try {
-      console.log('Starting native Google Sign-In...');
-      
       // Check if device supports Google Play Services
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-      console.log('Google Play Services available');
       
       // Sign out first to clear any cached account and force account picker
       // This ensures users can always choose which account to use
       try {
         await GoogleSignin.signOut();
-        console.log('Cleared cached Google account');
       } catch (error) {
-        console.log('No cached account to clear');
+        // Ignore errors if no account to clear
       }
       
       // Show account picker - users can select any Google account
-      console.log('Showing Google Sign-In picker...');
       const userInfo = await GoogleSignin.signIn();
       
       // Check if user cancelled (no user data returned)
       if (!userInfo.data || !userInfo.data.user) {
-        console.log('Google Sign-In cancelled by user (no user data)');
         return null;
       }
       
       const idToken = userInfo.data.idToken;
-      console.log('User selected from picker:', userInfo.data.user.email);
       
       if (!idToken) {
         throw new Error('No ID token received from Google Sign-In');
       }
-      
-      console.log('ID token received, signing in to Firebase...');
       
       // Create Firebase credential
       const credential = GoogleAuthProvider.credential(idToken);
@@ -84,8 +75,6 @@ class FirebaseAuthService {
       // Sign in to Firebase
       const userCredential = await signInWithCredential(getAuthInstance(), credential);
       const token = await userCredential.user.getIdToken();
-      
-      console.log('Firebase sign-in successful');
       
       return {
         user: userCredential.user,
@@ -97,19 +86,15 @@ class FirebaseAuthService {
           error.code === 'SIGN_IN_CANCELLED' || 
           error.message?.includes('Sign in action cancelled') ||
           error.message?.includes('User cancelled')) {
-        console.log('Google Sign-In cancelled by user');
         // Clear any cached state so next attempt shows account picker
         try {
           await GoogleSignin.signOut();
         } catch (signOutError) {
           // Ignore sign out errors
         }
-        return null; // Return null instead of throwing error
+        return null;
       }
       
-      console.error('Firebase Google sign-in error:', error);
-      console.error('Error code:', error.code);
-      console.error('Error message:', error.message);
       throw new Error(error.message || 'Failed to sign in with Google');
     }
   }
@@ -128,7 +113,6 @@ class FirebaseAuthService {
         idToken: token
       };
     } catch (error: any) {
-      console.error('Firebase Google sign-in error:', error);
       throw new Error(error.message || 'Failed to sign in with Google');
     }
   }
@@ -174,7 +158,6 @@ class FirebaseAuthService {
       if (error.code === 'ERR_CANCELED') {
         throw error;
       }
-      console.error('Firebase Apple sign-in error:', error);
       throw new Error(error.message || 'Failed to sign in with Apple');
     }
   }
@@ -192,8 +175,7 @@ class FirebaseAuthService {
         idToken: token
       };
     } catch (error: any) {
-      console.error('Firebase email sign-in error:', error);
-      
+      // Preserve the original error code from Firebase
       let errorMessage = 'Failed to sign in';
       
       switch (error.code) {
@@ -216,7 +198,10 @@ class FirebaseAuthService {
           errorMessage = error.message || 'Failed to sign in';
       }
       
-      throw new Error(errorMessage);
+      // Create new error but preserve the Firebase error code
+      const newError: any = new Error(errorMessage);
+      newError.code = error.code;
+      throw newError;
     }
   }
 
@@ -243,8 +228,6 @@ class FirebaseAuthService {
         idToken: token
       };
     } catch (error: any) {
-      console.error('Firebase create user error:', error);
-      
       let errorMessage = 'Failed to create account';
       
       switch (error.code) {
@@ -280,12 +263,8 @@ class FirebaseAuthService {
       const isGoogleSignedIn = await GoogleSignin.hasPreviousSignIn();
       if (isGoogleSignedIn) {
         await GoogleSignin.signOut();
-        console.log('Signed out from Google');
       }
-      
-      console.log('Sign out successful');
     } catch (error: any) {
-      console.error('Sign-out error:', error);
       throw new Error(error.message || 'Failed to sign out');
     }
   }
@@ -297,8 +276,6 @@ class FirebaseAuthService {
     try {
       await sendPasswordResetEmail(getAuthInstance(), email);
     } catch (error: any) {
-      console.error('Firebase password reset error:', error);
-      
       let errorMessage = 'Failed to send password reset email';
       
       switch (error.code) {
@@ -313,6 +290,33 @@ class FirebaseAuthService {
       }
       
       throw new Error(errorMessage);
+    }
+  }
+
+  /**
+   * Check if email exists in the backend database
+   * Returns true if user exists, false if not
+   */
+  async checkEmailExists(email: string): Promise<boolean> {
+    try {
+      // Use backend API to check email existence
+      const response = await fetch(
+        `http://100.91.176.251:8080/api/auth/check-email?email=${encodeURIComponent(email)}`
+      );
+      
+      if (!response.ok) {
+        console.error('Failed to check email existence');
+        return false;
+      }
+      
+      const exists = await response.json();
+      console.log('Email exists in database:', email, '=', exists);
+      
+      return exists;
+    } catch (error: any) {
+      console.error('Error checking email existence:', error);
+      // On error, return false (assume email doesn't exist)
+      return false;
     }
   }
 
@@ -333,7 +337,6 @@ class FirebaseAuthService {
     try {
       return await user.getIdToken();
     } catch (error) {
-      console.error('Failed to get user token:', error);
       return null;
     }
   }
@@ -348,7 +351,6 @@ class FirebaseAuthService {
     try {
       return await user.getIdToken(true);
     } catch (error) {
-      console.error('Failed to refresh token:', error);
       return null;
     }
   }

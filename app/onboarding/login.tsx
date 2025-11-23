@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Button, GradientText, Input } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
@@ -19,9 +19,13 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [isNotRobot, setIsNotRobot] = useState(false);
 
   const toggleLanguageMenu = () => {
     setShowLanguageMenu(!showLanguageMenu);
@@ -64,22 +68,19 @@ export default function LoginScreen() {
   };
 
   const handleContinueWithGoogle = async () => {
-    if (loading) return;
+    if (googleLoading || appleLoading || emailLoading) return;
     
     try {
-      setLoading(true);
+      setGoogleLoading(true);
       const result = await firebaseAuthService.signInWithGoogle();
       
       // User cancelled - result will be null
       if (!result) {
-        console.log('User cancelled Google Sign-In');
         return;
       }
       
       await handleAuthSuccess(result.user, result.idToken, 'google');
     } catch (error: any) {
-      console.error('Google Sign-In error:', error);
-      
       let errorMessage = error.message || t('welcome.googleError', 'Google sign-in failed');
       
       Alert.alert(
@@ -87,12 +88,12 @@ export default function LoginScreen() {
         errorMessage
       );
     } finally {
-      setLoading(false);
+      setGoogleLoading(false);
     }
   };
 
   const handleContinueWithApple = async () => {
-    if (loading) return;
+    if (googleLoading || appleLoading || emailLoading) return;
     
     // Check if Apple Sign-In is available
     try {
@@ -106,28 +107,26 @@ export default function LoginScreen() {
         return;
       }
 
-      setLoading(true);
+      setAppleLoading(true);
       const result = await firebaseAuthService.signInWithApple();
       await handleAuthSuccess(result.user, result.idToken, 'apple');
     } catch (error: any) {
       if (error.code !== 'ERR_CANCELED') {
-        console.error('Apple Sign-In error:', error);
         Alert.alert(
           t('welcome.error', 'Error'),
           error.message || t('welcome.appleError', 'Apple sign-in failed. Please try another method.')
         );
       }
     } finally {
-      setLoading(false);
+      setAppleLoading(false);
     }
   };
 
   const handleContinueWithEmail = async () => {
     // Reset errors
     setEmailError('');
-    setPasswordError('');
 
-    // Validate
+    // Validate email
     if (!email) {
       setEmailError(t('welcome.emailRequired', 'Email is required'));
       return;
@@ -136,6 +135,36 @@ export default function LoginScreen() {
       setEmailError(t('welcome.invalidEmail', 'Please enter a valid email'));
       return;
     }
+
+    // Check if email exists using Firebase API
+    try {
+      setEmailLoading(true);
+      
+      const emailExists = await firebaseAuthService.checkEmailExists(email);
+      
+      if (emailExists) {
+        // Email exists, show password modal
+        setShowPasswordModal(true);
+      } else {
+        // Email doesn't exist, show error
+        setEmailError(t('welcome.noAccount', 'No account found with this email. Please sign up first.'));
+      }
+    } catch (error: any) {
+      console.error('Email check error:', error);
+      Alert.alert(
+        t('welcome.error', 'Error'),
+        t('welcome.checkEmailError', 'Failed to verify email. Please try again.')
+      );
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handlePasswordSubmit = async () => {
+    // Reset errors
+    setPasswordError('');
+
+    // Validate
     if (!password) {
       setPasswordError(t('welcome.passwordRequired', 'Password is required'));
       return;
@@ -144,20 +173,58 @@ export default function LoginScreen() {
       setPasswordError(t('welcome.passwordTooShort', 'Password must be at least 6 characters'));
       return;
     }
+    if (!isNotRobot) {
+      Alert.alert(
+        t('welcome.error', 'Error'),
+        t('welcome.verifyRobot', 'Please verify that you are not a robot')
+      );
+      return;
+    }
 
     try {
-      setLoading(true);
+      setEmailLoading(true);
       const result = await firebaseAuthService.signInWithEmailPassword(email, password);
+      setShowPasswordModal(false);
       await handleAuthSuccess(result.user, result.idToken, 'email');
     } catch (error: any) {
-      console.error('Email login error:', error);
       Alert.alert(
         t('welcome.error', 'Error'),
         error.message || t('welcome.loginError', 'Login failed. Please check your credentials.')
       );
     } finally {
-      setLoading(false);
+      setEmailLoading(false);
     }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email || !validateEmail(email)) {
+      Alert.alert(
+        t('welcome.error', 'Error'),
+        t('welcome.enterValidEmail', 'Please enter a valid email address first')
+      );
+      return;
+    }
+
+    try {
+      await firebaseAuthService.sendPasswordResetEmail(email);
+      Alert.alert(
+        t('welcome.success', 'Success'),
+        t('welcome.resetEmailSent', 'Password reset email has been sent. Please check your inbox.')
+      );
+      setShowPasswordModal(false);
+    } catch (error: any) {
+      Alert.alert(
+        t('welcome.error', 'Error'),
+        error.message || t('welcome.resetError', 'Failed to send reset email')
+      );
+    }
+  };
+
+  const handleClosePasswordModal = () => {
+    setShowPasswordModal(false);
+    setPassword('');
+    setPasswordError('');
+    setIsNotRobot(false);
   };
 
   return (
@@ -245,9 +312,9 @@ export default function LoginScreen() {
             <TouchableOpacity 
               style={[styles.socialButton, { backgroundColor: colors.card, borderColor: colors.border }]} 
               onPress={handleContinueWithGoogle}
-              disabled={loading}
+              disabled={googleLoading || appleLoading || emailLoading}
             >
-              {loading ? (
+              {googleLoading ? (
                 <ActivityIndicator size="small" color={colors.primary} />
               ) : (
                 <>
@@ -264,9 +331,9 @@ export default function LoginScreen() {
             <TouchableOpacity 
               style={[styles.socialButton, { backgroundColor: colors.card, borderColor: colors.border }]} 
               onPress={handleContinueWithApple}
-              disabled={loading}
+              disabled={googleLoading || appleLoading || emailLoading}
             >
-              {loading ? (
+              {appleLoading ? (
                 <ActivityIndicator size="small" color={colors.primary} />
               ) : (
                 <>
@@ -295,37 +362,13 @@ export default function LoginScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               error={emailError}
-              style={{ marginBottom: 10 }}
-            />
-
-            {/* Password Input */}
-            <Input
-              label={t('welcome.password', 'Password')}
-              placeholder={t('welcome.passwordPlaceholder', 'Enter your password')}
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                setPasswordError('');
-              }}
-              secureTextEntry={!showPassword}
-              error={passwordError}
-              style={{ marginBottom: 10 }}
-              rightIcon={
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                  <Ionicons 
-                    name={showPassword ? 'eye-off' : 'eye'} 
-                    size={20} 
-                    color={colors.icon} 
-                  />
-                </TouchableOpacity>
-              }
             />
 
             {/* Continue Button */}
             <Button 
-              title={loading ? t('welcome.loading', 'Loading...') : t('welcome.login', 'Log In')} 
+              title={emailLoading ? t('welcome.loading', 'Loading...') : t('welcome.continue', 'Continue')} 
               onPress={handleContinueWithEmail}
-              disabled={loading}
+              disabled={googleLoading || appleLoading || emailLoading}
             />
 
             {/* Terms */}
@@ -345,6 +388,98 @@ export default function LoginScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Password Modal */}
+      <Modal
+        visible={showPasswordModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleClosePasswordModal}
+      >
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalKeyboardView}
+          >
+            <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+              {/* Close Button */}
+              <TouchableOpacity 
+                style={styles.modalCloseButton}
+                onPress={handleClosePasswordModal}
+              >
+                <Ionicons name="close" size={24} color={colors.text} />
+              </TouchableOpacity>
+
+              {/* Modal Header */}
+              <Text style={[styles.modalTitle, { color: colors.text }]}>
+                {t('welcome.enterPassword', 'Enter Password')}
+              </Text>
+              <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+                {email}
+              </Text>
+
+              {/* Password Input */}
+              <Input
+                label={t('welcome.password', 'Password')}
+                placeholder={t('welcome.passwordPlaceholder', 'Enter your password')}
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  setPasswordError('');
+                }}
+                secureTextEntry={!showPassword}
+                error={passwordError}
+                rightIcon={
+                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                    <Ionicons 
+                      name={showPassword ? 'eye-off' : 'eye'} 
+                      size={20} 
+                      color={colors.icon} 
+                    />
+                  </TouchableOpacity>
+                }
+              />
+
+              {/* Not a Robot Checkbox */}
+              <TouchableOpacity 
+                style={styles.checkboxContainer}
+                onPress={() => setIsNotRobot(!isNotRobot)}
+              >
+                <View style={[
+                  styles.checkbox, 
+                  { borderColor: colors.border },
+                  isNotRobot && { backgroundColor: Colors.primary, borderColor: Colors.primary }
+                ]}>
+                  {isNotRobot && (
+                    <Ionicons name="checkmark" size={16} color={Colors.white} />
+                  )}
+                </View>
+                <Text style={[styles.checkboxLabel, { color: colors.text }]}>
+                  {t('welcome.notRobot', "I'm not a robot")}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Forgot Password Link */}
+              <TouchableOpacity 
+                onPress={handleForgotPassword}
+                style={styles.forgotPasswordContainer}
+              >
+                <Text style={[styles.forgotPasswordText, { color: Colors.primary }]}>
+                  {t('welcome.forgotPassword', 'Forgot password?')}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Login Button */}
+              <Button 
+                title={emailLoading ? t('welcome.loading', 'Loading...') : t('welcome.login', 'Log In')} 
+                onPress={handlePasswordSubmit}
+                disabled={emailLoading}
+                style={{ marginTop: 8 }}
+              />
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -421,7 +556,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bottomWrapper: {
-    paddingTop: 60,
+    paddingVertical: 40,
   },
   header: {
     paddingHorizontal: Spacing.screenPaddingHorizontal,
@@ -506,5 +641,73 @@ const styles = StyleSheet.create({
     fontSize: Fonts.sizes.base,
     fontFamily: Fonts.semiBold,
     fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalKeyboardView: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    maxWidth: 400,
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  modalCloseButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    zIndex: 1,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: Fonts.weights.bold,
+    fontFamily: Fonts.bold,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: Fonts.sizes.sm,
+    fontFamily: Fonts.regular,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingVertical: 8,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  checkboxLabel: {
+    fontSize: Fonts.sizes.base,
+    fontFamily: Fonts.regular,
+  },
+  forgotPasswordContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  forgotPasswordText: {
+    fontSize: Fonts.sizes.sm,
+    fontFamily: Fonts.semiBold,
+    fontWeight: Fonts.weights.semiBold,
   },
 });
