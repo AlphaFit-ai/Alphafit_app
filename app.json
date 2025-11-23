@@ -44,7 +44,13 @@
           }
         }
       ],
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.972624920920-s0r51ubufl4271hublj74bni1rdmei90"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

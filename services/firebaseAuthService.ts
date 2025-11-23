@@ -1,6 +1,7 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
-  getAuth, 
+  getAuth,
+  initializeAuth,
   signInWithCredential, 
   GoogleAuthProvider,
   OAuthProvider,
@@ -12,12 +13,28 @@ import {
   User,
   UserCredential
 } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { config } from '../config';
+import { Platform } from 'react-native';
 
-// Initialize Firebase
-const app = initializeApp(config.firebase);
-const auth = getAuth(app);
+// Initialize Firebase (only once)
+const app = getApps().length === 0 ? initializeApp(config.firebase) : getApp();
+
+// Lazy auth initialization
+let authInstance: any = null;
+
+const getAuthInstance = () => {
+  if (authInstance) return authInstance;
+  
+  try {
+    authInstance = getAuth(app);
+    return authInstance;
+  } catch (error) {
+    console.error('Failed to get auth instance:', error);
+    throw error;
+  }
+};
 
 export interface AuthResult {
   user: User;
@@ -31,7 +48,7 @@ class FirebaseAuthService {
   async signInWithGoogleCredential(idToken: string): Promise<AuthResult> {
     try {
       const credential = GoogleAuthProvider.credential(idToken);
-      const userCredential = await signInWithCredential(auth, credential);
+      const userCredential = await signInWithCredential(getAuthInstance(), credential);
       const token = await userCredential.user.getIdToken();
       
       return {
@@ -67,7 +84,7 @@ class FirebaseAuthService {
         idToken: identityToken,
       });
 
-      const userCredential = await signInWithCredential(auth, credential);
+      const userCredential = await signInWithCredential(getAuthInstance(), credential);
       const token = await userCredential.user.getIdToken();
 
       // Update profile with Apple name if available
@@ -95,7 +112,7 @@ class FirebaseAuthService {
    */
   async signInWithEmailPassword(email: string, password: string): Promise<AuthResult> {
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(getAuthInstance(), email, password);
       const token = await userCredential.user.getIdToken();
       
       return {
@@ -140,7 +157,7 @@ class FirebaseAuthService {
     displayName?: string
   ): Promise<AuthResult> {
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(getAuthInstance(), email, password);
       
       // Update display name if provided
       if (displayName) {
@@ -184,7 +201,7 @@ class FirebaseAuthService {
    */
   async signOut(): Promise<void> {
     try {
-      await signOut(auth);
+      await signOut(getAuthInstance());
     } catch (error: any) {
       console.error('Firebase sign-out error:', error);
       throw new Error(error.message || 'Failed to sign out');
@@ -196,7 +213,7 @@ class FirebaseAuthService {
    */
   async sendPasswordResetEmail(email: string): Promise<void> {
     try {
-      await sendPasswordResetEmail(auth, email);
+      await sendPasswordResetEmail(getAuthInstance(), email);
     } catch (error: any) {
       console.error('Firebase password reset error:', error);
       
@@ -221,14 +238,14 @@ class FirebaseAuthService {
    * Get current user
    */
   getCurrentUser(): User | null {
-    return auth.currentUser;
+    return getAuthInstance().currentUser;
   }
 
   /**
    * Get current user ID token
    */
   async getCurrentUserToken(): Promise<string | null> {
-    const user = auth.currentUser;
+    const user = getAuthInstance().currentUser;
     if (!user) return null;
     
     try {
@@ -243,7 +260,7 @@ class FirebaseAuthService {
    * Refresh current user ID token
    */
   async refreshToken(): Promise<string | null> {
-    const user = auth.currentUser;
+    const user = getAuthInstance().currentUser;
     if (!user) return null;
     
     try {
