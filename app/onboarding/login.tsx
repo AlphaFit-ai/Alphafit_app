@@ -7,12 +7,8 @@ import { Button, GradientText, Input } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
-import { firebaseAuthService, userService } from '../../services';
-import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
+import { firebaseAuthService, nativeGoogleSignIn, userService } from '../../services';
 import * as AppleAuthentication from 'expo-apple-authentication';
-
-WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -27,14 +23,6 @@ export default function LoginScreen() {
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Google OAuth setup with account selection
-  const [googleRequest, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
-    androidClientId: '972624920920-jnpd9hrt779avgkiv01hpf1ghabo4esu.apps.googleusercontent.com',
-    iosClientId: '972624920920-s0r51ubufl4271hublj74bni1rdmei90.apps.googleusercontent.com',
-    webClientId: '972624920920-jnpd9hrt779avgkiv01hpf1ghabo4esu.apps.googleusercontent.com',
-    selectAccount: true, // Force account selection on Android
-  });
-
   const toggleLanguageMenu = () => {
     setShowLanguageMenu(!showLanguageMenu);
   };
@@ -43,24 +31,6 @@ export default function LoginScreen() {
     i18n.changeLanguage(lang);
     setShowLanguageMenu(false);
   };
-
-  // Handle Google OAuth response
-  React.useEffect(() => {
-    if (googleResponse?.type === 'success') {
-      handleGoogleSignIn(googleResponse.authentication?.idToken);
-    } else if (googleResponse?.type === 'error') {
-      console.error('Google OAuth error:', googleResponse.error);
-      
-      // Show user-friendly error for OAuth configuration issues
-      if (googleResponse.error?.message?.includes('Access blocked') || 
-          googleResponse.error?.message?.includes('Authorization')) {
-        Alert.alert(
-          'Configuration Error',
-          'Google Sign-In needs additional setup. Please use Email/Password sign-in for now, or contact support.'
-        );
-      }
-    }
-  }, [googleResponse]);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -130,13 +100,25 @@ export default function LoginScreen() {
     if (loading) return;
     
     try {
-      // Use showInRecents to force account picker on Android
-      await promptGoogleAsync({ 
-        showInRecents: true,
-        useProxy: true,
-      });
-    } catch (error) {
-      console.error('Error prompting Google sign in:', error);
+      setLoading(true);
+      
+      // Use native Google Sign-In (with account picker)
+      const idToken = await nativeGoogleSignIn.signIn();
+      
+      // Sign in with Firebase using the ID token
+      await handleGoogleSignIn(idToken);
+    } catch (error: any) {
+      console.error('Native Google sign in error:', error);
+      
+      // Don't show error if user cancelled
+      if (error.message !== 'Sign-in cancelled') {
+        Alert.alert(
+          t('welcome.error', 'Error'),
+          error.message || t('welcome.googleError', 'Google sign-in failed')
+        );
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -294,7 +276,7 @@ export default function LoginScreen() {
             <TouchableOpacity 
               style={[styles.socialButton, { backgroundColor: colors.card, borderColor: colors.border }]} 
               onPress={handleContinueWithGoogle}
-              disabled={loading || !googleRequest}
+              disabled={loading}
             >
               {loading ? (
                 <ActivityIndicator size="small" color={colors.primary} />

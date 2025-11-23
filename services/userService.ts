@@ -5,7 +5,8 @@ import firebaseAuthService from './firebaseAuthService';
 export interface UserOnboardingData {
   fullName?: string;
   email?: string;
-  authProvider?: 'google' | 'apple' | 'email';
+  authProvider?: string; // 'google' | 'apple' | 'email' | 'phone'
+  userId?: string;
   source?: 'instagram' | 'facebook' | 'tiktok' | 'threads' | 'x' | 'youtube' | 'google' | 'others';
   dateOfBirth?: {
     month: number;
@@ -132,6 +133,33 @@ class UserService {
       return response.data;
     } catch (error) {
       throw error;
+    }
+  }
+
+  // Generic authentication method (used by login screen)
+  async authenticateUser(idToken: string): Promise<{ userId: string; needsOnboarding: boolean }> {
+    try {
+      const response = await apiClient.post('/auth/firebase', { 
+        idToken 
+      });
+      
+      if (response.data.token) {
+        await AsyncStorage.setItem('authToken', response.data.token);
+        await AsyncStorage.setItem('userId', response.data.userId);
+      }
+      
+      return {
+        userId: response.data.userId,
+        needsOnboarding: response.data.needsOnboarding || false
+      };
+    } catch (error: any) {
+      // Handle specific error cases
+      if (error.response?.status === 401) {
+        throw new Error('Authentication failed. Please try again.');
+      } else if (error.response?.status === 404) {
+        throw new Error('User not found. Please register first.');
+      }
+      throw new Error(error.response?.data?.message || 'Authentication failed');
     }
   }
 
