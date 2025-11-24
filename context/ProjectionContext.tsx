@@ -1,14 +1,18 @@
 import React, { createContext, ReactNode, useContext, useState } from 'react';
+import { onboardingService } from '../services';
 
 interface ProjectionData {
   sleepHours?: string;
   dailySteps?: string;
   stressLevel?: string;
+  frontPhotoUrl?: string;
+  sidePhotoUrl?: string;
+  backPhotoUrl?: string;
 }
 
 interface ProjectionContextType {
   projectionData: ProjectionData;
-  updateProjectionData: (data: Partial<ProjectionData>) => void;
+  updateProjectionData: (data: Partial<ProjectionData>) => Promise<void>;
   resetProjectionData: () => void;
   currentStep: number;
   setCurrentStep: (step: number) => void;
@@ -30,8 +34,24 @@ export const ProjectionProvider: React.FC<{ children: ReactNode }> = ({ children
   const [navigationHistory, setNavigationHistory] = useState<number[]>([0]);
   const totalSteps = 6;
 
-  const updateProjectionData = (data: Partial<ProjectionData>) => {
-    setProjectionData((prev) => ({ ...prev, ...data }));
+  const updateProjectionData = async (data: Partial<ProjectionData>) => {
+    const updatedData = { ...projectionData, ...data };
+    setProjectionData(updatedData);
+    
+    // Save to backend after each update
+    try {
+      await onboardingService.saveProjectionOnboardingData({
+        sleepHours: updatedData.sleepHours,
+        dailySteps: updatedData.dailySteps,
+        stressLevel: updatedData.stressLevel,
+        frontPhotoUrl: updatedData.frontPhotoUrl,
+        sidePhotoUrl: updatedData.sidePhotoUrl,
+        backPhotoUrl: updatedData.backPhotoUrl,
+      });
+      console.log('Projection data saved to backend:', data);
+    } catch (error) {
+      console.error('Failed to save projection data:', error);
+    }
   };
 
   const handleSetCurrentStep = (step: number) => {

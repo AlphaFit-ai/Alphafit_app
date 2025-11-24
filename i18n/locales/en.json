@@ -1,7 +1,8 @@
 {
   "common": {
     "continue": "Continue",
-    "back": "Back"
+    "back": "Back",
+    "uploading": "Uploading..."
   },
   "welcome": {
     "title": "WELCOME TO",

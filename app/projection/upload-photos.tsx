@@ -2,11 +2,12 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { Button } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useProjection } from '../../context/ProjectionContext';
 import { useTheme } from '../../context/ThemeContext';
+import { imageService, onboardingService } from '../../services';
 
 interface PhotoSlot {
   id: string;
@@ -14,12 +15,13 @@ interface PhotoSlot {
   translationKey: string;
   image: any;
   uri?: string;
+  uploadedUrl?: string;
 }
 
 export default function UploadPhotosScreen() {
   const { t } = useTranslation();
   const { colors, isDarkMode } = useTheme();
-  const { setCurrentStep } = useProjection();
+  const { projectionData, setCurrentStep, updateProjectionData } = useProjection();
 
   const [photos, setPhotos] = useState<PhotoSlot[]>([
     {
@@ -42,6 +44,8 @@ export default function UploadPhotosScreen() {
     },
   ]);
 
+  const [isUploading, setIsUploading] = useState<string | null>(null);
+
   const pickImage = async (photoId: string) => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
@@ -51,18 +55,18 @@ export default function UploadPhotosScreen() {
     });
 
     if (!result.canceled) {
-      setPhotos((prev) =>
-        prev.map((photo) =>
-          photo.id === photoId ? { ...photo, uri: result.assets[0].uri } : photo
-        )
-      );
+      await uploadPhoto(photoId, result.assets[0].uri);
     }
   };
 
   const takePhoto = async (photoId: string) => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      alert('Camera permission is required to take photos');
+      Alert.alert(
+        'Permission Required',
+        'Camera permission is required to take photos',
+        [{ text: 'OK' }]
+      );
       return;
     }
 
@@ -73,20 +77,60 @@ export default function UploadPhotosScreen() {
     });
 
     if (!result.canceled) {
-      setPhotos((prev) =>
-        prev.map((photo) =>
-          photo.id === photoId ? { ...photo, uri: result.assets[0].uri } : photo
-        )
-      );
+      await uploadPhoto(photoId, result.assets[0].uri);
     }
   };
 
-  const allPhotosUploaded = photos.every((photo) => photo.uri);
+  const uploadPhoto = async (photoId: string, uri: string) => {
+    setIsUploading(photoId);
+    try {
+      // Map photoId to progress type
+      const progressType = photoId as 'front' | 'side' | 'back';
+      
+      // Upload to MinIO
+      const uploadedUrl = await imageService.uploadProgressPhoto(uri, progressType);
+      
+      // Update local state
+      setPhotos((prev) =>
+        prev.map((photo) =>
+          photo.id === photoId 
+            ? { ...photo, uri, uploadedUrl } 
+            : photo
+        )
+      );
 
-  const handleAnalyze = () => {
-    // Complete projection onboarding, go back to statistics screen
-    setCurrentStep(0);
-  };  return (
+      // Save URL to projection context (auto-saves to backend)
+      await updateProjectionData({
+        [`${photoId}PhotoUrl`]: uploadedUrl,
+      });
+
+      Alert.alert('Success', `${progressType} photo uploaded successfully`);
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      Alert.alert('Upload Failed', error.message || 'Failed to upload photo');
+    } finally {
+      setIsUploading(null);
+    }
+  };
+
+  const allPhotosUploaded = photos.every((photo) => photo.uploadedUrl);
+
+  const handleAnalyze = async () => {
+    if (allPhotosUploaded) {
+      try {
+        // Complete projection onboarding
+        await onboardingService.completeProjectionOnboarding(projectionData);
+        console.log('Projection onboarding completed');
+      } catch (error) {
+        console.error('Failed to complete projection onboarding:', error);
+      }
+      
+      // Go back to statistics screen
+      setCurrentStep(0);
+    }
+  };
+
+  return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         style={styles.scrollView}
@@ -104,12 +148,12 @@ export default function UploadPhotosScreen() {
               style={[
                 styles.photoCard,
                 {
-                  backgroundColor: photo.uri
+                  backgroundColor: photo.uploadedUrl
                     ? Colors.success + '20'
                     : isDarkMode
                     ? Colors.gray[800]
                     : Colors.gray[50],
-                  borderColor: photo.uri
+                  borderColor: photo.uploadedUrl
                     ? Colors.success
                     : isDarkMode
                     ? Colors.gray[700]
@@ -118,8 +162,18 @@ export default function UploadPhotosScreen() {
               ]}
               onPress={() => pickImage(photo.id)}
               activeOpacity={0.7}
+              disabled={isUploading === photo.id}
             >
               <Image source={photo.image} style={styles.photoImage} resizeMode="contain" />
+              
+              {isUploading === photo.id && (
+                <View style={styles.loadingOverlay}>
+                  <ActivityIndicator size="large" color={Colors.primary} />
+                  <Text style={[styles.loadingText, { color: colors.text }]}>
+                    {t('common.uploading')}
+                  </Text>
+                </View>
+              )}
               
               <View style={styles.photoInfo}>
                 <View style={styles.photoTextContainer}>
@@ -127,11 +181,11 @@ export default function UploadPhotosScreen() {
                     {t(photo.translationKey)}
                   </Text>
                   <Text style={[styles.photoHint, { color: colors.textSecondary }]}>
-                    {photo.uri ? t('bodyScan.uploaded') : t('bodyScan.tapToUpload')}
+                    {photo.uploadedUrl ? t('bodyScan.uploaded') : t('bodyScan.tapToUpload')}
                   </Text>
                 </View>
                 
-                {!photo.uri && (
+                {!photo.uploadedUrl && isUploading !== photo.id && (
                   <TouchableOpacity
                     style={[
                       styles.uploadIcon,
@@ -149,7 +203,7 @@ export default function UploadPhotosScreen() {
                   </TouchableOpacity>
                 )}
                 
-                {photo.uri && (
+                {photo.uploadedUrl && (
                   <View
                     style={[
                       styles.uploadIcon,
@@ -246,6 +300,18 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: Spacing.radius.lg,
+  },
+  loadingText: {
+    marginTop: 8,
+    fontSize: Fonts.sizes.sm,
+    fontFamily: Fonts.medium,
   },
   buttonContainer: {
     marginTop: 'auto',

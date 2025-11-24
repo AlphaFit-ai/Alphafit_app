@@ -1,4 +1,5 @@
 import React, { createContext, ReactNode, useContext, useState } from 'react';
+import { onboardingService } from '../services';
 
 export interface DietOnboardingData {
   dietPreference?: 'vegetarian' | 'vegan' | 'non-veg' | 'flexible';
@@ -13,7 +14,7 @@ export interface DietOnboardingData {
 
 interface DietContextType {
   dietData: DietOnboardingData;
-  updateDietData: (data: Partial<DietOnboardingData>) => void;
+  updateDietData: (data: Partial<DietOnboardingData>) => Promise<void>;
   resetDietData: () => void;
   currentStep: number;
   setCurrentStep: (step: number) => void;
@@ -37,8 +38,25 @@ export const DietProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [currentStep, setCurrentStep] = useState(0);
   const totalSteps = 6;
 
-  const updateDietData = (data: Partial<DietOnboardingData>) => {
-    setDietData((prev) => ({ ...prev, ...data }));
+  const updateDietData = async (data: Partial<DietOnboardingData>) => {
+    const updatedData = { ...dietData, ...data };
+    setDietData(updatedData);
+    
+    // Save to backend after each update
+    try {
+      await onboardingService.saveDietOnboardingData({
+        dietPreference: updatedData.dietPreference,
+        allergies: updatedData.allergies,
+        hasAllergies: updatedData.hasAllergies,
+        mealsPerDay: updatedData.mealsPerDay,
+        supplements: updatedData.supplements,
+        takesSupplements: updatedData.takesSupplements,
+        foodImage: updatedData.foodImage,
+      });
+      console.log('Diet data saved to backend:', data);
+    } catch (error) {
+      console.error('Failed to save diet data:', error);
+    }
   };
 
   const resetDietData = () => {

@@ -2,24 +2,55 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { Button, OptionCard, ProgressBar } from '../../components';
 import { Colors, SharedStyles } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
+import { onboardingService } from '../../services';
 
 export default function GoalScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { updateOnboardingData, setCurrentStep } = useOnboarding();
+  const { onboardingData, updateOnboardingData, setCurrentStep } = useOnboarding();
   const { colors, isDarkMode } = useTheme();
   const [selectedGoal, setSelectedGoal] = useState<'lose-fat' | 'get-stronger' | 'build-muscle' | 'stay-fit' | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleContinue = () => {
-    if (selectedGoal) {
-      updateOnboardingData({ goal: selectedGoal });
-      setCurrentStep(9);
-      router.replace('/(tabs)/home');
+  const handleContinue = async () => {
+    if (selectedGoal && !isSubmitting) {
+      setIsSubmitting(true);
+      
+      try {
+        // Update local state
+        const finalData = { ...onboardingData, goal: selectedGoal };
+        updateOnboardingData({ goal: selectedGoal });
+        setCurrentStep(9);
+
+        // Save to backend and mark onboarding as complete
+        await onboardingService.completeOnboarding(finalData);
+        
+        console.log('✅ Onboarding completed successfully!');
+        router.replace('/(tabs)/home');
+      } catch (error) {
+        console.error('❌ Failed to complete onboarding:', error);
+        Alert.alert(
+          t('onboarding.error.title') || 'Error',
+          t('onboarding.error.message') || 'Failed to save your preferences. Please try again.',
+          [
+            {
+              text: t('onboarding.error.retry') || 'Retry',
+              onPress: handleContinue,
+            },
+            {
+              text: t('onboarding.error.continue') || 'Continue Anyway',
+              onPress: () => router.replace('/(tabs)/home'),
+            },
+          ]
+        );
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -66,7 +97,11 @@ export default function GoalScreen() {
       </View>
 
       <View style={SharedStyles.footer}>
-        <Button title={t('onboarding.continue')} onPress={handleContinue} disabled={!selectedGoal} />
+        <Button 
+          title={isSubmitting ? t('onboarding.saving') || 'Saving...' : t('onboarding.continue')} 
+          onPress={handleContinue} 
+          disabled={!selectedGoal || isSubmitting} 
+        />
       </View>
     </View>
   );

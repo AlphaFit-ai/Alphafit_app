@@ -135,7 +135,8 @@ export default function StatisticsScreen() {
   };
 
   const handleRescan = () => {
-    setCurrentStep(5);
+    // Start from sleep screen (step 1) for full onboarding flow
+    setCurrentStep(1);
   };
 
   return (

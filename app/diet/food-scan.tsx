@@ -2,16 +2,19 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
 import { useTheme } from '../../context/ThemeContext';
+import { imageService, onboardingService } from '../../services';
 
 export default function FoodScanScreen() {
   const { t } = useTranslation();
-  const { updateDietData, setCurrentStep } = useDiet();
+  const { dietData, updateDietData, setCurrentStep } = useDiet();
   const { colors } = useTheme();
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
   const [cameraPermission, setCameraPermission] = useState<boolean>(false);
 
   const requestCameraPermission = async () => {
@@ -40,8 +43,7 @@ export default function FoodScanScreen() {
     });
 
     if (!result.canceled && result.assets[0]) {
-      setCapturedImage(result.assets[0].uri);
-      updateDietData({ foodImage: result.assets[0].uri });
+      await uploadFoodImage(result.assets[0].uri);
     }
   };
 
@@ -54,14 +56,40 @@ export default function FoodScanScreen() {
     });
 
     if (!result.canceled && result.assets[0]) {
-      setCapturedImage(result.assets[0].uri);
+      await uploadFoodImage(result.assets[0].uri);
     }
   };
 
-  const handleFinish = () => {
-    if (capturedImage) {
-      updateDietData({ foodImage: capturedImage });
+  const uploadFoodImage = async (uri: string) => {
+    setIsUploading(true);
+    try {
+      const uploadedImageUrl = await imageService.uploadFoodScanImage(uri);
+      
+      setCapturedImage(uri);
+      setUploadedUrl(uploadedImageUrl);
+      updateDietData({ foodImage: uploadedImageUrl });
+
+      Alert.alert('Success', 'Food image uploaded successfully');
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      Alert.alert('Upload Failed', error.message || 'Failed to upload food image');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleFinish = async () => {
+    if (uploadedUrl) {
+      try {
+        // Complete diet onboarding
+        await onboardingService.completeDietOnboarding(dietData);
+        console.log('Diet onboarding completed');
+      } catch (error) {
+        console.error('Failed to complete diet onboarding:', error);
+      }
       setCurrentStep(5); // Navigate to diet statistics screen
+    } else {
+      Alert.alert('No Image', 'Please capture or select a food image first');
     }
   };
 
@@ -76,7 +104,7 @@ export default function FoodScanScreen() {
           <Text style={[styles.title, { color: colors.text }]}>{t('diet.foodScan.title')}</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('diet.foodScan.subtitle')}</Text>
 
-                    <TouchableOpacity style={styles.imageContainer} onPress={takePhoto} activeOpacity={0.8}>
+                    <TouchableOpacity style={styles.imageContainer} onPress={takePhoto} activeOpacity={0.8} disabled={isUploading}>
             {capturedImage ? (
               <Image source={{ uri: capturedImage }} style={styles.foodImage} />
             ) : (
@@ -86,9 +114,18 @@ export default function FoodScanScreen() {
                 resizeMode="cover"
               />
             )}
-            {capturedImage && (
+            {isUploading && (
+              <View style={styles.loadingOverlay}>
+                <ActivityIndicator size="large" color={Colors.primary} />
+                <Text style={styles.loadingText}>{t('common.uploading')}</Text>
+              </View>
+            )}
+            {capturedImage && !isUploading && (
               <View style={styles.imageOverlay}>
-                <TouchableOpacity style={styles.overlayButton} onPress={() => setCapturedImage(null)}>
+                <TouchableOpacity style={styles.overlayButton} onPress={() => {
+                  setCapturedImage(null);
+                  setUploadedUrl(null);
+                }}>
                   <Ionicons name="close" size={24} color={Colors.white} />
                 </TouchableOpacity>
               </View>
@@ -96,21 +133,21 @@ export default function FoodScanScreen() {
           </TouchableOpacity>
 
           <View style={styles.scanOptions}>
-            <TouchableOpacity style={styles.scanOption} onPress={takePhoto}>
+            <TouchableOpacity style={styles.scanOption} onPress={takePhoto} disabled={isUploading}>
               <View style={[styles.scanIconContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Ionicons name="barcode" size={24} color={colors.text} />
               </View>
               <Text style={[styles.scanOptionText, { color: colors.text }]}>{t('diet.foodScan.barcode')}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.scanOption} onPress={takePhoto}>
+            <TouchableOpacity style={styles.scanOption} onPress={takePhoto} disabled={isUploading}>
               <View style={[styles.scanIconContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Ionicons name="camera" size={24} color={colors.text} />
               </View>
               <Text style={[styles.scanOptionText, { color: colors.text }]}>{t('diet.foodScan.scanFood')}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.scanOption} onPress={pickFromLibrary}>
+            <TouchableOpacity style={styles.scanOption} onPress={pickFromLibrary} disabled={isUploading}>
               <View style={[styles.scanIconContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Ionicons name="image" size={24} color={colors.text} />
               </View>
@@ -189,6 +226,19 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: Spacing.radius.lg,
+  },
+  loadingText: {
+    marginTop: 8,
+    fontSize: Fonts.sizes.sm,
+    fontFamily: Fonts.medium,
+    color: Colors.white,
   },
   scanOptions: {
     flexDirection: 'row',

@@ -1,7 +1,8 @@
 {
   "common": {
     "continue": "Continuar",
-    "back": "Atrás"
+    "back": "Atrás",
+    "uploading": "Subiendo..."
   },
   "welcome": {
     "title": "BIENVENIDO A",
