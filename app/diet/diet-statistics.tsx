@@ -15,22 +15,24 @@ interface NutrientInfo {
   percentage: number;
 }
 
-interface Ingredient {
-  name: string;
-  amount: string;
-}
-
 export default function DietStatisticsScreen() {
   const { t } = useTranslation();
   const { colors, isDarkMode } = useTheme();
   const { dietData, setCurrentStep } = useDiet();
 
   // Mock data - will be replaced with actual AI analysis
-  const foodName = 'Grilled Chicken Salad';
   const totalCalories = 450;
   const mealType = 'Lunch';
 
   const nutrients: NutrientInfo[] = [
+    {
+      label: 'Calories',
+      value: '450',
+      unit: 'kcal',
+      icon: 'flame',
+      color: Colors.primary,
+      percentage: 75,
+    },
     {
       label: 'Protein',
       value: '45',
@@ -52,25 +54,9 @@ export default function DietStatisticsScreen() {
       value: '18',
       unit: 'g',
       icon: 'water',
-      color: Colors.primary,
+      color: '#FF6B6B',
       percentage: 45,
     },
-    {
-      label: 'Fiber',
-      value: '8',
-      unit: 'g',
-      icon: 'leaf',
-      color: Colors.success,
-      percentage: 70,
-    },
-  ];
-
-  const ingredients: Ingredient[] = [
-    { name: 'Grilled Chicken Breast', amount: '200g' },
-    { name: 'Mixed Greens', amount: '100g' },
-    { name: 'Cherry Tomatoes', amount: '50g' },
-    { name: 'Cucumber', amount: '50g' },
-    { name: 'Olive Oil Dressing', amount: '30ml' },
   ];
 
   const recommendations = [
@@ -105,7 +91,7 @@ export default function DietStatisticsScreen() {
 
         {/* Food Image */}
         {dietData.foodImage && (
-          <View style={styles.imageContainer}>
+          <View style={styles.foodImageCard}>
             <Image
               source={{ uri: dietData.foodImage }}
               style={styles.foodImage}
@@ -113,29 +99,6 @@ export default function DietStatisticsScreen() {
             />
           </View>
         )}
-
-        {/* Food Name & Calories Card */}
-        <View
-          style={[
-            styles.caloriesCard,
-            {
-              backgroundColor: isDarkMode ? Colors.gray[800] : Colors.white,
-              borderColor: isDarkMode ? Colors.gray[700] : Colors.gray[200],
-            },
-          ]}
-        >
-          <Text style={[styles.foodName, { color: colors.text }]}>
-            {foodName}
-          </Text>
-          <View style={styles.caloriesContainer}>
-            <Text style={[styles.caloriesValue, { color: Colors.primary }]}>
-              {totalCalories}
-            </Text>
-            <Text style={[styles.caloriesUnit, { color: colors.textSecondary }]}>
-              kcal
-            </Text>
-          </View>
-        </View>
 
         {/* Nutrients Grid */}
         <View style={styles.section}>
@@ -191,34 +154,6 @@ export default function DietStatisticsScreen() {
                     ]}
                   />
                 </View>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* Ingredients */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            {t('diet.statistics.ingredients', 'Ingredients')}
-          </Text>
-          <View
-            style={[
-              styles.ingredientsCard,
-              {
-                backgroundColor: isDarkMode ? Colors.gray[800] : Colors.white,
-                borderColor: isDarkMode ? Colors.gray[700] : Colors.gray[200],
-              },
-            ]}
-          >
-            {ingredients.map((ingredient, index) => (
-              <View key={index} style={styles.ingredientRow}>
-                <View style={styles.ingredientDot} />
-                <Text style={[styles.ingredientName, { color: colors.text }]}>
-                  {ingredient.name}
-                </Text>
-                <Text style={[styles.ingredientAmount, { color: colors.textSecondary }]}>
-                  {ingredient.amount}
-                </Text>
               </View>
             ))}
           </View>
@@ -302,42 +237,16 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     marginLeft: 40,
   },
-  imageContainer: {
+  foodImageCard: {
     width: '100%',
-    aspectRatio: 1.5,
+    height: 400,
     borderRadius: Spacing.radius.lg,
     overflow: 'hidden',
-    marginBottom: 24,
+    marginBottom: 32,
   },
   foodImage: {
     width: '100%',
     height: '100%',
-  },
-  caloriesCard: {
-    borderRadius: Spacing.radius.lg,
-    borderWidth: 1,
-    padding: 24,
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  foodName: {
-    fontSize: Fonts.sizes.xl,
-    fontFamily: Fonts.bold,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  caloriesContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 4,
-  },
-  caloriesValue: {
-    fontSize: Fonts.sizes['4xl'],
-    fontFamily: Fonts.bold,
-  },
-  caloriesUnit: {
-    fontSize: Fonts.sizes.lg,
-    fontFamily: Fonts.regular,
   },
   section: {
     marginBottom: 32,
@@ -396,32 +305,6 @@ const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     borderRadius: 3,
-  },
-  ingredientsCard: {
-    borderRadius: Spacing.radius.lg,
-    borderWidth: 1,
-    padding: 20,
-  },
-  ingredientRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  ingredientDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.primary,
-    marginRight: 12,
-  },
-  ingredientName: {
-    flex: 1,
-    fontSize: Fonts.sizes.base,
-    fontFamily: Fonts.regular,
-  },
-  ingredientAmount: {
-    fontSize: Fonts.sizes.sm,
-    fontFamily: Fonts.medium,
   },
   recommendationsHeader: {
     flexDirection: 'row',
