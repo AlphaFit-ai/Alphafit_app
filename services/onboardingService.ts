@@ -73,14 +73,6 @@ class OnboardingService {
     return response.data;
   }
 
-  /**
-   * Complete onboarding (final step)
-   */
-  async completeOnboarding(data: OnboardingData): Promise<void> {
-    const response = await apiClient.post('/onboarding/complete', data);
-    return response.data;
-  }
-
   // ==================== DIET ONBOARDING ====================
 
   /**
@@ -92,27 +84,15 @@ class OnboardingService {
   }
 
   /**
-   * Complete diet onboarding
-   */
-  async completeDietOnboarding(data: DietOnboardingData): Promise<void> {
-    const response = await apiClient.post('/onboarding/diet/complete', data);
-    return response.data;
-  }
-
-  /**
    * Get diet onboarding data
    */
-  async getDietOnboardingData(): Promise<DietOnboardingData> {
-    const response = await apiClient.get('/onboarding/diet');
-    return response.data.data;
-  }
-
-  /**
-   * Check if diet onboarding is completed
-   */
-  async isDietOnboardingCompleted(): Promise<boolean> {
-    const response = await apiClient.get('/onboarding/diet/status');
-    return response.data.data;
+  async getDietOnboardingData(): Promise<DietOnboardingData | null> {
+    try {
+      const response = await apiClient.get('/onboarding/diet');
+      return response.data.data;
+    } catch (error) {
+      return null;
+    }
   }
 
   // ==================== PROJECTION ONBOARDING ====================
@@ -126,27 +106,15 @@ class OnboardingService {
   }
 
   /**
-   * Complete projection onboarding
-   */
-  async completeProjectionOnboarding(data: ProjectionOnboardingData): Promise<void> {
-    const response = await apiClient.post('/onboarding/projection/complete', data);
-    return response.data;
-  }
-
-  /**
    * Get projection onboarding data
    */
-  async getProjectionOnboardingData(): Promise<ProjectionOnboardingData> {
-    const response = await apiClient.get('/onboarding/projection');
-    return response.data.data;
-  }
-
-  /**
-   * Check if projection onboarding is completed
-   */
-  async isProjectionOnboardingCompleted(): Promise<boolean> {
-    const response = await apiClient.get('/onboarding/projection/status');
-    return response.data.data;
+  async getProjectionOnboardingData(): Promise<ProjectionOnboardingData | null> {
+    try {
+      const response = await apiClient.get('/onboarding/projection');
+      return response.data.data;
+    } catch (error) {
+      return null;
+    }
   }
 
   /**

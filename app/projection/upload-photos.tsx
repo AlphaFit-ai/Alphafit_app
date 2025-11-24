@@ -115,17 +115,10 @@ export default function UploadPhotosScreen() {
 
   const allPhotosUploaded = photos.every((photo) => photo.uploadedUrl);
 
-  const handleAnalyze = async () => {
+  const handleAnalyze = () => {
     if (allPhotosUploaded) {
-      try {
-        // Complete projection onboarding
-        await onboardingService.completeProjectionOnboarding(projectionData);
-        console.log('Projection onboarding completed');
-      } catch (error) {
-        console.error('Failed to complete projection onboarding:', error);
-      }
-      
-      // Go back to statistics screen
+      // Navigate to statistics screen
+      // All data is already saved via auto-save in context
       setCurrentStep(0);
     }
   };

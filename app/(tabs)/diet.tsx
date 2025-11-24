@@ -13,24 +13,39 @@ import SupplementsScreen from '../diet/supplements';
 export default function DietScreen() {
   const { dietData, currentStep, setCurrentStep } = useDiet();
   const [isLoading, setIsLoading] = useState(true);
-  const [isDietCompleted, setIsDietCompleted] = useState(false);
 
-  // Check diet onboarding completion status on mount
+  // Check which diet screen is incomplete on mount
   useEffect(() => {
-    checkDietOnboardingStatus();
+    findFirstIncompleteStep();
   }, []);
 
-  const checkDietOnboardingStatus = async () => {
+  const findFirstIncompleteStep = async () => {
     try {
-      const completed = await onboardingService.isDietOnboardingCompleted();
-      setIsDietCompleted(completed);
+      const data = await onboardingService.getDietOnboardingData();
       
-      // If completed, go to food scan screen
-      if (completed) {
-        setCurrentStep(4); // Food scan screen
+      if (!data) {
+        // No data at all, start from beginning
+        setCurrentStep(0);
+      } else {
+        // Check each field and find first incomplete step
+        if (!data.dietPreference) {
+          setCurrentStep(0); // Diet preference
+        } else if (data.hasAllergies === undefined || (data.hasAllergies && !data.allergies)) {
+          setCurrentStep(1); // Allergies
+        } else if (!data.mealsPerDay) {
+          setCurrentStep(2); // Meals per day
+        } else if (data.takesSupplements === undefined || (data.takesSupplements && !data.supplements)) {
+          setCurrentStep(3); // Supplements
+        } else if (!data.foodImage) {
+          setCurrentStep(4); // Food scan
+        } else {
+          // All data complete, show statistics
+          setCurrentStep(5); // Diet statistics
+        }
       }
     } catch (error) {
-      console.error('Failed to check diet onboarding status:', error);
+      console.error('Failed to load diet onboarding data:', error);
+      setCurrentStep(0);
     } finally {
       setIsLoading(false);
     }
@@ -40,8 +55,8 @@ export default function DietScreen() {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        // If in onboarding and not at first step, go to previous step
-        if (!dietData.isCompleted && currentStep > 0) {
+        // If not at statistics screen and not at first step, go to previous step
+        if (currentStep > 0 && currentStep < 5) {
           setCurrentStep(currentStep - 1);
           return true; // Prevent default back behavior
         }
@@ -52,7 +67,7 @@ export default function DietScreen() {
       const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
 
       return () => backHandler.remove();
-    }, [dietData.isCompleted, currentStep, setCurrentStep])
+    }, [currentStep, setCurrentStep])
   );
 
   // Show loading indicator while checking status

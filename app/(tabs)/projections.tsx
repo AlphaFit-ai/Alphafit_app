@@ -16,28 +16,41 @@ export default function ProjectionsScreen() {
   const { colors } = useTheme();
   const { currentStep, goBack, setCurrentStep } = useProjection();
   const [isLoading, setIsLoading] = useState(true);
-  const [isProjectionCompleted, setIsProjectionCompleted] = useState(false);
 
-  // Check projection onboarding completion status on mount
+  // Check which projection screen is incomplete on mount
   useEffect(() => {
-    checkProjectionOnboardingStatus();
+    findFirstIncompleteStep();
   }, []);
 
-  const checkProjectionOnboardingStatus = async () => {
+  const findFirstIncompleteStep = async () => {
     try {
-      const completed = await onboardingService.isProjectionOnboardingCompleted();
-      setIsProjectionCompleted(completed);
+      const data = await onboardingService.getProjectionOnboardingData();
       
-      // If NOT completed, start from sleep screen (step 1)
-      // If completed, stay at statistics screen (step 0)
-      if (!completed) {
-        setCurrentStep(1); // Sleep screen - start onboarding
+      if (!data) {
+        // No data at all, start from sleep screen
+        setCurrentStep(1);
       } else {
-        setCurrentStep(0); // Statistics screen - show results
+        // Check each field and find first incomplete step
+        if (!data.sleepHours) {
+          setCurrentStep(1); // Sleep
+        } else if (!data.dailySteps) {
+          setCurrentStep(2); // Steps
+        } else if (!data.stressLevel) {
+          setCurrentStep(3); // Stress
+        } else if (!data.frontPhotoUrl || !data.sidePhotoUrl || !data.backPhotoUrl) {
+          // Check if we need scan body screen or upload photos
+          if (!data.frontPhotoUrl && !data.sidePhotoUrl && !data.backPhotoUrl) {
+            setCurrentStep(4); // Scan body (intro to photos)
+          } else {
+            setCurrentStep(5); // Upload photos (some photos missing)
+          }
+        } else {
+          // All data complete, show statistics
+          setCurrentStep(0); // Statistics
+        }
       }
     } catch (error) {
-      console.error('Failed to check projection onboarding status:', error);
-      // On error, start onboarding from beginning
+      console.error('Failed to load projection onboarding data:', error);
       setCurrentStep(1);
     } finally {
       setIsLoading(false);

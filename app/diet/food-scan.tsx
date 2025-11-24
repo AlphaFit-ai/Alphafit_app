@@ -78,16 +78,11 @@ export default function FoodScanScreen() {
     }
   };
 
-  const handleFinish = async () => {
+  const handleFinish = () => {
     if (uploadedUrl) {
-      try {
-        // Complete diet onboarding
-        await onboardingService.completeDietOnboarding(dietData);
-        console.log('Diet onboarding completed');
-      } catch (error) {
-        console.error('Failed to complete diet onboarding:', error);
-      }
-      setCurrentStep(5); // Navigate to diet statistics screen
+      // Navigate to diet statistics screen
+      // All data is already saved via auto-save in context
+      setCurrentStep(5);
     } else {
       Alert.alert('No Image', 'Please capture or select a food image first');
     }

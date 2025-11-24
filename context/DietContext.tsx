@@ -9,7 +9,6 @@ export interface DietOnboardingData {
   supplements?: string;
   takesSupplements?: boolean;
   foodImage?: string;
-  isCompleted?: boolean;
 }
 
 interface DietContextType {
