@@ -7,6 +7,7 @@ import { Button, OptionCard, ProgressBar } from '../../components';
 import { Colors, SharedStyles } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
+import { onboardingService } from '../../services';
 
 export default function SourceScreen() {
   const { t } = useTranslation();
@@ -15,10 +16,18 @@ export default function SourceScreen() {
   const { colors, isDarkMode } = useTheme();
   const [selectedSource, setSelectedSource] = useState<'instagram' | 'facebook' | 'tiktok' | 'threads' | 'x' | 'youtube' | 'google' | 'others' | null>(null);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (selectedSource) {
       updateOnboardingData({ source: selectedSource });
       setCurrentStep(1);
+      
+      // Save to backend in real-time
+      try {
+        await onboardingService.saveOnboardingData({ source: selectedSource });
+      } catch (error) {
+        console.error('Failed to save source:', error);
+      }
+      
       router.push('/onboarding/age');
     }
   };

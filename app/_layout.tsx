@@ -16,6 +16,28 @@ import { ProjectionProvider } from '../context/ProjectionContext';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import '../i18n/config';
 
+// Suppress non-critical warnings and errors
+const originalWarn = console.warn;
+console.warn = (message: any, ...args: any[]) => {
+  if (typeof message === 'string' && message.includes('keep awake')) {
+    return;
+  }
+  originalWarn(message, ...args);
+};
+
+const originalError = console.error;
+console.error = (message: any, ...args: any[]) => {
+  // Suppress expected errors when user is not authenticated
+  if (typeof message === 'string') {
+    if (message.includes('Failed to sync theme with backend') || 
+        message.includes('Request failed with status code 404') ||
+        message.includes('Request failed with status code 401')) {
+      return; // Silently ignore expected authentication errors
+    }
+  }
+  originalError(message, ...args);
+};
+
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 

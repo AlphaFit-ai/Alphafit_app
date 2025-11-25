@@ -5,6 +5,7 @@ interface OnboardingContextType {
   onboardingData: UserOnboardingData;
   updateOnboardingData: (data: Partial<UserOnboardingData>) => void;
   resetOnboardingData: () => void;
+  loadOnboardingData: (data: UserOnboardingData) => void;
   currentStep: number;
   setCurrentStep: (step: number) => void;
   totalSteps: number;
@@ -42,6 +43,10 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     setOnboardingData((prev) => ({ ...prev, ...data }));
   };
 
+  const loadOnboardingData = (data: UserOnboardingData) => {
+    setOnboardingData(data);
+  };
+
   const resetOnboardingData = () => {
     setOnboardingData(initialOnboardingData);
     setCurrentStep(0);
@@ -52,6 +57,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       value={{
         onboardingData,
         updateOnboardingData,
+        loadOnboardingData,
         resetOnboardingData,
         currentStep,
         setCurrentStep,

@@ -23,17 +23,16 @@ export default function GoalScreen() {
       
       try {
         // Update local state
-        const finalData = { ...onboardingData, goal: selectedGoal };
         updateOnboardingData({ goal: selectedGoal });
         setCurrentStep(9);
 
-        // Save to backend and mark onboarding as complete
-        await onboardingService.completeOnboarding(finalData);
+        // Save to backend (real-time)
+        await onboardingService.saveOnboardingData({ goal: selectedGoal });
         
         console.log('✅ Onboarding completed successfully!');
         router.replace('/(tabs)/home');
       } catch (error) {
-        console.error('❌ Failed to complete onboarding:', error);
+        console.error('❌ Failed to save goal:', error);
         Alert.alert(
           t('onboarding.error.title') || 'Error',
           t('onboarding.error.message') || 'Failed to save your preferences. Please try again.',

@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { LanguageSelector } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
+import { userService } from '../../services';
 
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
@@ -15,6 +16,37 @@ export default function SettingsScreen() {
 
   const currentLanguage = i18n.language || 'en';
   const languageNames: { [key: string]: string } = { en: 'English', es: 'Español', fr: 'Français' };
+
+  // Load preferences from backend
+  React.useEffect(() => {
+    loadPreferences();
+  }, []);
+
+  const loadPreferences = async () => {
+    try {
+      const profile = await userService.getUserProfile();
+      if (profile.preferences) {
+        setNotificationsEnabled(profile.preferences.notificationsEnabled ?? true);
+      }
+    } catch (error) {
+      console.error('Failed to load preferences:', error);
+    }
+  };
+
+  const handleNotificationToggle = async (value: boolean) => {
+    setNotificationsEnabled(value);
+    
+    // Sync with backend
+    try {
+      await userService.updateUserProfile({
+        preferences: {
+          notificationsEnabled: value
+        }
+      });
+    } catch (error) {
+      console.error('Failed to sync notification settings with backend:', error);
+    }
+  };
 
   const handleLanguageSelect = (language: { code: string; name: string; flag: string }) => {
     Animated.sequence([
@@ -30,6 +62,7 @@ export default function SettingsScreen() {
       }),
     ]).start();
     
+    // i18n will handle backend sync automatically via languageChanged event
     i18n.changeLanguage(language.code);
   };
 
@@ -81,7 +114,7 @@ export default function SettingsScreen() {
             </View>
             <Switch
               value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
+              onValueChange={handleNotificationToggle}
               trackColor={{ false: Colors.gray[300], true: Colors.primary }}
               thumbColor={Colors.white}
             />

@@ -1,20 +1,37 @@
 import { Ionicons } from '@expo/vector-icons';
 import Feather from '@expo/vector-icons/Feather';
 import { Tabs, usePathname, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Image, Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GradientText, ProPlanModal } from '../../components';
 import NotificationModal from '../../components/NotificationModal';
 import { Colors, Fonts } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
+import { imageService } from '../../services';
 
 export default function TabsLayout() {
   const isWeb = Platform.OS === 'web';
   const pathname = usePathname();
   const router = useRouter();
   const { colors, isDarkMode } = useTheme();
+  const insets = useSafeAreaInsets();
   const [showProModal, setShowProModal] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [userProfilePicture, setUserProfilePicture] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadUserProfilePicture();
+  }, []);
+
+  const loadUserProfilePicture = async () => {
+    try {
+      const profilePicUrl = await imageService.getProfilePicture();
+      setUserProfilePicture(profilePicUrl);
+    } catch (error) {
+      console.log('No profile picture found');
+    }
+  };
 
   const navItems = [
     { name: 'home', route: '/(tabs)/home', label: 'Home', icon: 'home' as const, iconSet: 'feather' as const },
@@ -123,12 +140,11 @@ export default function TabsLayout() {
             backgroundColor: colors.background,
             borderTopColor: isDarkMode ? Colors.gray[700] : Colors.gray[100],
             borderTopWidth: 1,
+            height: 60 + insets.bottom,
+            paddingBottom: insets.bottom,
+            paddingTop: 8,
           },
-          tabBarLabelStyle: {
-            fontFamily: Fonts.semiBold,
-            fontSize: 11,
-            marginTop: 2,
-          },
+          tabBarShowLabel: false,
           animation: 'shift',
           lazy: false,
         }}
@@ -215,13 +231,22 @@ export default function TabsLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.profileIconContainer, focused && styles.iconWrapperActive, isWeb && styles.webProfileIcon]}>
-              <Ionicons 
-                name={focused ? "person" : "person-outline"} 
-                size={isWeb ? 24 : 20} 
-                color={color} 
-              />
-            </View>
+            userProfilePicture ? (
+              <View style={[styles.profileAvatarWrapper, focused && styles.profileAvatarWrapperActive]}>
+                <Image 
+                  source={{ uri: userProfilePicture }} 
+                  style={styles.profileAvatar}
+                />
+              </View>
+            ) : (
+              <View style={[styles.profileIconContainer, focused && styles.iconWrapperActive, isWeb && styles.webProfileIcon]}>
+                <Ionicons 
+                  name={focused ? "person" : "person-outline"} 
+                  size={isWeb ? 24 : 20} 
+                  color={color} 
+                />
+              </View>
+            )
           ),
           ...(isWeb && {
             tabBarLabel: ({ color }) => <Text style={[styles.webLabel, { color }]}>Profile</Text>,
@@ -299,6 +324,22 @@ export default function TabsLayout() {
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  profileAvatarWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  profileAvatarWrapperActive: {
+    borderColor: Colors.primary,
+  },
+  profileAvatar: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
   },
   // Web-specific styles
   webTabBar: {

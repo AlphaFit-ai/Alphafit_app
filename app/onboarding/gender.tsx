@@ -7,6 +7,7 @@ import { Button, OptionCard, ProgressBar } from '../../components';
 import { Colors, SharedStyles } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
+import { onboardingService } from '../../services';
 
 export default function GenderScreen() {
   const { t } = useTranslation();
@@ -15,10 +16,18 @@ export default function GenderScreen() {
   const { colors, isDarkMode } = useTheme();
   const [selectedGender, setSelectedGender] = useState<'male' | 'female' | null>(null);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (selectedGender) {
       updateOnboardingData({ gender: selectedGender });
       setCurrentStep(3);
+      
+      // Save to backend in real-time
+      try {
+        await onboardingService.saveOnboardingData({ gender: selectedGender });
+      } catch (error) {
+        console.error('Failed to save gender:', error);
+      }
+      
       router.push('/onboarding/height');
     }
   };

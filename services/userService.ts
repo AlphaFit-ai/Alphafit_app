@@ -41,10 +41,25 @@ export interface AuthResponse {
   needsOnboarding?: boolean;
 }
 
-export interface UserProfile extends UserOnboardingData {
-  _id: string;
-  createdAt: string;
-  updatedAt: string;
+export interface UserPreferences {
+  theme?: 'light' | 'dark';
+  language?: string;
+  notificationsEnabled?: boolean;
+}
+
+export interface UserProfile {
+  id?: string;
+  _id?: string;
+  email?: string;
+  fullName?: string;
+  phoneNumber?: string;
+  authProvider?: string;
+  profileImageUrl?: string;
+  onboardingData?: UserOnboardingData;
+  preferences?: UserPreferences;
+  createdAt?: string;
+  updatedAt?: string;
+  lastLoginAt?: string;
 }
 
 class UserService {
@@ -133,6 +148,11 @@ class UserService {
   async updateUserProfile(data: Partial<UserProfile>): Promise<UserProfile> {
     const response = await apiClient.put('/users/profile', data);
     return response.data;
+  }
+
+  // Deactivate account
+  async deactivateAccount(confirmationText: string): Promise<void> {
+    await apiClient.post('/users/deactivate', { confirmationText });
   }
 
   // Logout

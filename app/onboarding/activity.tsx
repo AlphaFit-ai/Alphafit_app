@@ -6,6 +6,7 @@ import { Button, OptionCard, ProgressBar } from '../../components';
 import { SharedStyles } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
+import { onboardingService } from '../../services';
 
 export default function ActivityLevelScreen() {
   const { t } = useTranslation();
@@ -14,10 +15,18 @@ export default function ActivityLevelScreen() {
   const { colors } = useTheme();
   const [selectedLevel, setSelectedLevel] = useState<'low' | 'medium' | 'high' | null>(null);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (selectedLevel) {
       updateOnboardingData({ activityLevel: selectedLevel });
       setCurrentStep(6);
+      
+      // Save to backend in real-time
+      try {
+        await onboardingService.saveOnboardingData({ activityLevel: selectedLevel });
+      } catch (error) {
+        console.error('Failed to save activity level:', error);
+      }
+      
       router.push('/onboarding/workouts');
     }
   };

@@ -13,6 +13,7 @@ interface ProjectionData {
 interface ProjectionContextType {
   projectionData: ProjectionData;
   updateProjectionData: (data: Partial<ProjectionData>) => Promise<void>;
+  loadProjectionData: (data: ProjectionData) => void;
   resetProjectionData: () => void;
   currentStep: number;
   setCurrentStep: (step: number) => void;
@@ -54,6 +55,10 @@ export const ProjectionProvider: React.FC<{ children: ReactNode }> = ({ children
     }
   };
 
+  const loadProjectionData = (data: ProjectionData) => {
+    setProjectionData(data);
+  };
+
   const handleSetCurrentStep = (step: number) => {
     setNavigationHistory((prev) => [...prev, step]);
     setCurrentStep(step);
@@ -80,6 +85,7 @@ export const ProjectionProvider: React.FC<{ children: ReactNode }> = ({ children
       value={{
         projectionData,
         updateProjectionData,
+        loadProjectionData,
         resetProjectionData,
         currentStep,
         setCurrentStep: handleSetCurrentStep,

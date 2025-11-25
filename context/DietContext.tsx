@@ -14,6 +14,7 @@ export interface DietOnboardingData {
 interface DietContextType {
   dietData: DietOnboardingData;
   updateDietData: (data: Partial<DietOnboardingData>) => Promise<void>;
+  loadDietData: (data: DietOnboardingData) => void;
   resetDietData: () => void;
   currentStep: number;
   setCurrentStep: (step: number) => void;
@@ -24,12 +25,12 @@ const DietContext = createContext<DietContextType | undefined>(undefined);
 
 const initialDietData: DietOnboardingData = {
   dietPreference: undefined,
-  allergies: '',
-  hasAllergies: false,
-  mealsPerDay: 3,
-  supplements: '',
-  takesSupplements: false,
-  isCompleted: false,
+  allergies: undefined,
+  hasAllergies: undefined,
+  mealsPerDay: undefined,
+  supplements: undefined,
+  takesSupplements: undefined,
+  foodImage: undefined,
 };
 
 export const DietProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -58,6 +59,10 @@ export const DietProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const loadDietData = (data: DietOnboardingData) => {
+    setDietData(data);
+  };
+
   const resetDietData = () => {
     setDietData(initialDietData);
     setCurrentStep(0);
@@ -68,6 +73,7 @@ export const DietProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       value={{
         dietData,
         updateDietData,
+        loadDietData,
         resetDietData,
         currentStep,
         setCurrentStep,

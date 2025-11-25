@@ -18,9 +18,9 @@ export default function MealsScreen() {
   const { colors, isDarkMode } = useTheme();
   const [selectedMeals, setSelectedMeals] = useState<number | null>(null);
 
-  const handleSelect = (value: number) => {
+  const handleSelect = async (value: number) => {
     setSelectedMeals(value);
-    updateDietData({ mealsPerDay: value });
+    await updateDietData({ mealsPerDay: value });
     setTimeout(() => {
       setCurrentStep(3);
     }, 300);

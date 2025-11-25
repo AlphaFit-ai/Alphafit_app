@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, Modal, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Alert, LanguageSelector, ProPlanModal } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
-import { firebaseAuthService } from '../../services';
+import { firebaseAuthService, imageService, userService } from '../../services';
+import type { UserProfile } from '../../services/userService';
 
 interface SettingItem {
   icon: keyof typeof Ionicons.glyphMap;
@@ -25,15 +26,41 @@ export default function ProfileScreen() {
   const [showProModal, setShowProModal] = useState(false);
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{ visible: boolean; title: string; message?: string; buttons?: any[] }>({ visible: false, title: '' });
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userProfilePicture, setUserProfilePicture] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const currentLanguage = i18n.language || 'en';
   const languageNames = { en: 'English', es: 'Español', fr: 'Français' };
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      setIsLoading(true);
+      const [profile, profilePic] = await Promise.all([
+        userService.getUserProfile(),
+        imageService.getProfilePicture()
+      ]);
+      setUserProfile(profile);
+      setUserProfilePicture(profilePic);
+    } catch (error) {
+      console.error('Failed to load user data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const accountSettings: SettingItem[] = [
     {
       icon: 'person-outline',
       title: t('profile.accountDetails'),
-      subtitle: 'Yassir • yassir@example.com',
+      subtitle: userProfile ? `${userProfile.fullName || 'User'} • ${userProfile.email || ''}` : 'Loading...',
       type: 'navigation',
       onPress: () => router.push('/profile/account-details'),
     },
@@ -88,6 +115,39 @@ export default function ProfileScreen() {
         message: error.message || 'Failed to logout. Please try again.',
         buttons: [{ text: 'OK', style: 'cancel' }]
       });
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    const trimmedConfirmation = deleteConfirmation.trim();
+    if (trimmedConfirmation !== 'Delete my account') {
+      setAlertConfig({
+        visible: true,
+        title: 'Invalid Confirmation',
+        message: 'Please type "Delete my account" exactly to confirm.',
+        buttons: [{ text: 'OK', style: 'cancel' }]
+      });
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      console.log('Sending delete request with confirmation:', trimmedConfirmation);
+      await userService.deactivateAccount(trimmedConfirmation);
+      await firebaseAuthService.signOut();
+      setShowDeleteModal(false);
+      router.replace('/onboarding/login');
+    } catch (error: any) {
+      console.error('Delete account error:', error);
+      setAlertConfig({
+        visible: true,
+        title: 'Delete Account Failed',
+        message: error.message || 'Failed to delete account. Please try again.',
+        buttons: [{ text: 'OK', style: 'cancel' }]
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeleteConfirmation('');
     }
   };
 
@@ -163,20 +223,38 @@ export default function ProfileScreen() {
     );
   };
 
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
       <View style={styles.profileSection}>
         <View style={styles.avatarContainer}>
-          <Image
-            source={{ uri: 'https://via.placeholder.com/100' }}
-            style={styles.avatar}
-          />
+          {userProfilePicture ? (
+            <Image
+              source={{ uri: userProfilePicture }}
+              style={styles.avatar}
+            />
+          ) : (
+            <View style={[styles.avatar, styles.avatarPlaceholder, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[200] }]}>
+              <Ionicons name="person" size={40} color={colors.textSecondary} />
+            </View>
+          )}
           <TouchableOpacity style={styles.editButton} activeOpacity={0.7}>
             <Ionicons name="camera" size={16} color={Colors.white} />
           </TouchableOpacity>
         </View>
-        <Text style={[styles.userName, { color: colors.text }]}>Yassir</Text>
-        <Text style={[styles.userEmail, { color: colors.textSecondary }]}>john@example.com</Text>
+        <Text style={[styles.userName, { color: colors.text }]}>
+          {userProfile?.fullName || 'User'}
+        </Text>
+        <Text style={[styles.userEmail, { color: colors.textSecondary }]}>
+          {userProfile?.email || 'user@example.com'}
+        </Text>
       </View>
 
       <View style={styles.section}>
@@ -210,6 +288,15 @@ export default function ProfileScreen() {
         <Text style={styles.logoutText}>{t('profile.logout')}</Text>
       </TouchableOpacity>
 
+      <TouchableOpacity
+        style={[styles.deleteButton, { borderColor: Colors.red, backgroundColor: Colors.red + '10' }]}
+        activeOpacity={0.7}
+        onPress={() => setShowDeleteModal(true)}
+      >
+        <Ionicons name="trash-outline" size={20} color={Colors.red} />
+        <Text style={styles.deleteText}>Delete Account</Text>
+      </TouchableOpacity>
+
       <View style={{ height: 40 }} />
 
       <ProPlanModal visible={showProModal} onClose={() => setShowProModal(false)} />
@@ -226,6 +313,63 @@ export default function ProfileScreen() {
         onSelect={handleLanguageSelect}
         selectedLanguage={currentLanguage}
       />
+
+      {/* Delete Account Modal */}
+      <Modal
+        visible={showDeleteModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContainer, { backgroundColor: colors.card }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Delete Account</Text>
+            <Text style={[styles.modalMessage, { color: colors.textSecondary }]}>
+              This will permanently delete your account and all your data. This action cannot be undone.
+            </Text>
+            
+            <Text style={[styles.modalLabel, { color: colors.text }]}>Type "Delete my account" to confirm:</Text>
+            <TextInput
+              style={[styles.confirmationInput, { 
+                backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100],
+                color: colors.text,
+                borderColor: colors.border
+              }]}
+              value={deleteConfirmation}
+              onChangeText={setDeleteConfirmation}
+              placeholder="Delete my account"
+              placeholderTextColor={colors.textSecondary}
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!isDeleting}
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalCancelButton, { borderColor: colors.border }]}
+                onPress={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmation('');
+                }}
+                disabled={isDeleting}
+              >
+                <Text style={[styles.modalButtonText, { color: colors.text }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalDeleteButton, { backgroundColor: Colors.red }]}
+                onPress={handleDeleteAccount}
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <ActivityIndicator size="small" color={Colors.white} />
+                ) : (
+                  <Text style={[styles.modalButtonText, { color: Colors.white }]}>Delete</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -234,6 +378,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.white,
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   profileSection: {
     alignItems: 'center',
@@ -249,6 +397,10 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     backgroundColor: Colors.gray[200],
+  },
+  avatarPlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   editButton: {
     position: 'absolute',
@@ -362,5 +514,89 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.bold,
     fontWeight: '700',
     color: Colors.red,
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
+    marginHorizontal: Spacing.screenPaddingHorizontal,
+    marginTop: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.red,
+  },
+  deleteText: {
+    fontSize: 16,
+    fontFamily: Fonts.semiBold,
+    color: Colors.red,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainer: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: Colors.white,
+    borderRadius: 20,
+    padding: 24,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontFamily: Fonts.bold,
+    color: Colors.black,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 15,
+    fontFamily: Fonts.regular,
+    color: Colors.gray[600],
+    marginBottom: 20,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  modalLabel: {
+    fontSize: 14,
+    fontFamily: Fonts.semiBold,
+    color: Colors.black,
+    marginBottom: 8,
+  },
+  confirmationInput: {
+    backgroundColor: Colors.gray[100],
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    fontFamily: Fonts.regular,
+    borderWidth: 1,
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancelButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+  },
+  modalDeleteButton: {
+    backgroundColor: Colors.red,
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontFamily: Fonts.semiBold,
   },
 });

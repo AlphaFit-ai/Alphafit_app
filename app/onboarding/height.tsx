@@ -6,6 +6,7 @@ import { Button, ProgressBar } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
+import { onboardingService } from '../../services';
 
 export default function HeightScreen() {
   const { t } = useTranslation();
@@ -109,7 +110,7 @@ export default function HeightScreen() {
     }
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     const heightData = isMetric
       ? { value: selectedCm, unit: 'metric' as const, cm: selectedCm }
       : { value: selectedFeet * 12 + selectedInches, unit: 'imperial' as const, feet: selectedFeet, inches: selectedInches };
@@ -118,13 +119,24 @@ export default function HeightScreen() {
       ? { value: selectedKg, unit: 'metric' as const, kg: selectedKg }
       : { value: selectedLbs, unit: 'imperial' as const, lbs: selectedLbs };
 
-      updateOnboardingData({
+    updateOnboardingData({
+      height: heightData,
+      weight: weightData,
+    });
+    setCurrentStep(4);
+    
+    // Save to backend in real-time
+    try {
+      await onboardingService.saveOnboardingData({
         height: heightData,
         weight: weightData,
       });
-      setCurrentStep(4);
-      router.push('/onboarding/fitness-level');
-    };  return (
+    } catch (error) {
+      console.error('Failed to save height/weight:', error);
+    }
+    
+    router.push('/onboarding/fitness-level');
+  };  return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <ProgressBar currentStep={4} totalSteps={10} />

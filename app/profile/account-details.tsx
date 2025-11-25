@@ -1,10 +1,12 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, NativeScrollEvent, NativeSyntheticEvent, Platform, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Modal, NativeScrollEvent, NativeSyntheticEvent, Platform, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button } from '../../components';
 import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
+import { userService } from '../../services';
+import type { UserProfile } from '../../services/userService';
 
 interface SuccessModalProps {
   visible: boolean;
@@ -39,11 +41,12 @@ const SuccessModal = ({ visible, onClose }: SuccessModalProps) => {
 export default function AccountDetailsScreen() {
   const { t } = useTranslation();
   const { colors, isDarkMode } = useTheme();
-  const [name, setName] = useState('Yassir');
-  const [email, setEmail] = useState('yassir@example.com');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [callingCode, setCallingCode] = useState('+212');
   const [phone, setPhone] = useState('');
-  const [age, setAge] = useState('28');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   
   const [isMetric, setIsMetric] = useState(true);
   const [selectedFeet, setSelectedFeet] = useState(5);
@@ -60,6 +63,78 @@ export default function AccountDetailsScreen() {
   const inchesScrollRef = useRef<ScrollView>(null);
   const weightScrollRef = useRef<ScrollView>(null);
 
+  const formatPhoneNumber = (phoneNumber: string) => {
+    const cleaned = phoneNumber.replace(/\D/g, '');
+    if (cleaned.length <= 3) {
+      return cleaned;
+    } else if (cleaned.length <= 6) {
+      return cleaned.slice(0, 3) + ' ' + cleaned.slice(3);
+    } else if (cleaned.length <= 10) {
+      return cleaned.slice(0, 3) + ' ' + cleaned.slice(3, 6) + ' ' + cleaned.slice(6);
+    }
+    return cleaned.slice(0, 10);
+  };
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      setIsLoading(true);
+      const profile = await userService.getUserProfile();
+      
+      // Set basic info
+      setName(profile.fullName || '');
+      setEmail(profile.email || '');
+      
+      // Set phone number
+      if (profile.phoneNumber) {
+        // Remove any non-digit characters and format
+        const cleanPhone = profile.phoneNumber.replace(/\D/g, '');
+        // Check if it starts with country code
+        if (cleanPhone.startsWith('212')) {
+          // Remove Morocco country code if present
+          const localNumber = cleanPhone.substring(3);
+          setPhone(formatPhoneNumber(localNumber));
+        } else if (cleanPhone.startsWith('+')) {
+          // Handle other formats
+          setPhone(formatPhoneNumber(cleanPhone));
+        } else {
+          setPhone(formatPhoneNumber(cleanPhone));
+        }
+      }
+      
+      // Set height from onboardingData
+      const heightData = profile.onboardingData?.height;
+      if (heightData) {
+        if (heightData.unit === 'metric' && heightData.cm) {
+          setIsMetric(true);
+          setSelectedCm(Math.round(heightData.cm));
+        } else if (heightData.unit === 'imperial' && heightData.feet && heightData.inches !== undefined) {
+          setIsMetric(false);
+          setSelectedFeet(heightData.feet);
+          setSelectedInches(heightData.inches);
+        }
+      }
+      
+      // Set weight from onboardingData
+      const weightData = profile.onboardingData?.weight;
+      if (weightData) {
+        if (weightData.unit === 'metric' && weightData.kg) {
+          setSelectedKg(Math.round(weightData.kg));
+        } else if (weightData.unit === 'imperial' && weightData.lbs) {
+          setSelectedLbs(Math.round(weightData.lbs));
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load user data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Scroll pickers to correct position when unit system changes or when data loads
   useEffect(() => {
     setTimeout(() => {
       if (isMetric) {
@@ -71,7 +146,7 @@ export default function AccountDetailsScreen() {
         weightScrollRef.current?.scrollTo({ y: (selectedLbs - 60) * ITEM_HEIGHT, animated: false });
       }
     }, 100);
-  }, [isMetric]);
+  }, [isMetric, selectedCm, selectedKg, selectedFeet, selectedInches, selectedLbs]);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -80,14 +155,6 @@ export default function AccountDetailsScreen() {
 
   const handleEmailChange = (text: string) => {
     setEmail(text.toLowerCase().trim());
-  };
-
-  const handleAgeChange = (text: string) => {
-    const numericValue = text.replace(/[^0-9]/g, '');
-    const ageNum = parseInt(numericValue);
-    if (numericValue === '' || (ageNum >= 1 && ageNum <= 120)) {
-      setAge(numericValue);
-    }
   };
 
   const handlePhoneChange = (text: string) => {
@@ -138,17 +205,69 @@ export default function AccountDetailsScreen() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validateEmail(email)) {
       return;
     }
-    setShowSuccessModal(true);
+    
+    try {
+      setIsSaving(true);
+      
+      // Prepare height data
+      const heightData = isMetric ? {
+        value: selectedCm,
+        unit: 'metric' as const,
+        cm: selectedCm
+      } : {
+        value: selectedFeet * 12 + selectedInches,
+        unit: 'imperial' as const,
+        feet: selectedFeet,
+        inches: selectedInches
+      };
+      
+      // Prepare weight data
+      const weightData = isMetric ? {
+        value: selectedKg,
+        unit: 'metric' as const,
+        kg: selectedKg
+      } : {
+        value: selectedLbs,
+        unit: 'imperial' as const,
+        lbs: selectedLbs
+      };
+      
+      // Prepare update data with onboardingData structure
+      const updateData: Partial<UserProfile> = {
+        fullName: name,
+        email: email,
+        phoneNumber: phone.replace(/\s/g, ''), // Remove spaces
+        onboardingData: {
+          height: heightData,
+          weight: weightData
+        }
+      }
+      
+      await userService.updateUserProfile(updateData);
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error('Failed to save user data:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleModalClose = () => {
     setShowSuccessModal(false);
     router.back();
   };
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -207,19 +326,6 @@ export default function AccountDetailsScreen() {
                 maxLength={12}
               />
             </View>
-          </View>
-
-          <View style={styles.formSection}>
-            <Text style={[styles.label, { color: colors.text }]}>{t('profile.accountDetailsForm.age')}</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100], color: colors.text }]}
-              value={age}
-              onChangeText={handleAgeChange}
-              placeholder={t('profile.accountDetailsForm.agePlaceholder')}
-              placeholderTextColor={Colors.gray[400]}
-              keyboardType="numeric"
-              maxLength={3}
-            />
           </View>
 
           <View style={styles.switchContainer}>
@@ -373,9 +479,9 @@ export default function AccountDetailsScreen() {
 
       <View style={SharedStyles.footerFloating}>
         <Button 
-          title={t('profile.accountDetailsForm.saveChanges')}
+          title={isSaving ? t('profile.accountDetailsForm.saving', 'Saving...') : t('profile.accountDetailsForm.saveChanges')}
           onPress={handleSave}
-          disabled={!validateEmail(email) || !name.trim() || !age}
+          disabled={!validateEmail(email) || !name.trim() || isSaving}
           floating
         />
       </View>
@@ -389,6 +495,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.white,
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scrollView: {
     flex: 1,

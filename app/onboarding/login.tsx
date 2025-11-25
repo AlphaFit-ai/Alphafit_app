@@ -7,8 +7,27 @@ import { Button, GradientText, Input } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
-import { firebaseAuthService, userService } from '../../services';
+import { firebaseAuthService, onboardingService, userService } from '../../services';
 import * as AppleAuthentication from 'expo-apple-authentication';
+
+// Helper function to determine first incomplete onboarding screen
+function getFirstIncompleteScreen(data: any): string {
+  if (!data) return '/onboarding/source';
+  
+  // Check each required field in order
+  if (!data.source) return '/onboarding/source';
+  if (!data.dateOfBirth) return '/onboarding/age';
+  if (!data.gender) return '/onboarding/gender';
+  if (!data.height || !data.weight) return '/onboarding/height';
+  if (!data.fitnessLevel) return '/onboarding/fitness-level';
+  if (!data.activityLevel) return '/onboarding/activity';
+  if (!data.workoutsPerWeek) return '/onboarding/workouts';
+  if (!data.equipment) return '/onboarding/equipment';
+  if (!data.goal) return '/onboarding/goal';
+  
+  // All onboarding complete
+  return '/(tabs)/home';
+}
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -46,17 +65,33 @@ export default function LoginScreen() {
       // Send to backend
       const response = await userService.authenticateUser(idToken);
       
-      // Update onboarding context
-      updateOnboardingData({ 
-        email: user.email || '',
-        authProvider: provider
-      });
-
-      // Check if user needs onboarding
-      if (response.needsOnboarding) {
+      // Load saved onboarding data from backend
+      try {
+        const savedData = await onboardingService.getOnboardingData();
+        
+        if (savedData) {
+          // Load saved data into context
+          updateOnboardingData(savedData);
+        } else {
+          // New user - just update email and provider
+          updateOnboardingData({ 
+            email: user.email || '',
+            authProvider: provider
+          });
+        }
+        
+        // Determine where to navigate based on onboarding progress
+        const nextScreen = getFirstIncompleteScreen(savedData);
+        router.replace(nextScreen);
+        
+      } catch (error) {
+        console.error('Failed to load onboarding data:', error);
+        // If error loading data, start onboarding from beginning
+        updateOnboardingData({ 
+          email: user.email || '',
+          authProvider: provider
+        });
         router.replace('/onboarding/source');
-      } else {
-        router.replace('/(tabs)/home');
       }
     } catch (error: any) {
       console.error('Backend authentication error:', error);

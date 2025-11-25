@@ -43,9 +43,9 @@ export default function DietPreferenceScreen() {
   const [selected, setSelected] = useState<DietType | null>(null);
   const dietOptions = getDietOptions(t);
 
-  const handleSelect = (type: DietType) => {
+  const handleSelect = async (type: DietType) => {
     setSelected(type);
-    updateDietData({ dietPreference: type });
+    await updateDietData({ dietPreference: type });
     setTimeout(() => {
       setCurrentStep(1);
     }, 300);

@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button, OptionCard, ProgressBar } from '../../components';
-import { Colors, Fonts, Spacing } from '../../constants';
+import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
+import { onboardingService } from '../../services';
 
 export default function WorkoutsScreen() {
   const { t } = useTranslation();
@@ -14,10 +15,18 @@ export default function WorkoutsScreen() {
   const { colors } = useTheme();
   const [selectedWorkouts, setSelectedWorkouts] = useState<'0-2' | '3-5' | '6+' | null>(null);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (selectedWorkouts) {
       updateOnboardingData({ workoutsPerWeek: selectedWorkouts });
       setCurrentStep(7);
+      
+      // Save to backend in real-time
+      try {
+        await onboardingService.saveOnboardingData({ workoutsPerWeek: selectedWorkouts });
+      } catch (error) {
+        console.error('Failed to save workouts per week:', error);
+      }
+      
       router.push('/onboarding/equipment');
     }
   };

@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { Appearance } from 'react-native';
 import { Colors } from '../constants';
+import { userService } from '../services';
 
 interface ThemeColors {
   background: string;
@@ -55,12 +56,52 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const loadTheme = async () => {
     try {
+      // First, check if user is authenticated
+      const isAuthenticated = await userService.isAuthenticated();
+      
+      if (isAuthenticated) {
+        // Try to load from backend
+        try {
+          const profile = await userService.getUserProfile();
+          if (profile.preferences?.theme) {
+            const isDark = profile.preferences.theme === 'dark';
+            setIsDarkMode(isDark);
+            // Also save to AsyncStorage for offline access
+            await AsyncStorage.setItem(THEME_STORAGE_KEY, profile.preferences.theme);
+            return;
+          }
+        } catch (error: any) {
+          // Only log unexpected errors (not 401/404)
+          if (error?.response?.status !== 401 && error?.response?.status !== 404) {
+            console.log('Could not load theme from backend:', error.message);
+          }
+        }
+      }
+
+      // Fallback to AsyncStorage
       const savedTheme = await AsyncStorage.getItem(THEME_STORAGE_KEY);
       if (savedTheme !== null) {
         setIsDarkMode(savedTheme === 'dark');
       } else {
         // Use device default if no saved preference
-        setIsDarkMode(Appearance.getColorScheme() === 'dark');
+        const deviceTheme = Appearance.getColorScheme() === 'dark';
+        setIsDarkMode(deviceTheme);
+        
+        // Save default to backend only if authenticated
+        if (isAuthenticated) {
+          try {
+            await userService.updateUserProfile({
+              preferences: {
+                theme: deviceTheme ? 'dark' : 'light'
+              }
+            });
+          } catch (error: any) {
+            // Silently fail for authentication errors
+            if (error?.response?.status !== 401 && error?.response?.status !== 404) {
+              console.log('Could not save initial theme to backend:', error.message);
+            }
+          }
+        }
       }
     } catch (error) {
       console.error('Failed to load theme:', error);
@@ -74,6 +115,23 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const newMode = !isDarkMode;
       setIsDarkMode(newMode);
       await AsyncStorage.setItem(THEME_STORAGE_KEY, newMode ? 'dark' : 'light');
+      
+      // Sync with backend only if authenticated
+      const isAuthenticated = await userService.isAuthenticated();
+      if (isAuthenticated) {
+        try {
+          await userService.updateUserProfile({
+            preferences: {
+              theme: newMode ? 'dark' : 'light'
+            }
+          });
+        } catch (error: any) {
+          // Only log unexpected errors (not authentication errors)
+          if (error?.response?.status !== 401 && error?.response?.status !== 404) {
+            console.error('Failed to sync theme with backend:', error.message);
+          }
+        }
+      }
     } catch (error) {
       console.error('Failed to save theme:', error);
     }

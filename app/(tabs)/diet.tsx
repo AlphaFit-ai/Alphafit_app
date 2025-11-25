@@ -11,7 +11,7 @@ import MealsScreen from '../diet/meals';
 import SupplementsScreen from '../diet/supplements';
 
 export default function DietScreen() {
-  const { dietData, currentStep, setCurrentStep } = useDiet();
+  const { dietData, currentStep, setCurrentStep, loadDietData } = useDiet();
   const [isLoading, setIsLoading] = useState(true);
 
   // Check which diet screen is incomplete on mount
@@ -27,20 +27,21 @@ export default function DietScreen() {
         // No data at all, start from beginning
         setCurrentStep(0);
       } else {
+        // Load saved data into context
+        loadDietData(data);
+        
         // Check each field and find first incomplete step
         if (!data.dietPreference) {
           setCurrentStep(0); // Diet preference
-        } else if (data.hasAllergies === undefined || (data.hasAllergies && !data.allergies)) {
+        } else if (data.hasAllergies === undefined || data.hasAllergies === null) {
           setCurrentStep(1); // Allergies
         } else if (!data.mealsPerDay) {
           setCurrentStep(2); // Meals per day
-        } else if (data.takesSupplements === undefined || (data.takesSupplements && !data.supplements)) {
+        } else if (data.takesSupplements === undefined || data.takesSupplements === null) {
           setCurrentStep(3); // Supplements
-        } else if (!data.foodImage) {
-          setCurrentStep(4); // Food scan
         } else {
-          // All data complete, show statistics
-          setCurrentStep(5); // Diet statistics
+          // All required fields complete, show statistics
+          setCurrentStep(5);
         }
       }
     } catch (error) {

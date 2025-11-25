@@ -250,42 +250,6 @@ export default function StatisticsScreen() {
           </View>
         </View>
 
-        {/* Stats Grid */}
-        <View style={styles.statsGrid}>
-          {stats.map((stat, index) => (
-            <View
-              key={index}
-              style={[
-                styles.statCard,
-                {
-                  backgroundColor: isDarkMode ? Colors.gray[800] : Colors.white,
-                  borderColor: isDarkMode ? Colors.gray[700] : Colors.gray[200],
-                },
-              ]}
-            >
-              <View
-                style={[
-                  styles.statIconContainer,
-                  { backgroundColor: stat.color + '20' },
-                ]}
-              >
-                <Ionicons name={stat.icon as any} size={24} color={stat.color} />
-              </View>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                {stat.label}
-              </Text>
-              <View style={styles.statValueContainer}>
-                <Text style={[styles.statValue, { color: colors.text }]}>
-                  {stat.value}
-                </Text>
-                <Text style={[styles.statUnit, { color: colors.textSecondary }]}>
-                  {stat.unit}
-                </Text>
-              </View>
-            </View>
-          ))}
-        </View>
-
         {/* AI Recommendations Section */}
         <View style={styles.recommendationsSection}>
           <View style={styles.sectionHeader}>

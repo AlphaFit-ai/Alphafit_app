@@ -14,7 +14,7 @@ import UploadPhotosScreen from '../projection/upload-photos';
 export default function ProjectionsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { currentStep, goBack, setCurrentStep } = useProjection();
+  const { currentStep, goBack, setCurrentStep, loadProjectionData } = useProjection();
   const [isLoading, setIsLoading] = useState(true);
 
   // Check which projection screen is incomplete on mount
@@ -30,6 +30,9 @@ export default function ProjectionsScreen() {
         // No data at all, start from sleep screen
         setCurrentStep(1);
       } else {
+        // Load saved data into context
+        loadProjectionData(data);
+        
         // Check each field and find first incomplete step
         if (!data.sleepHours) {
           setCurrentStep(1); // Sleep

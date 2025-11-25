@@ -6,6 +6,7 @@ import { Button, OptionCard, ProgressBar } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
+import { onboardingService } from '../../services';
 
 export default function FitnessLevelScreen() {
   const { t } = useTranslation();
@@ -14,10 +15,18 @@ export default function FitnessLevelScreen() {
   const { colors } = useTheme();
   const [selectedLevel, setSelectedLevel] = useState<'beginner' | 'intermediate' | 'advanced' | null>(null);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (selectedLevel) {
       updateOnboardingData({ fitnessLevel: selectedLevel });
-      setCurrentStep(8);
+      setCurrentStep(5);
+      
+      // Save to backend in real-time
+      try {
+        await onboardingService.saveOnboardingData({ fitnessLevel: selectedLevel });
+      } catch (error) {
+        console.error('Failed to save fitness level:', error);
+      }
+      
       router.push('/onboarding/activity');
     }
   };

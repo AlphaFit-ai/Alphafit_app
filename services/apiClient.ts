@@ -28,11 +28,29 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401) {
-      // Handle unauthorized access
-      await AsyncStorage.removeItem('authToken');
-      // Redirect to login if needed
+    // Handle network errors
+    if (!error.response) {
+      console.error('Network error - please check your connection');
+      return Promise.reject({
+        ...error,
+        message: 'Network error. Please check your internet connection.',
+      });
     }
+
+    // Handle specific HTTP status codes
+    const status = error.response?.status;
+    
+    if (status === 401) {
+      // Handle unauthorized access - clear auth token
+      await AsyncStorage.removeItem('authToken');
+      await AsyncStorage.removeItem('userId');
+      console.log('Authentication expired, please login again');
+    } else if (status === 404) {
+      console.log('Resource not found:', error.config?.url);
+    } else if (status === 500) {
+      console.error('Server error:', error.response?.data?.message || 'Internal server error');
+    }
+    
     return Promise.reject(error);
   }
 );

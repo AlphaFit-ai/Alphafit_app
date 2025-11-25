@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button, OptionCard, ProgressBar } from '../../components';
-import { Colors, Fonts, Spacing } from '../../constants';
+import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
+import { onboardingService } from '../../services';
 
 export default function EquipmentScreen() {
   const { t } = useTranslation();
@@ -14,10 +15,18 @@ export default function EquipmentScreen() {
   const { colors } = useTheme();
   const [selectedEquipment, setSelectedEquipment] = useState<'full-gym' | 'dumbbells-barbell' | 'bodyweight-only' | null>(null);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (selectedEquipment) {
       updateOnboardingData({ equipment: selectedEquipment });
       setCurrentStep(8);
+      
+      // Save to backend in real-time
+      try {
+        await onboardingService.saveOnboardingData({ equipment: selectedEquipment });
+      } catch (error) {
+        console.error('Failed to save equipment:', error);
+      }
+      
       router.push('/onboarding/goal');
     }
   };

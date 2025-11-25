@@ -390,7 +390,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     paddingHorizontal: Spacing.screenPaddingHorizontal,
-    paddingBottom: 20,
+    paddingVertical: 20,
   },
   input: {
     flex: 1,

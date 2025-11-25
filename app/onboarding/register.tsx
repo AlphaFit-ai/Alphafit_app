@@ -8,7 +8,26 @@ import { Button, GradientText, Input } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
-import { firebaseAuthService, userService } from '../../services';
+import { firebaseAuthService, onboardingService, userService } from '../../services';
+
+// Helper function to determine first incomplete onboarding screen
+function getFirstIncompleteScreen(data: any): string {
+  if (!data) return '/onboarding/source';
+  
+  // Check each required field in order
+  if (!data.source) return '/onboarding/source';
+  if (!data.dateOfBirth) return '/onboarding/age';
+  if (!data.gender) return '/onboarding/gender';
+  if (!data.height || !data.weight) return '/onboarding/height';
+  if (!data.fitnessLevel) return '/onboarding/fitness-level';
+  if (!data.activityLevel) return '/onboarding/activity';
+  if (!data.workoutsPerWeek) return '/onboarding/workouts';
+  if (!data.equipment) return '/onboarding/equipment';
+  if (!data.goal) return '/onboarding/goal';
+  
+  // All onboarding complete
+  return '/(tabs)/home';
+}
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -217,16 +236,40 @@ export default function RegisterScreen() {
       // Send to backend
       const response = await userService.authenticateUser(result.idToken);
 
-      // Update onboarding context
-      updateOnboardingData({
-        fullName: formData.fullName,
-        email: formData.email,
-        authProvider: 'email'
-      });
-
-      // Close modal and navigate
-      setShowVerificationModal(false);
-      router.replace('/onboarding/source');
+      // Load saved onboarding data from backend (in case user registered before)
+      try {
+        const savedData = await onboardingService.getOnboardingData();
+        
+        if (savedData) {
+          // Load saved data into context
+          updateOnboardingData(savedData);
+        } else {
+          // New user - set initial data
+          updateOnboardingData({
+            fullName: formData.fullName,
+            email: formData.email,
+            authProvider: 'email'
+          });
+        }
+        
+        // Determine where to navigate based on onboarding progress
+        const nextScreen = getFirstIncompleteScreen(savedData);
+        
+        // Close modal and navigate
+        setShowVerificationModal(false);
+        router.replace(nextScreen);
+        
+      } catch (error) {
+        console.error('Failed to load onboarding data:', error);
+        // If error loading data, start onboarding from beginning
+        updateOnboardingData({
+          fullName: formData.fullName,
+          email: formData.email,
+          authProvider: 'email'
+        });
+        setShowVerificationModal(false);
+        router.replace('/onboarding/source');
+      }
       
     } catch (error: any) {
       let errorMessage = t('register.errors.registrationFailed', 'Registration failed. Please try again.');

@@ -13,10 +13,10 @@ export default function AllergiesScreen() {
   const [hasAllergies, setHasAllergies] = useState<boolean | null>(null);
   const [allergiesText, setAllergiesText] = useState('');
 
-  const handleSelectNo = () => {
+  const handleSelectNo = async () => {
     setHasAllergies(false);
     setAllergiesText('');
-    updateDietData({
+    await updateDietData({
       hasAllergies: false,
       allergies: '',
     });
@@ -25,9 +25,9 @@ export default function AllergiesScreen() {
     }, 300);
   };
 
-  const handleSubmitAllergies = () => {
+  const handleSubmitAllergies = async () => {
     if (!allergiesText.trim()) return;
-    updateDietData({
+    await updateDietData({
       hasAllergies: true,
       allergies: allergiesText,
     });

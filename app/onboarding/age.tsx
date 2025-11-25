@@ -1,11 +1,12 @@
 import { useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { NativeScrollEvent, NativeSyntheticEvent, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button, ProgressBar } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
+import { onboardingService } from '../../services';
 
 export default function AgeScreen() {
   const router = useRouter();
@@ -73,15 +74,23 @@ export default function AgeScreen() {
     setSelectedYear(Math.max(1945, Math.min(2015, 2015 - index)));
   };
 
-  const handleContinue = () => {
-    updateOnboardingData({
-      dateOfBirth: {
-        month: selectedMonth + 1,
-        day: selectedDay,
-        year: selectedYear,
-      },
-    });
+  const handleContinue = async () => {
+    const dateOfBirth = {
+      month: selectedMonth,
+      day: selectedDay,
+      year: selectedYear,
+    };
+    
+    updateOnboardingData({ dateOfBirth });
     setCurrentStep(2);
+    
+    // Save to backend in real-time
+    try {
+      await onboardingService.saveOnboardingData({ dateOfBirth });
+    } catch (error) {
+      console.error('Failed to save age:', error);
+    }
+    
     router.push('/onboarding/gender');
   };
 

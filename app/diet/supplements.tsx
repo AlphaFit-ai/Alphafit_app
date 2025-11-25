@@ -13,10 +13,10 @@ export default function SupplementsScreen() {
   const [takesSupplements, setTakesSupplements] = useState<boolean | null>(null);
   const [supplementsText, setSupplementsText] = useState('');
 
-  const handleSelectNo = () => {
+  const handleSelectNo = async () => {
     setTakesSupplements(false);
     setSupplementsText('');
-    updateDietData({
+    await updateDietData({
       takesSupplements: false,
       supplements: '',
     });
@@ -25,9 +25,9 @@ export default function SupplementsScreen() {
     }, 300);
   };
 
-  const handleSubmitSupplements = () => {
+  const handleSubmitSupplements = async () => {
     if (!supplementsText.trim()) return;
-    updateDietData({
+    await updateDietData({
       takesSupplements: true,
       supplements: supplementsText,
     });
