@@ -136,6 +136,15 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Floating Chatbot Button */}
+      <TouchableOpacity
+        style={[styles.floatingChatButton, { backgroundColor: Colors.primary }]}
+        onPress={() => router.push('/chatbot' as any)}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="chatbubble-ellipses" size={28} color={Colors.white} />
+      </TouchableOpacity>
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -711,5 +720,21 @@ const styles = StyleSheet.create({
     width: 1,
     height: 40,
     backgroundColor: Colors.gray[300],
+  },
+  floatingChatButton: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    zIndex: 1000,
   },
 });

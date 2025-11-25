@@ -1,6 +1,8 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getAuth,
+  initializeAuth,
+  getReactNativePersistence,
   signInWithCredential, 
   GoogleAuthProvider,
   OAuthProvider,
@@ -11,6 +13,7 @@ import {
   updateProfile,
   User
 } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { config } from '../config';
@@ -26,10 +29,15 @@ GoogleSignin.configure({
 // Initialize Firebase (only once)
 const app = getApps().length === 0 ? initializeApp(config.firebase) : getApp();
 
-// Get Auth instance - Firebase 12.x auto-detects AsyncStorage if package is installed
-// The warning can be safely ignored as persistence still works
+// Initialize Auth with React Native persistence
+const auth = getApps().length === 1 
+  ? initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage)
+    })
+  : getAuth(app);
+
 const getAuthInstance = () => {
-  return getAuth(app);
+  return auth;
 };
 
 export interface AuthResult {
