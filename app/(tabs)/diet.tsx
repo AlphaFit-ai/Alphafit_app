@@ -40,8 +40,8 @@ export default function DietScreen() {
         } else if (data.takesSupplements === undefined || data.takesSupplements === null) {
           setCurrentStep(3); // Supplements
         } else {
-          // All required fields complete, show statistics
-          setCurrentStep(5);
+          // All required fields complete, default to food scan screen
+          setCurrentStep(4);
         }
       }
     } catch (error) {

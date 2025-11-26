@@ -1,12 +1,14 @@
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ProPlanModal } from '../../components/ProPlanModal';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
 import { useTheme } from '../../context/ThemeContext';
-import { imageService, onboardingService } from '../../services';
+import { imageService, userService } from '../../services';
 
 export default function FoodScanScreen() {
   const { t } = useTranslation();
@@ -16,6 +18,25 @@ export default function FoodScanScreen() {
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [cameraPermission, setCameraPermission] = useState<boolean>(false);
+  const [showProModal, setShowProModal] = useState<boolean>(false);
+  const [isPremium, setIsPremium] = useState<boolean>(false);
+
+  // Refresh subscription status every time screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      checkSubscriptionStatus();
+    }, [])
+  );
+
+  const checkSubscriptionStatus = async () => {
+    try {
+      const profile = await userService.getUserProfile();
+      setIsPremium(profile.subscriptionPlan === 'PREMIUM');
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+      setIsPremium(false);
+    }
+  };
 
   const requestCameraPermission = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -24,6 +45,11 @@ export default function FoodScanScreen() {
   };
 
   const takePhoto = async () => {
+    if (!isPremium) {
+      setShowProModal(true);
+      return;
+    }
+
     const hasPermission = cameraPermission || await requestCameraPermission();
     
     if (!hasPermission) {
@@ -48,6 +74,11 @@ export default function FoodScanScreen() {
   };
 
   const pickFromLibrary = async () => {
+    if (!isPremium) {
+      setShowProModal(true);
+      return;
+    }
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -89,8 +120,10 @@ export default function FoodScanScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView 
+    <>
+      <ProPlanModal visible={showProModal} onClose={() => setShowProModal(false)} />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -164,7 +197,8 @@ export default function FoodScanScreen() {
           )}
         </View>
       </ScrollView>
-    </View>
+      </View>
+    </>
   );
 }
 

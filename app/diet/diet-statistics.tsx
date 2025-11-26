@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Fonts, Spacing } from '../../constants';
@@ -20,50 +20,17 @@ export default function DietStatisticsScreen() {
   const { colors, isDarkMode } = useTheme();
   const { dietData, setCurrentStep } = useDiet();
 
-  // Mock data - will be replaced with actual AI analysis
-  const totalCalories = 450;
-  const mealType = 'Lunch';
+  // Redirect to food scan if no food image data
+  useEffect(() => {
+    if (!dietData.foodImage) {
+      setCurrentStep(4); // Redirect to food scan screen
+    }
+  }, [dietData.foodImage, setCurrentStep]);
 
-  const nutrients: NutrientInfo[] = [
-    {
-      label: 'Calories',
-      value: '450',
-      unit: 'kcal',
-      icon: 'flame',
-      color: Colors.primary,
-      percentage: 75,
-    },
-    {
-      label: 'Protein',
-      value: '45',
-      unit: 'g',
-      icon: 'fitness',
-      color: Colors.success,
-      percentage: 85,
-    },
-    {
-      label: 'Carbs',
-      value: '32',
-      unit: 'g',
-      icon: 'nutrition',
-      color: Colors.warning,
-      percentage: 60,
-    },
-    {
-      label: 'Fats',
-      value: '18',
-      unit: 'g',
-      icon: 'water',
-      color: '#FF6B6B',
-      percentage: 45,
-    },
-  ];
-
-  const recommendations = [
-    'Add more vegetables for extra fiber',
-    'Consider reducing dressing for lower fat',
-    'Perfect protein amount for muscle building',
-  ];
+  // If no data, return null (will redirect via useEffect)
+  if (!dietData.foodImage) {
+    return null;
+  }
 
   const handleScanAnother = () => {
     setCurrentStep(4); // Go back to food scan screen
@@ -90,100 +57,30 @@ export default function DietStatisticsScreen() {
         </View>
 
         {/* Food Image */}
-        {dietData.foodImage && (
-          <View style={styles.foodImageCard}>
-            <Image
-              source={{ uri: dietData.foodImage }}
-              style={styles.foodImage}
-              resizeMode="cover"
-            />
-          </View>
-        )}
-
-        {/* Nutrients Grid */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            {t('diet.statistics.nutrients', 'Nutritional Information')}
-          </Text>
-          <View style={styles.nutrientsGrid}>
-            {nutrients.map((nutrient, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.nutrientCard,
-                  {
-                    backgroundColor: isDarkMode ? Colors.gray[800] : Colors.white,
-                    borderColor: isDarkMode ? Colors.gray[700] : Colors.gray[200],
-                  },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.nutrientIconContainer,
-                    { backgroundColor: nutrient.color + '20' },
-                  ]}
-                >
-                  <Ionicons name={nutrient.icon as any} size={24} color={nutrient.color} />
-                </View>
-                <Text style={[styles.nutrientLabel, { color: colors.textSecondary }]}>
-                  {nutrient.label}
-                </Text>
-                <View style={styles.nutrientValueContainer}>
-                  <Text style={[styles.nutrientValue, { color: colors.text }]}>
-                    {nutrient.value}
-                  </Text>
-                  <Text style={[styles.nutrientUnit, { color: colors.textSecondary }]}>
-                    {nutrient.unit}
-                  </Text>
-                </View>
-                <View
-                  style={[
-                    styles.progressBar,
-                    {
-                      backgroundColor: isDarkMode ? Colors.gray[700] : Colors.gray[200],
-                    },
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.progressFill,
-                      {
-                        width: `${nutrient.percentage}%`,
-                        backgroundColor: nutrient.color,
-                      },
-                    ]}
-                  />
-                </View>
-              </View>
-            ))}
-          </View>
+        <View style={styles.foodImageCard}>
+          <Image
+            source={{ uri: dietData.foodImage }}
+            style={styles.foodImage}
+            resizeMode="cover"
+          />
         </View>
 
-        {/* AI Recommendations */}
+        {/* Empty state - AI analysis coming soon */}
         <View style={styles.section}>
-          <View style={styles.recommendationsHeader}>
-            <Ionicons name="sparkles" size={24} color={Colors.warning} />
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              {t('diet.statistics.recommendations', 'AI Recommendations')}
+          <View style={[
+            styles.emptyStateCard,
+            {
+              backgroundColor: isDarkMode ? Colors.gray[800] : Colors.white,
+              borderColor: isDarkMode ? Colors.gray[700] : Colors.gray[200],
+            },
+          ]}>
+            <Ionicons name="sparkles" size={48} color={Colors.warning} />
+            <Text style={[styles.emptyStateTitle, { color: colors.text }]}>
+              {t('diet.statistics.analyzing', 'AI Analysis Coming Soon')}
             </Text>
-          </View>
-          <View
-            style={[
-              styles.recommendationsCard,
-              {
-                backgroundColor: isDarkMode ? Colors.gray[800] : Colors.white,
-                borderColor: isDarkMode ? Colors.gray[700] : Colors.gray[200],
-              },
-            ]}
-          >
-            {recommendations.map((rec, index) => (
-              <View key={index} style={styles.recommendationRow}>
-                <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
-                <Text style={[styles.recommendationText, { color: colors.text }]}>
-                  {rec}
-                </Text>
-              </View>
-            ))}
+            <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
+              {t('diet.statistics.analyzeMessage', 'Your meal has been uploaded. AI nutritional analysis will be available soon!')}
+            </Text>
           </View>
         </View>
 
@@ -343,5 +240,25 @@ const styles = StyleSheet.create({
     fontSize: Fonts.sizes.lg,
     fontFamily: Fonts.semiBold,
     color: Colors.white,
+  },
+  emptyStateCard: {
+    borderRadius: Spacing.radius.lg,
+    borderWidth: 1,
+    padding: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyStateTitle: {
+    fontSize: Fonts.sizes.xl,
+    fontFamily: Fonts.bold,
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptyStateText: {
+    fontSize: Fonts.sizes.base,
+    fontFamily: Fonts.regular,
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });

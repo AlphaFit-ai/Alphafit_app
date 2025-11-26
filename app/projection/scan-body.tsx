@@ -1,10 +1,13 @@
+import { useFocusEffect } from '@react-navigation/native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ProPlanModal } from '../../components/ProPlanModal';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useProjection } from '../../context/ProjectionContext';
 import { useTheme } from '../../context/ThemeContext';
+import { userService } from '../../services';
 
 const features = [
   { icon: 'sparkles', text: 'AI-powered muscle analysis' },
@@ -16,14 +19,39 @@ export default function ScanBodyScreen() {
   const { t } = useTranslation();
   const { colors, isDarkMode } = useTheme();
   const { setCurrentStep } = useProjection();
+  const [showProModal, setShowProModal] = useState<boolean>(false);
+  const [isPremium, setIsPremium] = useState<boolean>(false);
+
+  // Refresh subscription status every time screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      checkSubscriptionStatus();
+    }, [])
+  );
+
+  const checkSubscriptionStatus = async () => {
+    try {
+      const profile = await userService.getUserProfile();
+      setIsPremium(profile.subscriptionPlan === 'PREMIUM');
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+      setIsPremium(false);
+    }
+  };
 
   const handleStartScan = () => {
+    if (!isPremium) {
+      setShowProModal(true);
+      return;
+    }
     setCurrentStep(5);
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView
+    <>
+      <ProPlanModal visible={showProModal} onClose={() => setShowProModal(false)} />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -62,7 +90,8 @@ export default function ScanBodyScreen() {
           ))}
         </View>
       </ScrollView>
-    </View>
+      </View>
+    </>
   );
 }
 

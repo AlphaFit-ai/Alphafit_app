@@ -57,6 +57,9 @@ export interface UserProfile {
   profileImageUrl?: string;
   onboardingData?: UserOnboardingData;
   preferences?: UserPreferences;
+  subscriptionPlan?: 'FREE' | 'PREMIUM';
+  subscriptionStartDate?: string;
+  subscriptionEndDate?: string;
   createdAt?: string;
   updatedAt?: string;
   lastLoginAt?: string;
