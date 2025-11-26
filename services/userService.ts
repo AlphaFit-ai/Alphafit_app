@@ -66,12 +66,13 @@ class UserService {
   // Authentication endpoints - All auth handled through Firebase ID tokens
   
   /**
-   * Authenticate user with Firebase ID token
+   * Authenticate user with Firebase token
    * Backend will verify the token and create/return user session
    */
-  async authenticateUser(firebaseIdToken: string): Promise<AuthResponse> {
+  async authenticateUser(firebaseIdToken: string, provider?: 'google' | 'apple' | 'email'): Promise<AuthResponse> {
     const response = await apiClient.post('/auth/firebase', { 
-      idToken: firebaseIdToken 
+      idToken: firebaseIdToken,
+      provider: provider 
     });
     
     if (response.data.token) {
@@ -142,6 +143,7 @@ class UserService {
   // User profile endpoints
   async getUserProfile(): Promise<UserProfile> {
     const response = await apiClient.get('/users/profile');
+    console.log('getUserProfile response:', JSON.stringify(response.data, null, 2));
     return response.data;
   }
 

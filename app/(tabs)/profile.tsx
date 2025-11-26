@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Image, Modal, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Alert, LanguageSelector, ProPlanModal } from '../../components';
+import { Alert, ImageUpload, LanguageSelector, ProPlanModal } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
 import { firebaseAuthService, imageService, userService } from '../../services';
@@ -40,20 +40,54 @@ export default function ProfileScreen() {
     loadUserData();
   }, []);
 
+  // Reload profile data when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      loadUserData();
+    }, [])
+  );
+
   const loadUserData = async () => {
     try {
       setIsLoading(true);
-      const [profile, profilePic] = await Promise.all([
-        userService.getUserProfile(),
-        imageService.getProfilePicture()
-      ]);
+      const profile = await userService.getUserProfile();
+      console.log('Loaded profile data:', profile);
+      console.log('Profile image URL from profile:', profile.profileImageUrl);
+      
       setUserProfile(profile);
-      setUserProfilePicture(profilePic);
-    } catch (error) {
-      console.error('Failed to load user data:', error);
+      setUserProfilePicture(profile.profileImageUrl || null);
+    } catch (error: any) {
+      const is404 = error?.response?.status === 404;
+      const is401 = error?.response?.status === 401;
+      
+      if (is404 || is401) {
+        // User doesn't exist or session expired - sign out and redirect to login
+        await firebaseAuthService.signOut();
+        router.replace('/onboarding/login');
+      } else {
+        console.error('Failed to load user data:', error);
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleProfilePictureUpdate = async (imageUrl: string) => {
+    console.log('Profile picture updated with URL:', imageUrl);
+    // Update local state immediately for instant feedback
+    setUserProfilePicture(imageUrl);
+    
+    // Reload user data after a short delay to ensure backend has processed the update
+    setTimeout(async () => {
+      try {
+        const profile = await userService.getUserProfile();
+        console.log('Refreshed profile data:', profile);
+        setUserProfile(profile);
+        setUserProfilePicture(profile.profileImageUrl || null);
+      } catch (error) {
+        console.error('Failed to refresh profile after image update:', error);
+      }
+    }, 500);
   };
 
   const accountSettings: SettingItem[] = [
@@ -234,20 +268,15 @@ export default function ProfileScreen() {
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
       <View style={styles.profileSection}>
-        <View style={styles.avatarContainer}>
-          {userProfilePicture ? (
-            <Image
-              source={{ uri: userProfilePicture }}
-              style={styles.avatar}
-            />
-          ) : (
-            <View style={[styles.avatar, styles.avatarPlaceholder, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[200] }]}>
-              <Ionicons name="person" size={40} color={colors.textSecondary} />
-            </View>
-          )}
-          <TouchableOpacity style={styles.editButton} activeOpacity={0.7}>
-            <Ionicons name="camera" size={16} color={Colors.white} />
-          </TouchableOpacity>
+        <View style={styles.avatarWrapper}>
+          <ImageUpload
+            key={userProfilePicture || 'no-image'}
+            currentImageUrl={userProfilePicture}
+            onImageUploaded={handleProfilePictureUpdate}
+            uploadType="profile"
+            size={120}
+            rounded={true}
+          />
         </View>
         <Text style={[styles.userName, { color: colors.text }]}>
           {userProfile?.fullName || 'User'}
@@ -388,32 +417,16 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
     paddingHorizontal: Spacing.screenPaddingHorizontal,
   },
-  avatarContainer: {
-    position: 'relative',
-    marginBottom: 16,
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: Colors.gray[200],
-  },
-  avatarPlaceholder: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  editButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.black,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: Colors.white,
+  avatarWrapper: {
+    marginBottom: 20,
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   userName: {
     fontSize: 24,
@@ -421,6 +434,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.black,
     marginBottom: 4,
+    marginTop: 4,
   },
   userEmail: {
     fontSize: 14,

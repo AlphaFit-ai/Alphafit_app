@@ -22,7 +22,7 @@
     "title": "CRÉER UN COMPTE",
     "subtitle": "Commencez votre voyage de transformation physique",
     "fullName": "Nom complet",
-    "fullNamePlaceholder": "Yassir",
+    "fullNamePlaceholder": "Entrez votre nom",
     "email": "E-mail",
     "emailPlaceholder": "exemple@gmail.com",
     "password": "Mot de passe",
@@ -36,6 +36,7 @@
     "createAccount": "Créer un compte",
     "alreadyHaveAccount": "Vous avez déjà un compte?",
     "signIn": "Se connecter",
+    "termsRequired": "Conditions Requises",
     "errors": {
       "nameRequired": "Le nom complet est obligatoire",
       "nameMinLength": "Le nom doit contenir au moins 2 caractères",
@@ -128,6 +129,7 @@
     },
     "continue": "Continuer",
     "back": "Retour",
+    "saving": "Enregistrement...",
     "step": "{{current}} sur {{total}}"
   },
   "workoutScreen": {
@@ -194,7 +196,7 @@
     "appSettings": "Paramètres de l'application",
     "accountDetails": "Détails du compte",
     "notifications": "Notifications",
-    "notificationsSubtitle": "Gérez vos préférences de notification",
+    "notificationsSubtitle": "Gérez vos notifications",
     "subscription": "Abonnement",
     "subscriptionSubtitle": "Gérez votre abonnement Pro",
     "support": "Support",

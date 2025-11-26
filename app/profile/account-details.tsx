@@ -5,7 +5,7 @@ import { ActivityIndicator, Modal, NativeScrollEvent, NativeSyntheticEvent, Plat
 import { Button } from '../../components';
 import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
-import { userService } from '../../services';
+import { firebaseAuthService, userService } from '../../services';
 import type { UserProfile } from '../../services/userService';
 
 interface SuccessModalProps {
@@ -127,8 +127,17 @@ export default function AccountDetailsScreen() {
           setSelectedLbs(Math.round(weightData.lbs));
         }
       }
-    } catch (error) {
-      console.error('Failed to load user data:', error);
+    } catch (error: any) {
+      const is404 = error?.response?.status === 404;
+      const is401 = error?.response?.status === 401;
+      
+      if (is404 || is401) {
+        // User doesn't exist or session expired - sign out and redirect to login
+        await firebaseAuthService.signOut();
+        router.replace('/onboarding/login');
+      } else {
+        console.error('Failed to load user data:', error);
+      }
     } finally {
       setIsLoading(false);
     }

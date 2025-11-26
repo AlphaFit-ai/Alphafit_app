@@ -22,7 +22,7 @@
     "title": "CREAR CUENTA",
     "subtitle": "Comienza tu viaje de transformación física",
     "fullName": "Nombre completo",
-    "fullNamePlaceholder": "Yassir",
+    "fullNamePlaceholder": "Ingresa tu nombre",
     "email": "Correo electrónico",
     "emailPlaceholder": "example@gmail.com",
     "password": "Contraseña",
@@ -36,6 +36,7 @@
     "createAccount": "Crear cuenta",
     "alreadyHaveAccount": "¿Ya tienes una cuenta?",
     "signIn": "Iniciar sesión",
+    "termsRequired": "Términos Requeridos",
     "errors": {
       "nameRequired": "El nombre completo es obligatorio",
       "nameMinLength": "El nombre debe tener al menos 2 caracteres",
@@ -128,6 +129,7 @@
     },
     "continue": "Continuar",
     "back": "Atrás",
+    "saving": "Guardando...",
     "step": "{{current}} de {{total}}"
   },
   "workoutScreen": {

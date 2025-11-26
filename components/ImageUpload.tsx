@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Alert, Image, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { imageService } from '../services';
@@ -27,6 +27,11 @@ export default function ImageUpload({
   const { colors } = useTheme();
   const [imageUri, setImageUri] = useState<string | null>(currentImageUrl || null);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Sync local state with prop changes
+  useEffect(() => {
+    setImageUri(currentImageUrl || null);
+  }, [currentImageUrl]);
 
   const handlePickImage = async (source: 'camera' | 'gallery') => {
     try {
@@ -59,9 +64,9 @@ export default function ImageUpload({
           throw new Error('Invalid upload type');
       }
 
+      console.log('Image uploaded successfully:', uploadedUrl);
       setImageUri(uploadedUrl);
       onImageUploaded?.(uploadedUrl);
-      Alert.alert('Success', 'Image uploaded successfully');
     } catch (error: any) {
       console.error('Upload error:', error);
       Alert.alert('Upload Failed', error.message || 'Failed to upload image');
@@ -105,11 +110,12 @@ export default function ImageUpload({
             height: size,
             borderRadius: rounded ? size / 2 : Spacing.radius.md,
             backgroundColor: colors.card,
-            borderColor: colors.textSecondary + '30',
+            borderColor: imageUri ? Colors.primary + '40' : colors.textSecondary + '30',
           },
         ]}
         onPress={showImageSourceOptions}
         disabled={isUploading}
+        activeOpacity={0.8}
       >
         {isUploading ? (
           <View style={styles.loadingContainer}>
@@ -128,14 +134,21 @@ export default function ImageUpload({
                   borderRadius: rounded ? size / 2 : Spacing.radius.md,
                 },
               ]}
+              resizeMode="cover"
+              onError={(error) => {
+                console.error('Image load error:', error.nativeEvent.error);
+                setImageUri(null);
+              }}
             />
             <View style={[styles.editButton, { backgroundColor: Colors.primary }]}>
-              <Ionicons name="camera" size={16} color={Colors.white} />
+              <Ionicons name="camera" size={18} color={Colors.white} />
             </View>
           </>
         ) : (
           <View style={styles.placeholder}>
-            <Ionicons name="camera" size={32} color={colors.textSecondary} />
+            <View style={[styles.placeholderIconWrapper, { backgroundColor: colors.textSecondary + '20' }]}>
+              <Ionicons name="camera-outline" size={32} color={colors.textSecondary} />
+            </View>
             <Text style={[styles.placeholderText, { color: colors.textSecondary }]}>Add Photo</Text>
           </View>
         )}
@@ -155,8 +168,8 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     overflow: 'hidden',
-    borderWidth: 2,
-    borderStyle: 'dashed',
+    borderWidth: 3,
+    borderStyle: 'solid',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -168,22 +181,38 @@ const styles = StyleSheet.create({
   placeholder: {
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 12,
+  },
+  placeholderIconWrapper: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   placeholderText: {
-    marginTop: Spacing.xs,
-    fontSize: 12,
+    fontSize: 13,
+    fontWeight: '600',
   },
   editButton: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    bottom: 4,
+    right: 4,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: Colors.white,
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   loadingContainer: {
     justifyContent: 'center',

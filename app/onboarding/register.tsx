@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Alert, KeyboardAvoidingView, Modal, Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, GradientText, Input } from '../../components';
+import { config } from '../../config';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -173,7 +174,7 @@ export default function RegisterScreen() {
       }
 
       // Send verification code to email
-      const response = await fetch('http://100.91.176.251:8080/api/auth/send-verification-code', {
+      const response = await fetch(`${config.API_BASE_URL}/auth/send-verification-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: formData.email })
@@ -211,7 +212,7 @@ export default function RegisterScreen() {
       setVerifyingCode(true);
       
       // Verify code with backend
-      const verifyResponse = await fetch('http://100.91.176.251:8080/api/auth/verify-code', {
+      const verifyResponse = await fetch(`${config.API_BASE_URL}/auth/verify-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -234,7 +235,7 @@ export default function RegisterScreen() {
       );
 
       // Send to backend
-      const response = await userService.authenticateUser(result.idToken);
+      const response = await userService.authenticateUser(result.idToken, 'email');
 
       // Load saved onboarding data from backend (in case user registered before)
       try {
@@ -242,7 +243,7 @@ export default function RegisterScreen() {
         
         if (savedData) {
           // Load saved data into context
-          updateOnboardingData(savedData);
+          updateOnboardingData(savedData as any);
         } else {
           // New user - set initial data
           updateOnboardingData({
@@ -257,7 +258,7 @@ export default function RegisterScreen() {
         
         // Close modal and navigate
         setShowVerificationModal(false);
-        router.replace(nextScreen);
+        router.replace(nextScreen as any);
         
       } catch (error) {
         console.error('Failed to load onboarding data:', error);
@@ -297,7 +298,7 @@ export default function RegisterScreen() {
       setSendingCode(true);
       setVerificationError('');
       
-      const response = await fetch('http://100.91.176.251:8080/api/auth/send-verification-code', {
+      const response = await fetch(`${config.API_BASE_URL}/auth/send-verification-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: formData.email })
@@ -374,7 +375,7 @@ export default function RegisterScreen() {
             {/* Full Name Input */}
             <Input
               label={t('register.fullName', 'Full Name')}
-              placeholder={t('register.fullNamePlaceholder', 'yassir amraoui')}
+              placeholder={t('register.fullNamePlaceholder', 'Full Name')}
               value={formData.fullName}
               onChangeText={(text) => handleFieldChange('fullName', text)}
               autoCapitalize="words"

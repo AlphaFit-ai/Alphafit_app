@@ -22,7 +22,7 @@
     "title": "CREATE ACCOUNT",
     "subtitle": "Start your fitness transformation journey",
     "fullName": "Full Name",
-    "fullNamePlaceholder": "Yassir",
+    "fullNamePlaceholder": "Enter your name",
     "email": "Email",
     "emailPlaceholder": "example@gmail.com",
     "password": "Password",
@@ -36,6 +36,7 @@
     "createAccount": "Create Account",
     "alreadyHaveAccount": "Already have an account?",
     "signIn": "Sign In",
+    "termsRequired": "Terms Required",
     "errors": {
       "nameRequired": "Full name is required",
       "nameMinLength": "Name must be at least 2 characters",
@@ -128,6 +129,7 @@
     },
     "continue": "Continue",
     "back": "Back",
+    "saving": "Saving...",
     "step": "{{current}} of {{total}}"
   },
   "workoutScreen": {
@@ -194,7 +196,7 @@
     "appSettings": "App Settings",
     "accountDetails": "Account Details",
     "notifications": "Notifications",
-    "notificationsSubtitle": "Manage your notification preferences",
+    "notificationsSubtitle": "Manage your notification",
     "subscription": "Subscription",
     "subscriptionSubtitle": "Manage your Pro subscription",
     "support": "Support",

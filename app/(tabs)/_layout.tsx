@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import Feather from '@expo/vector-icons/Feather';
-import { Tabs, usePathname, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { Tabs, usePathname, useRouter, useFocusEffect } from 'expo-router';
+import { useEffect, useState, useCallback } from 'react';
 import { Image, Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GradientText, ProPlanModal } from '../../components';
@@ -20,18 +20,25 @@ export default function TabsLayout() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [userProfilePicture, setUserProfilePicture] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadUserProfilePicture();
-  }, []);
-
-  const loadUserProfilePicture = async () => {
+  const loadUserProfilePicture = useCallback(async () => {
     try {
       const profilePicUrl = await imageService.getProfilePicture();
       setUserProfilePicture(profilePicUrl);
     } catch (error) {
       console.log('No profile picture found');
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadUserProfilePicture();
+  }, [loadUserProfilePicture]);
+
+  // Refresh profile picture when navigating between tabs
+  useEffect(() => {
+    if (pathname) {
+      loadUserProfilePicture();
+    }
+  }, [pathname, loadUserProfilePicture]);
 
   const navItems = [
     { name: 'home', route: '/(tabs)/home', label: 'Home', icon: 'home' as const, iconSet: 'feather' as const },
@@ -234,6 +241,7 @@ export default function TabsLayout() {
             userProfilePicture ? (
               <View style={[styles.profileAvatarWrapper, focused && styles.profileAvatarWrapperActive]}>
                 <Image 
+                  key={userProfilePicture}
                   source={{ uri: userProfilePicture }} 
                   style={styles.profileAvatar}
                 />

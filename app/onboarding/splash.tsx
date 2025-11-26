@@ -86,10 +86,23 @@ export default function SplashScreen() {
           const nextScreen = getFirstIncompleteScreen(savedData);
           router.replace(nextScreen);
           
-        } catch (error) {
-          console.error('Failed to load onboarding data:', error);
-          // If error loading data, start from beginning
-          router.replace('/onboarding/source');
+        } catch (error: any) {
+          // Handle different error types
+          const is404 = error?.response?.status === 404;
+          const is401 = error?.response?.status === 401;
+          const isNetworkError = error?.code === 'ERR_NETWORK' || !error?.response;
+          
+          if (is401 || is404) {
+            // Authentication issue or user not found - redirect to login
+            await firebaseAuthService.signOut();
+            router.replace('/onboarding/login');
+          } else if (isNetworkError) {
+            // Network error - allow offline access, start from beginning
+            router.replace('/onboarding/source');
+          } else {
+            // Other errors - start from beginning
+            router.replace('/onboarding/source');
+          }
         }
         
       } catch (error) {

@@ -63,7 +63,7 @@ export default function LoginScreen() {
   const handleAuthSuccess = async (user: any, idToken: string, provider: 'email' | 'google' | 'apple') => {
     try {
       // Send to backend
-      const response = await userService.authenticateUser(idToken);
+      const response = await userService.authenticateUser(idToken, provider);
       
       // Load saved onboarding data from backend
       try {

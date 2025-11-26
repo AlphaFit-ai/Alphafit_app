@@ -30,7 +30,7 @@ apiClient.interceptors.response.use(
   async (error) => {
     // Handle network errors
     if (!error.response) {
-      console.error('Network error - please check your connection');
+      // Network error - don't log, it's expected when offline
       return Promise.reject({
         ...error,
         message: 'Network error. Please check your internet connection.',
@@ -41,14 +41,17 @@ apiClient.interceptors.response.use(
     const status = error.response?.status;
     
     if (status === 401) {
-      // Handle unauthorized access - clear auth token
+      // Handle unauthorized access - clear auth token silently
       await AsyncStorage.removeItem('authToken');
       await AsyncStorage.removeItem('userId');
-      console.log('Authentication expired, please login again');
     } else if (status === 404) {
-      console.log('Resource not found:', error.config?.url);
+      // Resource not found - expected for some optional endpoints
     } else if (status === 500) {
-      console.error('Server error:', error.response?.data?.message || 'Internal server error');
+      // Only log server errors if they're unexpected
+      const errorMessage = error.response?.data?.message || 'Internal server error';
+      if (!errorMessage.includes('already exists')) {
+        console.error('Server error:', errorMessage);
+      }
     }
     
     return Promise.reject(error);

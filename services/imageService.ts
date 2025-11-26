@@ -1,3 +1,4 @@
+import * as ImagePicker from 'expo-image-picker';
 import apiClient from './apiClient';
 
 export interface ImageUploadResponse {
@@ -132,9 +133,12 @@ class ImageService {
    */
   async getProfilePicture(): Promise<string | null> {
     const response = await apiClient.get<ImageUploadResponse>('/images/profile');
+    console.log('getProfilePicture response:', JSON.stringify(response.data, null, 2));
     
     if (response.data.success && response.data.data) {
-      return response.data.data.imageUrl;
+      const imageUrl = response.data.data.imageUrl;
+      console.log('Profile picture URL:', imageUrl);
+      return imageUrl;
     }
 
     return null;
@@ -175,8 +179,6 @@ class ImageService {
    */
   async pickImage(source: 'camera' | 'gallery' = 'gallery'): Promise<string | null> {
     try {
-      const { default: ImagePicker } = await import('expo-image-picker');
-
       // Request permissions
       if (source === 'camera') {
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -193,13 +195,13 @@ class ImageService {
       // Launch picker
       const result = source === 'camera'
         ? await ImagePicker.launchCameraAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ['images'],
             allowsEditing: true,
             aspect: [1, 1],
             quality: 0.8,
           })
         : await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ['images'],
             allowsEditing: true,
             aspect: [1, 1],
             quality: 0.8,

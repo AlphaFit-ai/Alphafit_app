@@ -16,7 +16,39 @@ import { ProjectionProvider } from '../context/ProjectionContext';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import '../i18n/config';
 
-// Suppress non-critical warnings and errors
+// Suppress non-critical warnings, errors, and logs
+const originalLog = console.log;
+console.log = (message: any, ...args: any[]) => {
+  if (typeof message === 'string') {
+    // Only allow important logs (app lifecycle, critical operations)
+    const isImportantLog = 
+      message.includes('Starting') ||
+      message.includes('Initialized') ||
+      message.includes('Successfully') ||
+      message.includes('Completed') ||
+      message.includes('User logged in') ||
+      message.includes('User registered');
+    
+    // Suppress non-critical logs
+    if (!isImportantLog && (
+        message.includes('Could not load') ||
+        message.includes('Could not sync') ||
+        message.includes('Could not save') ||
+        message.includes('Failed to load') ||
+        message.includes('Failed to sync') ||
+        message.includes('Failed to save') ||
+        message.includes('using local storage') ||
+        message.includes('Authentication expired') ||
+        message.includes('saved to backend') ||
+        message.includes('data saved') ||
+        message.includes('Resource not found') ||
+        message.includes('request for user'))) {
+      return;
+    }
+  }
+  originalLog(message, ...args);
+};
+
 const originalWarn = console.warn;
 console.warn = (message: any, ...args: any[]) => {
   if (typeof message === 'string' && message.includes('keep awake')) {
@@ -27,14 +59,48 @@ console.warn = (message: any, ...args: any[]) => {
 
 const originalError = console.error;
 console.error = (message: any, ...args: any[]) => {
-  // Suppress expected errors when user is not authenticated
+  // Suppress expected/non-critical errors
   if (typeof message === 'string') {
-    if (message.includes('Failed to sync theme with backend') || 
-        message.includes('Request failed with status code 404') ||
+    // Network errors (expected when backend is down or no internet)
+    if (message.includes('Network error') ||
+        message.includes('ERR_NETWORK') ||
+        message.includes('network_XMLHttpRequest') ||
+        message.includes('Host unreachable')) {
+      return;
+    }
+    
+    // Backend sync failures (expected when not authenticated or offline)
+    if (message.includes('Failed to sync') ||
+        message.includes('Could not load') ||
+        message.includes('Could not sync') ||
+        message.includes('Failed to load onboarding data') ||
+        message.includes('Failed to load theme') ||
+        message.includes('Failed to load language')) {
+      return;
+    }
+    
+    // Authentication errors (expected)
+    if (message.includes('Request failed with status code 404') ||
         message.includes('Request failed with status code 401')) {
-      return; // Silently ignore expected authentication errors
+      return;
+    }
+    
+    // Keep awake errors (non-critical)
+    if (message.includes('keep awake') || message.includes('Unable to activate keep awake')) {
+      return;
     }
   }
+  
+  // Check if error object contains network error
+  if (typeof message === 'object' && message !== null) {
+    const errorStr = JSON.stringify(message);
+    if (errorStr.includes('ERR_NETWORK') || 
+        errorStr.includes('Host unreachable') ||
+        errorStr.includes('Network error')) {
+      return;
+    }
+  }
+  
   originalError(message, ...args);
 };
 
