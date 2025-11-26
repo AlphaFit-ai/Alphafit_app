@@ -6,6 +6,7 @@ import { Button, OptionCard, ProgressBar } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useProfileUpdateNavigation } from '../../hooks/useProfileUpdateNavigation';
 import { onboardingService } from '../../services';
 
 export default function FitnessLevelScreen() {
@@ -13,12 +14,15 @@ export default function FitnessLevelScreen() {
   const router = useRouter();
   const { updateOnboardingData, setCurrentStep } = useOnboarding();
   const { colors } = useTheme();
+  const { navigateAfterUpdate, isUpdatingFromProfile } = useProfileUpdateNavigation();
   const [selectedLevel, setSelectedLevel] = useState<'beginner' | 'intermediate' | 'advanced' | null>(null);
 
   const handleContinue = async () => {
     if (selectedLevel) {
       updateOnboardingData({ fitnessLevel: selectedLevel });
-      setCurrentStep(5);
+      if (!isUpdatingFromProfile) {
+        setCurrentStep(5);
+      }
       
       // Save to backend in real-time
       try {
@@ -27,7 +31,11 @@ export default function FitnessLevelScreen() {
         console.error('Failed to save fitness level:', error);
       }
       
-      router.push('/onboarding/activity');
+      if (isUpdatingFromProfile) {
+        navigateAfterUpdate();
+      } else {
+        router.push('/onboarding/activity');
+      }
     }
   };
 

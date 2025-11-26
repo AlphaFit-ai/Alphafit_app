@@ -39,17 +39,19 @@ export const ProjectionProvider: React.FC<{ children: ReactNode }> = ({ children
     const updatedData = { ...projectionData, ...data };
     setProjectionData(updatedData);
     
-    // Save to backend after each update
+    // Save to backend after each update - only send the fields that were actually provided
     try {
-      await onboardingService.saveProjectionOnboardingData({
-        sleepHours: updatedData.sleepHours,
-        dailySteps: updatedData.dailySteps,
-        stressLevel: updatedData.stressLevel,
-        frontPhotoUrl: updatedData.frontPhotoUrl,
-        sidePhotoUrl: updatedData.sidePhotoUrl,
-        backPhotoUrl: updatedData.backPhotoUrl,
-      });
-      console.log('Projection data saved to backend:', data);
+      // Filter out undefined values to only send what was actually updated
+      const dataToSave: Partial<ProjectionData> = {};
+      if (data.sleepHours !== undefined) dataToSave.sleepHours = data.sleepHours;
+      if (data.dailySteps !== undefined) dataToSave.dailySteps = data.dailySteps;
+      if (data.stressLevel !== undefined) dataToSave.stressLevel = data.stressLevel;
+      if (data.frontPhotoUrl !== undefined) dataToSave.frontPhotoUrl = data.frontPhotoUrl;
+      if (data.sidePhotoUrl !== undefined) dataToSave.sidePhotoUrl = data.sidePhotoUrl;
+      if (data.backPhotoUrl !== undefined) dataToSave.backPhotoUrl = data.backPhotoUrl;
+      
+      await onboardingService.saveProjectionOnboardingData(dataToSave);
+      console.log('Projection data saved to backend:', dataToSave);
     } catch (error) {
       console.error('Failed to save projection data:', error);
     }

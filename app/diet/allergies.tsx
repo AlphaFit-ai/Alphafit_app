@@ -5,11 +5,15 @@ import { Button } from '../../components';
 import { Colors, SharedStyles, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useProfileUpdateNavigation } from '../../hooks/useProfileUpdateNavigation';
+import { useRouter } from 'expo-router';
 
 export default function AllergiesScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const { updateDietData, setCurrentStep } = useDiet();
   const { colors, isDarkMode } = useTheme();
+  const { navigateAfterUpdate, isUpdatingFromProfile } = useProfileUpdateNavigation();
   const [hasAllergies, setHasAllergies] = useState<boolean | null>(null);
   const [allergiesText, setAllergiesText] = useState('');
 
@@ -21,7 +25,11 @@ export default function AllergiesScreen() {
       allergies: '',
     });
     setTimeout(() => {
-      setCurrentStep(2);
+      if (isUpdatingFromProfile) {
+        navigateAfterUpdate();
+      } else {
+        setCurrentStep(2);
+      }
     }, 300);
   };
 
@@ -32,7 +40,11 @@ export default function AllergiesScreen() {
       allergies: allergiesText,
     });
     setTimeout(() => {
-      setCurrentStep(2);
+      if (isUpdatingFromProfile) {
+        navigateAfterUpdate();
+      } else {
+        setCurrentStep(2);
+      }
     }, 300);
   };
 

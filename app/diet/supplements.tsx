@@ -5,11 +5,15 @@ import { Button } from '../../components';
 import { Colors, SharedStyles, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useProfileUpdateNavigation } from '../../hooks/useProfileUpdateNavigation';
+import { useRouter } from 'expo-router';
 
 export default function SupplementsScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const { updateDietData, setCurrentStep } = useDiet();
   const { colors, isDarkMode } = useTheme();
+  const { navigateAfterUpdate, isUpdatingFromProfile } = useProfileUpdateNavigation();
   const [takesSupplements, setTakesSupplements] = useState<boolean | null>(null);
   const [supplementsText, setSupplementsText] = useState('');
 
@@ -21,7 +25,11 @@ export default function SupplementsScreen() {
       supplements: '',
     });
     setTimeout(() => {
-      setCurrentStep(4);
+      if (isUpdatingFromProfile) {
+        navigateAfterUpdate();
+      } else {
+        setCurrentStep(4);
+      }
     }, 300);
   };
 
@@ -31,7 +39,11 @@ export default function SupplementsScreen() {
       takesSupplements: true,
       supplements: supplementsText,
     });
-    setCurrentStep(4);
+    if (isUpdatingFromProfile) {
+      navigateAfterUpdate();
+    } else {
+      setCurrentStep(4);
+    }
   };
 
   return (

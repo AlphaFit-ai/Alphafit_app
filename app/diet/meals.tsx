@@ -1,9 +1,11 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useProfileUpdateNavigation } from '../../hooks/useProfileUpdateNavigation';
 
 const mealOptions = [
   { label: '2 meals', value: 2 },
@@ -14,15 +16,25 @@ const mealOptions = [
 
 export default function MealsScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const { updateDietData, setCurrentStep } = useDiet();
   const { colors, isDarkMode } = useTheme();
+  const { navigateAfterUpdate, isUpdatingFromProfile } = useProfileUpdateNavigation();
   const [selectedMeals, setSelectedMeals] = useState<number | null>(null);
 
   const handleSelect = async (value: number) => {
     setSelectedMeals(value);
     await updateDietData({ mealsPerDay: value });
     setTimeout(() => {
-      setCurrentStep(3);
+      if (!isUpdatingFromProfile) {
+        setCurrentStep(3);
+      }
+      
+      // Navigate based on context
+      if (isUpdatingFromProfile) {
+        navigateAfterUpdate();
+      }
+      // If not updating from profile, the diet flow continues automatically via setCurrentStep
     }, 300);
   };
 

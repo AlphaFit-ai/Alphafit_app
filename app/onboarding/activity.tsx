@@ -6,6 +6,7 @@ import { Button, OptionCard, ProgressBar } from '../../components';
 import { SharedStyles } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useProfileUpdateNavigation } from '../../hooks/useProfileUpdateNavigation';
 import { onboardingService } from '../../services';
 
 export default function ActivityLevelScreen() {
@@ -13,12 +14,15 @@ export default function ActivityLevelScreen() {
   const router = useRouter();
   const { updateOnboardingData, setCurrentStep } = useOnboarding();
   const { colors } = useTheme();
+  const { navigateAfterUpdate, isUpdatingFromProfile } = useProfileUpdateNavigation();
   const [selectedLevel, setSelectedLevel] = useState<'low' | 'medium' | 'high' | null>(null);
 
   const handleContinue = async () => {
     if (selectedLevel) {
       updateOnboardingData({ activityLevel: selectedLevel });
-      setCurrentStep(6);
+      if (!isUpdatingFromProfile) {
+        setCurrentStep(6);
+      }
       
       // Save to backend in real-time
       try {
@@ -27,7 +31,11 @@ export default function ActivityLevelScreen() {
         console.error('Failed to save activity level:', error);
       }
       
-      router.push('/onboarding/workouts');
+      if (isUpdatingFromProfile) {
+        navigateAfterUpdate();
+      } else {
+        router.push('/onboarding/workouts');
+      }
     }
   };
 

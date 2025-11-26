@@ -7,6 +7,7 @@ import { Button, OptionCard, ProgressBar } from '../../components';
 import { Colors, SharedStyles } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useProfileUpdateNavigation } from '../../hooks/useProfileUpdateNavigation';
 import { onboardingService } from '../../services';
 
 export default function GoalScreen() {
@@ -14,6 +15,7 @@ export default function GoalScreen() {
   const router = useRouter();
   const { onboardingData, updateOnboardingData, setCurrentStep } = useOnboarding();
   const { colors, isDarkMode } = useTheme();
+  const { navigateAfterUpdate, isUpdatingFromProfile } = useProfileUpdateNavigation();
   const [selectedGoal, setSelectedGoal] = useState<'lose-fat' | 'get-stronger' | 'build-muscle' | 'stay-fit' | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -24,13 +26,22 @@ export default function GoalScreen() {
       try {
         // Update local state
         updateOnboardingData({ goal: selectedGoal });
-        setCurrentStep(9);
+        
+        if (!isUpdatingFromProfile) {
+          setCurrentStep(9);
+        }
 
         // Save to backend (real-time)
         await onboardingService.saveOnboardingData({ goal: selectedGoal });
         
-        console.log('✅ Onboarding completed successfully!');
-        router.replace('/(tabs)/home');
+        console.log('✅ Goal saved successfully!');
+        
+        // Navigate based on context
+        if (isUpdatingFromProfile) {
+          navigateAfterUpdate();
+        } else {
+          router.replace('/(tabs)/home');
+        }
       } catch (error) {
         console.error('❌ Failed to save goal:', error);
         Alert.alert(
@@ -43,7 +54,13 @@ export default function GoalScreen() {
             },
             {
               text: t('onboarding.error.continue') || 'Continue Anyway',
-              onPress: () => router.replace('/(tabs)/home'),
+              onPress: () => {
+                if (isUpdatingFromProfile) {
+                  navigateAfterUpdate();
+                } else {
+                  router.replace('/(tabs)/home');
+                }
+              },
             },
           ]
         );

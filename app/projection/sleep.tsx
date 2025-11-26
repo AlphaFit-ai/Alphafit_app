@@ -1,11 +1,13 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '../../components';
-import { Fonts, Spacing } from '../../constants';
+import { Colors, Fonts, Spacing } from '../../constants';
 import { useProjection } from '../../context/ProjectionContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useProfileUpdateNavigation } from '../../hooks/useProfileUpdateNavigation';
+import { onboardingService } from '../../services';
 
 const sleepOptions = [
   { id: '<5', label: '<5', degrees: 90 },
@@ -18,13 +20,39 @@ export default function SleepScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { colors, isDarkMode } = useTheme();
-  const { projectionData, updateProjectionData, setCurrentStep } = useProjection();
-  const [selected, setSelected] = useState<string | undefined>(projectionData.sleepHours);
+  const { projectionData, updateProjectionData, setCurrentStep, loadProjectionData } = useProjection();
+  const { navigateAfterUpdate, isUpdatingFromProfile } = useProfileUpdateNavigation();
+  const [selected, setSelected] = useState<string | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(isUpdatingFromProfile);
+
+  // Load saved data from backend when updating from profile
+  React.useEffect(() => {
+    const loadSavedData = async () => {
+      if (isUpdatingFromProfile) {
+        try {
+          const savedData = await onboardingService.getProjectionOnboardingData();
+          if (savedData) {
+            loadProjectionData(savedData);
+            setSelected(savedData.sleepHours);
+          }
+        } catch (error) {
+          console.error('Failed to load projection data:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    loadSavedData();
+  }, [isUpdatingFromProfile]);
 
   const handleContinue = () => {
     if (selected) {
       updateProjectionData({ sleepHours: selected });
-      setCurrentStep(2);
+      if (isUpdatingFromProfile) {
+        navigateAfterUpdate();
+      } else {
+        setCurrentStep(2);
+      }
     }
   };
 
@@ -132,6 +160,14 @@ export default function SleepScreen() {
     );
   };
 
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView 
@@ -139,11 +175,13 @@ export default function SleepScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[styles.title, { color: colors.text }]}>
-          {t('projection.sleep.title')}
-        </Text>
+        <View style={styles.content}>
+          <Text style={[styles.title, { color: colors.text }]}>
+            {t('projection.sleep.title')}
+          </Text>
 
-        {renderPieChart()}
+          {renderPieChart()}
+        </View>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -161,14 +199,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingTop: 20,
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  content: {
     paddingHorizontal: Spacing.screenPaddingHorizontal,
-    paddingBottom: 24,
   },
   title: {
     fontSize: Fonts.sizes['3xl'],
@@ -214,6 +258,6 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: Spacing.screenPaddingHorizontal,
     paddingTop: Spacing.lg,
-    paddingBottom: 40,
+    paddingBottom: 20,
   },
 });

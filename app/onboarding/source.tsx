@@ -7,6 +7,7 @@ import { Button, OptionCard, ProgressBar } from '../../components';
 import { Colors, SharedStyles } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useProfileUpdateNavigation } from '../../hooks/useProfileUpdateNavigation';
 import { onboardingService } from '../../services';
 
 export default function SourceScreen() {
@@ -14,12 +15,15 @@ export default function SourceScreen() {
   const router = useRouter();
   const { updateOnboardingData, setCurrentStep } = useOnboarding();
   const { colors, isDarkMode } = useTheme();
+  const { navigateAfterUpdate, isUpdatingFromProfile } = useProfileUpdateNavigation();
   const [selectedSource, setSelectedSource] = useState<'instagram' | 'facebook' | 'tiktok' | 'threads' | 'x' | 'youtube' | 'google' | 'others' | null>(null);
 
   const handleContinue = async () => {
     if (selectedSource) {
       updateOnboardingData({ source: selectedSource });
-      setCurrentStep(1);
+      if (!isUpdatingFromProfile) {
+        setCurrentStep(1);
+      }
       
       // Save to backend in real-time
       try {
@@ -28,7 +32,11 @@ export default function SourceScreen() {
         console.error('Failed to save source:', error);
       }
       
-      router.push('/onboarding/age');
+      if (isUpdatingFromProfile) {
+        navigateAfterUpdate();
+      } else {
+        router.push('/onboarding/age');
+      }
     }
   };
 

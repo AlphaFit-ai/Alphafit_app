@@ -6,6 +6,7 @@ import { Button, OptionCard, ProgressBar } from '../../components';
 import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useProfileUpdateNavigation } from '../../hooks/useProfileUpdateNavigation';
 import { onboardingService } from '../../services';
 
 export default function WorkoutsScreen() {
@@ -13,12 +14,15 @@ export default function WorkoutsScreen() {
   const router = useRouter();
   const { updateOnboardingData, setCurrentStep } = useOnboarding();
   const { colors } = useTheme();
+  const { navigateAfterUpdate, isUpdatingFromProfile } = useProfileUpdateNavigation();
   const [selectedWorkouts, setSelectedWorkouts] = useState<'0-2' | '3-5' | '6+' | null>(null);
 
   const handleContinue = async () => {
     if (selectedWorkouts) {
       updateOnboardingData({ workoutsPerWeek: selectedWorkouts });
-      setCurrentStep(7);
+      if (!isUpdatingFromProfile) {
+        setCurrentStep(7);
+      }
       
       // Save to backend in real-time
       try {
@@ -27,7 +31,11 @@ export default function WorkoutsScreen() {
         console.error('Failed to save workouts per week:', error);
       }
       
-      router.push('/onboarding/equipment');
+      if (isUpdatingFromProfile) {
+        navigateAfterUpdate();
+      } else {
+        router.push('/onboarding/equipment');
+      }
     }
   };
 

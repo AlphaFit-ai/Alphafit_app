@@ -4,6 +4,8 @@ import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useProfileUpdateNavigation } from '../../hooks/useProfileUpdateNavigation';
+import { useRouter } from 'expo-router';
 
 type DietType = 'vegetarian' | 'vegan' | 'non-veg' | 'flexible';
 
@@ -38,8 +40,10 @@ const getDietOptions = (t: any): DietOption[] => [
 
 export default function DietPreferenceScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const { updateDietData, setCurrentStep } = useDiet();
   const { colors } = useTheme();
+  const { navigateAfterUpdate, isUpdatingFromProfile } = useProfileUpdateNavigation();
   const [selected, setSelected] = useState<DietType | null>(null);
   const dietOptions = getDietOptions(t);
 
@@ -47,7 +51,11 @@ export default function DietPreferenceScreen() {
     setSelected(type);
     await updateDietData({ dietPreference: type });
     setTimeout(() => {
-      setCurrentStep(1);
+      if (isUpdatingFromProfile) {
+        navigateAfterUpdate();
+      } else {
+        setCurrentStep(1);
+      }
     }, 300);
   };
 

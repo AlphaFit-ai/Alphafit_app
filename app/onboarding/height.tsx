@@ -6,6 +6,7 @@ import { Button, ProgressBar } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useProfileUpdateNavigation } from '../../hooks/useProfileUpdateNavigation';
 import { onboardingService } from '../../services';
 
 export default function HeightScreen() {
@@ -13,6 +14,7 @@ export default function HeightScreen() {
   const router = useRouter();
   const { updateOnboardingData, setCurrentStep } = useOnboarding();
   const { colors, isDarkMode } = useTheme();
+  const { navigateAfterUpdate, isUpdatingFromProfile } = useProfileUpdateNavigation();
   
   const [isMetric, setIsMetric] = useState(true);
   const [selectedFeet, setSelectedFeet] = useState(5);
@@ -123,7 +125,10 @@ export default function HeightScreen() {
       height: heightData,
       weight: weightData,
     });
-    setCurrentStep(4);
+    
+    if (!isUpdatingFromProfile) {
+      setCurrentStep(4);
+    }
     
     // Save to backend in real-time
     try {
@@ -131,11 +136,22 @@ export default function HeightScreen() {
         height: heightData,
         weight: weightData,
       });
+      
+      // Navigate based on context
+      if (isUpdatingFromProfile) {
+        navigateAfterUpdate();
+      } else {
+        router.push('/onboarding/fitness-level');
+      }
     } catch (error) {
       console.error('Failed to save height/weight:', error);
+      // Still navigate even on error
+      if (isUpdatingFromProfile) {
+        navigateAfterUpdate();
+      } else {
+        router.push('/onboarding/fitness-level');
+      }
     }
-    
-    router.push('/onboarding/fitness-level');
   };  return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>

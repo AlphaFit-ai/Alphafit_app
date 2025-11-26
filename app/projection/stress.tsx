@@ -2,10 +2,12 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useProjection } from '../../context/ProjectionContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useProfileUpdateNavigation } from '../../hooks/useProfileUpdateNavigation';
+import { onboardingService } from '../../services';
 
 const stressOptions = [
   { id: 'low', translationKey: 'onboarding.activity.low', icon: 'trending-down' as const },
@@ -17,21 +19,55 @@ export default function StressScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { colors, isDarkMode } = useTheme();
-  const { projectionData, updateProjectionData, setCurrentStep } = useProjection();
-  const [selected, setSelected] = useState<string | undefined>(projectionData.stressLevel);
+  const { projectionData, updateProjectionData, setCurrentStep, loadProjectionData } = useProjection();
+  const { navigateAfterUpdate, isUpdatingFromProfile } = useProfileUpdateNavigation();
+  const [selected, setSelected] = useState<string | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(isUpdatingFromProfile);
   const isInitialMount = useRef(true);
+
+  // Load saved data from backend when updating from profile
+  useEffect(() => {
+    const loadSavedData = async () => {
+      if (isUpdatingFromProfile) {
+        try {
+          const savedData = await onboardingService.getProjectionOnboardingData();
+          if (savedData) {
+            loadProjectionData(savedData);
+            setSelected(savedData.stressLevel);
+          }
+        } catch (error) {
+          console.error('Failed to load projection data:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    loadSavedData();
+  }, [isUpdatingFromProfile]);
 
   const handleSelect = (value: string) => {
     setSelected(value);
     updateProjectionData({ stressLevel: value });
     setTimeout(() => {
-      setCurrentStep(4);
+      if (isUpdatingFromProfile) {
+        navigateAfterUpdate();
+      } else {
+        setCurrentStep(4);
+      }
     }, 300);
   };
 
   useEffect(() => {
     isInitialMount.current = false;
   }, []);
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -40,19 +76,20 @@ export default function StressScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[styles.title, { color: colors.text }]}>
-          {t('projection.stress.title')}
-        </Text>
+        <View style={styles.content}>
+          <Text style={[styles.title, { color: colors.text }]}>
+            {t('projection.stress.title')}
+          </Text>
 
-        <View style={styles.imageContainer}>
-          <Image
-            source={require('../../assets/images/projection/stress.png')}
-            style={styles.image}
-            resizeMode="contain"
-          />
-        </View>
+          <View style={styles.imageContainer}>
+            <Image
+              source={require('../../assets/images/projection/stress.png')}
+              style={styles.image}
+              resizeMode="contain"
+            />
+          </View>
 
-        <View style={styles.optionsContainer}>
+          <View style={styles.optionsContainer}>
           {stressOptions.map((option) => (
             <TouchableOpacity
               key={option.id}
@@ -85,6 +122,7 @@ export default function StressScreen() {
             </TouchableOpacity>
           ))}
         </View>
+        </View>
       </ScrollView>
     </View>
   );
@@ -94,14 +132,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingTop: 20,
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  content: {
     paddingHorizontal: Spacing.screenPaddingHorizontal,
-    paddingBottom: 24,
   },
   title: {
     fontSize: Fonts.sizes['3xl'],

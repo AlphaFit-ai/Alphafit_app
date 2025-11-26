@@ -57,6 +57,12 @@ export default function ProfileLayout() {
           title: t('profile.helpAndSupport', 'Help & Support'),
         }}
       />
+      <Stack.Screen
+        name="manage-data"
+        options={{
+          title: t('profile.myDataSection'),
+        }}
+      />
     </Stack>
   );
 }

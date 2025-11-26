@@ -6,6 +6,7 @@ import { Button, OptionCard, ProgressBar } from '../../components';
 import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useProfileUpdateNavigation } from '../../hooks/useProfileUpdateNavigation';
 import { onboardingService } from '../../services';
 
 export default function EquipmentScreen() {
@@ -13,12 +14,15 @@ export default function EquipmentScreen() {
   const router = useRouter();
   const { updateOnboardingData, setCurrentStep } = useOnboarding();
   const { colors } = useTheme();
+  const { navigateAfterUpdate, isUpdatingFromProfile } = useProfileUpdateNavigation();
   const [selectedEquipment, setSelectedEquipment] = useState<'full-gym' | 'dumbbells-barbell' | 'bodyweight-only' | null>(null);
 
   const handleContinue = async () => {
     if (selectedEquipment) {
       updateOnboardingData({ equipment: selectedEquipment });
-      setCurrentStep(8);
+      if (!isUpdatingFromProfile) {
+        setCurrentStep(8);
+      }
       
       // Save to backend in real-time
       try {
@@ -27,7 +31,11 @@ export default function EquipmentScreen() {
         console.error('Failed to save equipment:', error);
       }
       
-      router.push('/onboarding/goal');
+      if (isUpdatingFromProfile) {
+        navigateAfterUpdate();
+      } else {
+        router.push('/onboarding/goal');
+      }
     }
   };
 

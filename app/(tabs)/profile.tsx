@@ -93,6 +93,30 @@ export default function ProfileScreen() {
     await loadUserData(true);
   };
 
+  const myDataSettings: SettingItem[] = [
+    {
+      icon: 'people-outline',
+      title: t('profile.onboardingData'),
+      subtitle: t('profile.onboardingDataSubtitle'),
+      type: 'navigation',
+      onPress: () => router.push('/profile/manage-data?type=onboarding'),
+    },
+    {
+      icon: 'restaurant-outline',
+      title: t('profile.dietData'),
+      subtitle: t('profile.dietDataSubtitle'),
+      type: 'navigation',
+      onPress: () => router.push('/profile/manage-data?type=diet'),
+    },
+    {
+      icon: 'analytics-outline',
+      title: t('profile.projectionData'),
+      subtitle: t('profile.projectionDataSubtitle'),
+      type: 'navigation',
+      onPress: () => router.push('/profile/manage-data?type=projection'),
+    },
+  ];
+
   const accountSettings: SettingItem[] = [
     {
       icon: 'person-outline',
@@ -304,6 +328,13 @@ export default function ProfileScreen() {
         <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('profile.accountSection')}</Text>
         <View style={[styles.settingsList, { backgroundColor: isDarkMode ? Colors.gray[900] : Colors.gray[50] }]}>
           {accountSettings.map(renderSettingItem)}
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('profile.myDataSection')}</Text>
+        <View style={[styles.settingsList, { backgroundColor: isDarkMode ? Colors.gray[900] : Colors.gray[50] }]}>
+          {myDataSettings.map(renderSettingItem)}
         </View>
       </View>
 
