@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Image, Modal, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, Modal, RefreshControl, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Alert, ImageUpload, LanguageSelector, ProPlanModal } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
@@ -29,6 +29,7 @@ export default function ProfileScreen() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [userProfilePicture, setUserProfilePicture] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
@@ -47,15 +48,19 @@ export default function ProfileScreen() {
     }, [])
   );
 
-  const loadUserData = async () => {
+  const loadUserData = async (isRefresh = false) => {
     try {
-      setIsLoading(true);
-      const profile = await userService.getUserProfile();
-      console.log('Loaded profile data:', profile);
-      console.log('Profile image URL from profile:', profile.profileImageUrl);
-      
+      if (isRefresh) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
+      const [profile, profilePic] = await Promise.all([
+        userService.getUserProfile(),
+        imageService.getProfilePicture()
+      ]);
       setUserProfile(profile);
-      setUserProfilePicture(profile.profileImageUrl || null);
+      setUserProfilePicture(profilePic);
     } catch (error: any) {
       const is404 = error?.response?.status === 404;
       const is401 = error?.response?.status === 401;
@@ -68,26 +73,24 @@ export default function ProfileScreen() {
         console.error('Failed to load user data:', error);
       }
     } finally {
-      setIsLoading(false);
+      if (isRefresh) {
+        setIsRefreshing(false);
+      } else {
+        setIsLoading(false);
+      }
     }
   };
 
+  const onRefresh = useCallback(() => {
+    loadUserData(true);
+  }, []);
+
   const handleProfilePictureUpdate = async (imageUrl: string) => {
-    console.log('Profile picture updated with URL:', imageUrl);
     // Update local state immediately for instant feedback
     setUserProfilePicture(imageUrl);
     
-    // Reload user data after a short delay to ensure backend has processed the update
-    setTimeout(async () => {
-      try {
-        const profile = await userService.getUserProfile();
-        console.log('Refreshed profile data:', profile);
-        setUserProfile(profile);
-        setUserProfilePicture(profile.profileImageUrl || null);
-      } catch (error) {
-        console.error('Failed to refresh profile after image update:', error);
-      }
-    }, 500);
+    // Force immediate refresh to sync with backend
+    await loadUserData(true);
   };
 
   const accountSettings: SettingItem[] = [
@@ -266,7 +269,18 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      style={[styles.container, { backgroundColor: colors.background }]} 
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={onRefresh}
+          colors={[Colors.primary]}
+          tintColor={Colors.primary}
+        />
+      }
+    >
       <View style={styles.profileSection}>
         <View style={styles.avatarWrapper}>
           <ImageUpload

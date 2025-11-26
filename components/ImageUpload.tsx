@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Alert, Image, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Modal, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { imageService } from '../services';
 import { useTheme } from '../context/ThemeContext';
-import { Colors, Spacing } from '../constants';
+import { Colors, Spacing, Fonts } from '../constants';
 
 interface ImageUploadProps {
   currentImageUrl?: string | null;
@@ -24,9 +25,11 @@ export default function ImageUpload({
   size = 120,
   rounded = true,
 }: ImageUploadProps) {
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
+  const { t } = useTranslation();
   const [imageUri, setImageUri] = useState<string | null>(currentImageUrl || null);
   const [isUploading, setIsUploading] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
 
   // Sync local state with prop changes
   useEffect(() => {
@@ -41,7 +44,8 @@ export default function ImageUpload({
         await uploadImage(uri);
       }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to pick image');
+      // Error handling - could be enhanced with custom alert
+      console.error('Pick image error:', error);
     }
   };
 
@@ -64,12 +68,15 @@ export default function ImageUpload({
           throw new Error('Invalid upload type');
       }
 
-      console.log('Image uploaded successfully:', uploadedUrl);
-      setImageUri(uploadedUrl);
-      onImageUploaded?.(uploadedUrl);
+      // Add cache busting timestamp to force refresh
+      const urlWithTimestamp = uploadedUrl.includes('?') 
+        ? `${uploadedUrl}&t=${Date.now()}` 
+        : `${uploadedUrl}?t=${Date.now()}`;
+      
+      setImageUri(urlWithTimestamp);
+      onImageUploaded?.(urlWithTimestamp);
     } catch (error: any) {
       console.error('Upload error:', error);
-      Alert.alert('Upload Failed', error.message || 'Failed to upload image');
       setImageUri(null);
     } finally {
       setIsUploading(false);
@@ -77,32 +84,22 @@ export default function ImageUpload({
   };
 
   const showImageSourceOptions = () => {
-    Alert.alert(
-      'Select Image Source',
-      'Choose where to get your image from',
-      [
-        {
-          text: 'Camera',
-          onPress: () => handlePickImage('camera'),
-        },
-        {
-          text: 'Gallery',
-          onPress: () => handlePickImage('gallery'),
-        },
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-      ],
-      { cancelable: true }
-    );
+    setShowAlert(true);
+  };
+
+  const handleAlertOption = (option: 'camera' | 'gallery' | 'cancel') => {
+    setShowAlert(false);
+    if (option !== 'cancel') {
+      setTimeout(() => handlePickImage(option), 300);
+    }
   };
 
   return (
-    <View style={styles.container}>
-      {label && <Text style={[styles.label, { color: colors.text }]}>{label}</Text>}
-      
-      <TouchableOpacity
+    <>
+      <View style={styles.container}>
+        {label && <Text style={[styles.label, { color: colors.text }]}>{label}</Text>}
+        
+        <TouchableOpacity
         style={[
           styles.imageContainer,
           {
@@ -125,7 +122,10 @@ export default function ImageUpload({
         ) : imageUri ? (
           <>
             <Image
-              source={{ uri: imageUri }}
+              source={{ 
+                uri: imageUri,
+                cache: 'reload'
+              }}
               style={[
                 styles.image,
                 {
@@ -135,10 +135,6 @@ export default function ImageUpload({
                 },
               ]}
               resizeMode="cover"
-              onError={(error) => {
-                console.error('Image load error:', error.nativeEvent.error);
-                setImageUri(null);
-              }}
             />
             <View style={[styles.editButton, { backgroundColor: Colors.primary }]}>
               <Ionicons name="camera" size={18} color={Colors.white} />
@@ -153,7 +149,63 @@ export default function ImageUpload({
           </View>
         )}
       </TouchableOpacity>
-    </View>
+      </View>
+
+      {/* iOS-style Alert Modal */}
+      <Modal
+        visible={showAlert}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowAlert(false)}
+      >
+        <TouchableOpacity 
+          style={styles.alertOverlay} 
+          activeOpacity={1}
+          onPress={() => setShowAlert(false)}
+        >
+          <View style={[styles.alertContainer, { backgroundColor: isDarkMode ? 'rgba(28, 28, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)' }]}>
+            <Text style={[styles.alertTitle, { color: colors.text }]}>
+              {t('imageUpload.selectSource')}
+            </Text>
+            <Text style={[styles.alertMessage, { color: colors.textSecondary }]}>
+              {t('imageUpload.selectSourceMessage')}
+            </Text>
+            
+            <View style={[styles.alertButtonContainer, { borderTopColor: isDarkMode ? 'rgba(84, 84, 88, 0.6)' : 'rgba(60, 60, 67, 0.29)' }]}>
+              <TouchableOpacity
+                style={[styles.alertButton, { borderBottomColor: isDarkMode ? 'rgba(84, 84, 88, 0.6)' : 'rgba(60, 60, 67, 0.29)' }]}
+                onPress={() => handleAlertOption('camera')}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.alertButtonText, { color: '#007AFF' }]}>
+                  {t('imageUpload.camera')}
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.alertButton, { borderBottomColor: isDarkMode ? 'rgba(84, 84, 88, 0.6)' : 'rgba(60, 60, 67, 0.29)' }]}
+                onPress={() => handleAlertOption('gallery')}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.alertButtonText, { color: '#007AFF' }]}>
+                  {t('imageUpload.gallery')}
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.alertButton}
+                onPress={() => handleAlertOption('cancel')}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.alertButtonText, styles.alertButtonTextBold, { color: '#007AFF' }]}>
+                  {t('common.cancel')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </>
   );
 }
 
@@ -221,5 +273,64 @@ const styles = StyleSheet.create({
   uploadingText: {
     marginTop: Spacing.sm,
     fontSize: 12,
+  },
+  // iOS-style Alert Modal
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  alertContainer: {
+    width: 270,
+    borderRadius: 14,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+  },
+  alertTitle: {
+    fontSize: 17,
+    fontFamily: Fonts.semiBold,
+    fontWeight: '600',
+    textAlign: 'center',
+    paddingTop: 19,
+    paddingHorizontal: 16,
+    marginBottom: 2,
+  },
+  alertMessage: {
+    fontSize: 13,
+    fontFamily: Fonts.regular,
+    textAlign: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 0,
+    paddingBottom: 20,
+    lineHeight: 18,
+  },
+  alertButtonContainer: {
+    borderTopWidth: 0.5,
+  },
+  alertButton: {
+    paddingVertical: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: 0.5,
+  },
+  alertButtonText: {
+    fontSize: 17,
+    fontFamily: Fonts.regular,
+  },
+  alertButtonTextBold: {
+    fontFamily: Fonts.semiBold,
+    fontWeight: '600',
   },
 });

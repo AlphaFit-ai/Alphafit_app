@@ -2,7 +2,14 @@
   "common": {
     "continue": "Continuer",
     "back": "Retour",
-    "uploading": "Téléchargement..."
+    "uploading": "Téléchargement...",
+    "cancel": "Annuler"
+  },
+  "imageUpload": {
+    "selectSource": "Sélectionner la source de l'image",
+    "selectSourceMessage": "Choisissez d'où vous voulez obtenir votre photo",
+    "camera": "Caméra",
+    "gallery": "Galerie"
   },
   "welcome": {
     "title": "BIENVENUE DANS",

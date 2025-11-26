@@ -143,7 +143,6 @@ class UserService {
   // User profile endpoints
   async getUserProfile(): Promise<UserProfile> {
     const response = await apiClient.get('/users/profile');
-    console.log('getUserProfile response:', JSON.stringify(response.data, null, 2));
     return response.data;
   }
 

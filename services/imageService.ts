@@ -1,5 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import apiClient from './apiClient';
+import { config } from '../config';
 
 export interface ImageUploadResponse {
   success: boolean;
@@ -52,7 +53,9 @@ class ImageService {
     );
 
     if (response.data.success && response.data.data) {
-      return response.data.data.imageUrl;
+      // Convert relative URL to absolute URL with backend base
+      const imageUrl = response.data.data.imageUrl;
+      return this.toAbsoluteUrl(imageUrl);
     }
 
     throw new Error(response.data.message || 'Failed to upload profile picture');
@@ -88,7 +91,7 @@ class ImageService {
     );
 
     if (response.data.success && response.data.data) {
-      return response.data.data.imageUrl;
+      return this.toAbsoluteUrl(response.data.data.imageUrl);
     }
 
     throw new Error(response.data.message || 'Failed to upload progress photo');
@@ -122,7 +125,7 @@ class ImageService {
     );
 
     if (response.data.success && response.data.data) {
-      return response.data.data.imageUrl;
+      return this.toAbsoluteUrl(response.data.data.imageUrl);
     }
 
     throw new Error(response.data.message || 'Failed to upload food scan image');
@@ -133,12 +136,9 @@ class ImageService {
    */
   async getProfilePicture(): Promise<string | null> {
     const response = await apiClient.get<ImageUploadResponse>('/images/profile');
-    console.log('getProfilePicture response:', JSON.stringify(response.data, null, 2));
     
     if (response.data.success && response.data.data) {
-      const imageUrl = response.data.data.imageUrl;
-      console.log('Profile picture URL:', imageUrl);
-      return imageUrl;
+      return this.toAbsoluteUrl(response.data.data.imageUrl);
     }
 
     return null;
@@ -216,6 +216,26 @@ class ImageService {
       console.error('Error picking image:', error);
       throw error;
     }
+  }
+
+  /**
+   * Convert relative URL to absolute URL with backend base
+   */
+  private toAbsoluteUrl(url: string | null): string | null {
+    if (!url) return null;
+    
+    // If URL already starts with http:// or https://, return as is
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    
+    // Remove '/api' from base URL since we'll add it with the path
+    const baseUrl = config.API_BASE_URL.replace('/api', '');
+    
+    // Ensure url starts with /
+    const path = url.startsWith('/') ? url : `/${url}`;
+    
+    return `${baseUrl}${path}`;
   }
 }
 

@@ -242,8 +242,9 @@ export default function TabsLayout() {
               <View style={[styles.profileAvatarWrapper, focused && styles.profileAvatarWrapperActive]}>
                 <Image 
                   key={userProfilePicture}
-                  source={{ uri: userProfilePicture }} 
+                  source={{ uri: userProfilePicture, cache: 'reload' }} 
                   style={styles.profileAvatar}
+                  resizeMode="cover"
                 />
               </View>
             ) : (

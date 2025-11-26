@@ -2,7 +2,14 @@
   "common": {
     "continue": "Continuar",
     "back": "Atrás",
-    "uploading": "Subiendo..."
+    "uploading": "Subiendo...",
+    "cancel": "Cancelar"
+  },
+  "imageUpload": {
+    "selectSource": "Seleccionar fuente de imagen",
+    "selectSourceMessage": "Elige de dónde quieres obtener tu foto",
+    "camera": "Cámara",
+    "gallery": "Galería"
   },
   "welcome": {
     "title": "BIENVENIDO A",
