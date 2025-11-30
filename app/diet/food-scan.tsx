@@ -1,25 +1,31 @@
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ProPlanModal } from '../../components/ProPlanModal';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
 import { useTheme } from '../../context/ThemeContext';
-import { imageService, userService } from '../../services';
+import { foodScanService, imageService, userService } from '../../services';
+import type { FoodScanDto } from '../../services';
 
 export default function FoodScanScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const { dietData, updateDietData, setCurrentStep } = useDiet();
   const { colors } = useTheme();
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [progressStatus, setProgressStatus] = useState<string>('');
+  const [progressValue, setProgressValue] = useState<number>(0);
   const [cameraPermission, setCameraPermission] = useState<boolean>(false);
   const [showProModal, setShowProModal] = useState<boolean>(false);
   const [isPremium, setIsPremium] = useState<boolean>(false);
+  const [scanResult, setScanResult] = useState<FoodScanDto | null>(null);
+  const [showNoFoodAlert, setShowNoFoodAlert] = useState<boolean>(false);
 
   // Refresh subscription status every time screen is focused
   useFocusEffect(
@@ -92,36 +98,110 @@ export default function FoodScanScreen() {
   };
 
   const uploadFoodImage = async (uri: string) => {
-    setIsUploading(true);
+    setIsProcessing(true);
+    setProgressStatus('Uploading image...');
+    setProgressValue(0.1);
+
     try {
+      // Step 1: Upload image to MinIO
       const uploadedImageUrl = await imageService.uploadFoodScanImage(uri);
-      
       setCapturedImage(uri);
       setUploadedUrl(uploadedImageUrl);
-      updateDietData({ foodImage: uploadedImageUrl });
+      
+      setProgressStatus('Analyzing with AI...');
+      setProgressValue(0.3);
 
-      Alert.alert('Success', 'Food image uploaded successfully');
+      // Step 2: Create food scan and process with AI
+      const result = await foodScanService.scanFood(
+        uploadedImageUrl,
+        (status, progress) => {
+          setProgressStatus(status);
+          setProgressValue(progress);
+        }
+      );
+
+      setScanResult(result);
+      updateDietData({ 
+        foodImage: uploadedImageUrl,
+        scanId: result.id 
+      });
+
+      // Navigate to diet statistics screen (step 5)
+      setProgressStatus('Complete!');
+      setProgressValue(1);
+      
+      // Small delay to show completion
+      setTimeout(() => {
+        setCurrentStep(5);
+      }, 500);
+
     } catch (error: any) {
-      console.error('Upload error:', error);
-      Alert.alert('Upload Failed', error.message || 'Failed to upload food image');
-    } finally {
-      setIsUploading(false);
+      // Clear loading state first
+      setIsProcessing(false);
+      setProgressStatus('');
+      setProgressValue(0);
+      
+      // Check if it's a "no food detected" error
+      if (error.message?.includes('No food detected')) {
+        setTimeout(() => {
+          setShowNoFoodAlert(true);
+        }, 100);
+      }
     }
   };
 
   const handleFinish = () => {
-    if (uploadedUrl) {
-      // Navigate to diet statistics screen
-      // All data is already saved via auto-save in context
+    if (scanResult) {
+      // Navigate to statistics screen
       setCurrentStep(5);
     } else {
-      Alert.alert('No Image', 'Please capture or select a food image first');
+      Alert.alert('No Results', 'Please scan a food image first');
     }
   };
 
   return (
     <>
       <ProPlanModal visible={showProModal} onClose={() => setShowProModal(false)} />
+      
+      {/* iOS-style No Food Alert */}
+      <Modal
+        visible={showNoFoodAlert}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowNoFoodAlert(false)}
+      >
+        <TouchableOpacity 
+          style={styles.alertOverlay} 
+          activeOpacity={1}
+          onPress={() => setShowNoFoodAlert(false)}
+        >
+          <View style={[styles.alertContainer, { backgroundColor: colors.card }]}>
+            <Text style={[styles.alertTitle, { color: colors.text }]}>
+              No Food Detected
+            </Text>
+            <Text style={[styles.alertMessage, { color: colors.textSecondary }]}>
+              Please upload a clear photo of food items. Make sure the food is well-lit and centered.
+            </Text>
+            
+            <View style={[styles.alertButtonContainer, { borderTopColor: colors.border }]}>
+              <TouchableOpacity
+                style={styles.alertButton}
+                onPress={() => {
+                  setShowNoFoodAlert(false);
+                  setCapturedImage(null);
+                  setUploadedUrl(null);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.alertButtonText, styles.alertButtonTextBold]}>
+                  Try Again
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ScrollView 
         style={styles.scrollView}
@@ -132,7 +212,7 @@ export default function FoodScanScreen() {
           <Text style={[styles.title, { color: colors.text }]}>{t('diet.foodScan.title')}</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('diet.foodScan.subtitle')}</Text>
 
-                    <TouchableOpacity style={styles.imageContainer} onPress={takePhoto} activeOpacity={0.8} disabled={isUploading}>
+                    <TouchableOpacity style={styles.imageContainer} onPress={takePhoto} activeOpacity={0.8} disabled={isProcessing}>
             {capturedImage ? (
               <Image source={{ uri: capturedImage }} style={styles.foodImage} />
             ) : (
@@ -142,17 +222,21 @@ export default function FoodScanScreen() {
                 resizeMode="cover"
               />
             )}
-            {isUploading && (
+            {isProcessing && (
               <View style={styles.loadingOverlay}>
                 <ActivityIndicator size="large" color={Colors.primary} />
-                <Text style={styles.loadingText}>{t('common.uploading')}</Text>
+                <Text style={styles.loadingText}>{progressStatus}</Text>
+                <View style={styles.progressBarContainer}>
+                  <View style={[styles.progressBar, { width: `${progressValue * 100}%` }]} />
+                </View>
               </View>
             )}
-            {capturedImage && !isUploading && (
+            {capturedImage && !isProcessing && (
               <View style={styles.imageOverlay}>
                 <TouchableOpacity style={styles.overlayButton} onPress={() => {
                   setCapturedImage(null);
                   setUploadedUrl(null);
+                  setScanResult(null);
                 }}>
                   <Ionicons name="close" size={24} color={Colors.white} />
                 </TouchableOpacity>
@@ -161,40 +245,27 @@ export default function FoodScanScreen() {
           </TouchableOpacity>
 
           <View style={styles.scanOptions}>
-            <TouchableOpacity style={styles.scanOption} onPress={takePhoto} disabled={isUploading}>
+            <TouchableOpacity style={styles.scanOption} onPress={takePhoto} disabled={isProcessing}>
               <View style={[styles.scanIconContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Ionicons name="barcode" size={24} color={colors.text} />
               </View>
               <Text style={[styles.scanOptionText, { color: colors.text }]}>{t('diet.foodScan.barcode')}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.scanOption} onPress={takePhoto} disabled={isUploading}>
+            <TouchableOpacity style={styles.scanOption} onPress={takePhoto} disabled={isProcessing}>
               <View style={[styles.scanIconContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Ionicons name="camera" size={24} color={colors.text} />
               </View>
               <Text style={[styles.scanOptionText, { color: colors.text }]}>{t('diet.foodScan.scanFood')}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.scanOption} onPress={pickFromLibrary} disabled={isUploading}>
+            <TouchableOpacity style={styles.scanOption} onPress={pickFromLibrary} disabled={isProcessing}>
               <View style={[styles.scanIconContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Ionicons name="image" size={24} color={colors.text} />
               </View>
               <Text style={[styles.scanOptionText, { color: colors.text }]}>{t('diet.foodScan.library')}</Text>
             </TouchableOpacity>
           </View>
-
-          {capturedImage && (
-            <TouchableOpacity 
-              style={[styles.finishButton, { backgroundColor: Colors.black }]} 
-              onPress={handleFinish}
-              activeOpacity={0.7}
-            >
-              <View style={styles.finishButtonContent}>
-                <Ionicons name="sparkles" size={20} color={Colors.white} />
-                <Text style={styles.finishButtonText}>{t('diet.foodScan.generate')}</Text>
-              </View>
-            </TouchableOpacity>
-          )}
         </View>
       </ScrollView>
       </View>
@@ -269,6 +340,19 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.medium,
     color: Colors.white,
   },
+  progressBarContainer: {
+    width: '70%',
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 2,
+    marginTop: 16,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: Colors.primary,
+    borderRadius: 2,
+  },
   scanOptions: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -307,5 +391,55 @@ const styles = StyleSheet.create({
     fontSize: Fonts.sizes.lg,
     fontFamily: Fonts.bold,
     color: Colors.white,
+  },
+  // iOS-style Alert
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  alertContainer: {
+    width: 270,
+    borderRadius: 14,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  alertTitle: {
+    fontSize: 17,
+    fontFamily: Fonts.semiBold,
+    textAlign: 'center',
+    paddingTop: 20,
+    paddingHorizontal: 16,
+  },
+  alertMessage: {
+    fontSize: 13,
+    fontFamily: Fonts.regular,
+    textAlign: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 20,
+    lineHeight: 18,
+  },
+  alertButtonContainer: {
+    borderTopWidth: 0.5,
+  },
+  alertButton: {
+    paddingVertical: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  alertButtonText: {
+    fontSize: 17,
+    fontFamily: Fonts.regular,
+    color: '#007AFF',
+  },
+  alertButtonTextBold: {
+    fontFamily: Fonts.semiBold,
   },
 });

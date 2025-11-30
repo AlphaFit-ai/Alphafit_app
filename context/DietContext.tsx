@@ -9,6 +9,7 @@ export interface DietOnboardingData {
   supplements?: string;
   takesSupplements?: boolean;
   foodImage?: string;
+  scanId?: string;
 }
 
 interface DietContextType {
@@ -31,6 +32,7 @@ const initialDietData: DietOnboardingData = {
   supplements: undefined,
   takesSupplements: undefined,
   foodImage: undefined,
+  scanId: undefined,
 };
 
 export const DietProvider: React.FC<{ children: ReactNode }> = ({ children }) => {

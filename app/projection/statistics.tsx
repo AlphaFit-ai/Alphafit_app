@@ -336,11 +336,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between'
   },
-  headerTitle: {
-    fontSize: Fonts.sizes['xl'],
-    fontFamily: Fonts.bold,
-    flex: 1,
-  },
   levelBadge: {
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -429,46 +424,6 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 6,
   },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-    marginBottom: 32,
-  },
-  statCard: {
-    width: '47%',
-    borderRadius: Spacing.radius.lg,
-    borderWidth: 1,
-    padding: 16,
-    alignItems: 'center',
-  },
-  statIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  statLabel: {
-    fontSize: Fonts.sizes.sm,
-    fontFamily: Fonts.regular,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  statValueContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  statValue: {
-    fontSize: Fonts.sizes['3xl'],
-    fontFamily: Fonts.bold,
-  },
-  statUnit: {
-    fontSize: Fonts.sizes.base,
-    fontFamily: Fonts.regular,
-    marginLeft: 2,
-  },
   recommendationsSection: {
     marginBottom: 24,
   },
@@ -519,9 +474,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    paddingHorizontal: 24,
+    paddingHorizontal: 32,
     borderRadius: Spacing.radius.full,
     gap: 8,
+    marginHorizontal: Spacing.screenPaddingHorizontal,
   },
   rescanButtonText: {
     fontSize: Fonts.sizes.lg,
