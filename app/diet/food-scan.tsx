@@ -146,6 +146,20 @@ export default function FoodScanScreen() {
         setTimeout(() => {
           setShowNoFoodAlert(true);
         }, 100);
+      } else if (error.message?.includes('timeout') || error.message?.includes('network') || error.code === 'ECONNABORTED') {
+        // Network/connection error
+        Alert.alert(
+          'Connection Failed',
+          'Unable to connect to the server. Please check your internet connection and try again.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        // Other errors
+        Alert.alert(
+          'Error',
+          error.message || 'An unexpected error occurred. Please try again.',
+          [{ text: 'OK' }]
+        );
       }
     }
   };

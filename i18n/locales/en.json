@@ -194,6 +194,21 @@
       "scanFood": "Scan Food",
       "library": "Library",
       "generate": "Generate"
+    },
+    "statistics": {
+      "nutritionFacts": "Nutrition Facts",
+      "analyzing": "AI Analysis in Progress",
+      "analyzeMessage": "Your meal is being analyzed by AI. Results will appear shortly!",
+      "scanAnother": "Scan Another Meal",
+      "calories": "Calories",
+      "protein": "Protein",
+      "carbs": "Carbs",
+      "fat": "Fat",
+      "allDetectedItems": "All Detected Items",
+      "caloriesUnit": "calories",
+      "personalizedRecommendations": "Personalized Recommendations",
+      "analyzingMeal": "Analyzing your meal...",
+      "loadingResults": "Loading results..."
     }
   },
   "profile": {

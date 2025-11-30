@@ -89,7 +89,7 @@ class FoodScanService {
   async getFoodScan(scanId: string): Promise<FoodScanDto> {
     const response = await apiClient.get<ApiResponse<FoodScanDto>>(
       `${this.BASE_PATH}/${scanId}`,
-      { timeout: 5000 }
+      { timeout: 10000 }
     );
 
     if (response.data.success && response.data.data) {
@@ -149,14 +149,22 @@ class FoodScanService {
     intervalMs: number = 2000
   ): Promise<FoodScanDto> {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const scan = await this.getFoodScan(scanId);
+      try {
+        const scan = await this.getFoodScan(scanId);
 
       if (scan.status === 'COMPLETED') {
         return scan;
       }
 
-      if (scan.status === 'FAILED') {
-        throw new Error(scan.errorMessage || 'Food scan processing failed');
+        if (scan.status === 'FAILED') {
+          throw new Error(scan.errorMessage || 'Food scan processing failed');
+        }
+      } catch (error: any) {
+        // If this is the last attempt or it's not a timeout, throw the error
+        if (attempt === maxAttempts - 1 || !error.message?.includes('timeout')) {
+          throw error;
+        }
+        // Otherwise, continue to next attempt
       }
 
       // Wait before next poll

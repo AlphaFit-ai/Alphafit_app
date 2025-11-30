@@ -194,6 +194,21 @@
       "scanFood": "Escanear Comida",
       "library": "Biblioteca",
       "generate": "Generar"
+    },
+    "statistics": {
+      "nutritionFacts": "Información Nutricional",
+      "analyzing": "Análisis de IA en Progreso",
+      "analyzeMessage": "Tu comida está siendo analizada por IA. ¡Los resultados aparecerán pronto!",
+      "scanAnother": "Escanear Otra Comida",
+      "calories": "Calorías",
+      "protein": "Proteínas",
+      "carbs": "Carbohidratos",
+      "fat": "Grasas",
+      "allDetectedItems": "Todos los Elementos Detectados",
+      "caloriesUnit": "calorías",
+      "personalizedRecommendations": "Recomendaciones Personalizadas",
+      "analyzingMeal": "Analizando tu comida...",
+      "loadingResults": "Cargando resultados..."
     }
   },
   "profile": {

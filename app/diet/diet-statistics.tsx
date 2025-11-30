@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
@@ -101,8 +102,17 @@ export default function DietStatisticsScreen() {
         userContext += `Equipment access: ${userData.equipment}. `;
       }
 
+      // Get current language
+      const currentLanguage = i18n.language || 'en';
+      const languageNames: { [key: string]: string } = {
+        en: 'English',
+        fr: 'French',
+        es: 'Spanish'
+      };
+      const responseLang = languageNames[currentLanguage] || 'English';
+
       // Create prompt for LLM with full user context
-      const prompt = `As a nutrition expert, analyze this meal and provide 3 concise, actionable recommendations for this specific user.
+      const prompt = `As a nutrition expert, analyze this meal and provide 3 concise, actionable recommendations for this specific user. IMPORTANT: Respond in ${responseLang}.
 
 User Profile:
 ${userContext || 'Limited user data available.'}
@@ -114,7 +124,7 @@ Meal Analysis:
 - Carbs: ${totalNutrition.carbs.toFixed(1)}g
 - Fat: ${totalNutrition.fat.toFixed(1)}g
 
-Provide exactly 3 personalized recommendations:
+Provide exactly 3 personalized recommendations in ${responseLang}:
 
 1. FIRST RECOMMENDATION (MOST IMPORTANT): Analyze how this meal aligns with their specific fitness goal (${userData.goal || 'their goal'}). Provide a strategic recommendation about how they can improve their nutrition plan to better achieve their goal. Focus on overall dietary strategy, macronutrient distribution for their goal, or meal planning improvements.
 
@@ -186,7 +196,7 @@ Each recommendation should be one clear, actionable sentence. Format as a simple
       <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color={Colors.primary} />
         <Text style={[styles.emptyStateText, { color: colors.textSecondary, marginTop: 16 }]}>
-          Loading results...
+          {t('diet.statistics.loadingResults')}
         </Text>
       </View>
     );
@@ -232,7 +242,7 @@ Each recommendation should be one clear, actionable sentence. Format as a simple
                   <View style={[styles.nutrientIconContainer, { backgroundColor: Colors.primary + '20' }]}>
                     <Ionicons name="flame" size={24} color={Colors.primary} />
                   </View>
-                  <Text style={[styles.nutrientLabel, { color: colors.textSecondary }]}>Calories</Text>
+                  <Text style={[styles.nutrientLabel, { color: colors.textSecondary }]}>{t('diet.statistics.calories')}</Text>
                   <View style={styles.nutrientValueContainer}>
                     <Text style={[styles.nutrientValue, { color: colors.text }]}>
                       {Math.round(totalNutrition.calories)}
@@ -245,7 +255,7 @@ Each recommendation should be one clear, actionable sentence. Format as a simple
                   <View style={[styles.nutrientIconContainer, { backgroundColor: Colors.error + '20' }]}>
                     <Ionicons name="fitness" size={24} color={Colors.error} />
                   </View>
-                  <Text style={[styles.nutrientLabel, { color: colors.textSecondary }]}>Protein</Text>
+                  <Text style={[styles.nutrientLabel, { color: colors.textSecondary }]}>{t('diet.statistics.protein')}</Text>
                   <View style={styles.nutrientValueContainer}>
                     <Text style={[styles.nutrientValue, { color: colors.text }]}>
                       {totalNutrition.protein.toFixed(1)}
@@ -258,7 +268,7 @@ Each recommendation should be one clear, actionable sentence. Format as a simple
                   <View style={[styles.nutrientIconContainer, { backgroundColor: Colors.warning + '20' }]}>
                     <Ionicons name="nutrition" size={24} color={Colors.warning} />
                   </View>
-                  <Text style={[styles.nutrientLabel, { color: colors.textSecondary }]}>Carbs</Text>
+                  <Text style={[styles.nutrientLabel, { color: colors.textSecondary }]}>{t('diet.statistics.carbs')}</Text>
                   <View style={styles.nutrientValueContainer}>
                     <Text style={[styles.nutrientValue, { color: colors.text }]}>
                       {totalNutrition.carbs.toFixed(1)}
@@ -271,7 +281,7 @@ Each recommendation should be one clear, actionable sentence. Format as a simple
                   <View style={[styles.nutrientIconContainer, { backgroundColor: Colors.info + '20' }]}>
                     <Ionicons name="water" size={24} color={Colors.info} />
                   </View>
-                  <Text style={[styles.nutrientLabel, { color: colors.textSecondary }]}>Fat</Text>
+                  <Text style={[styles.nutrientLabel, { color: colors.textSecondary }]}>{t('diet.statistics.fat')}</Text>
                   <View style={styles.nutrientValueContainer}>
                     <Text style={[styles.nutrientValue, { color: colors.text }]}>
                       {totalNutrition.fat.toFixed(1)}
@@ -286,7 +296,7 @@ Each recommendation should be one clear, actionable sentence. Format as a simple
             {scanResult.predictions.length > 1 && (
               <View style={styles.section}>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                  All Detected Items
+                  {t('diet.statistics.allDetectedItems')}
                 </Text>
                 <View style={[styles.recommendationsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   {scanResult.predictions.map((prediction, index) => (
@@ -297,7 +307,7 @@ Each recommendation should be one clear, actionable sentence. Format as a simple
                           {prediction.food}
                         </Text>
                         <Text style={[styles.nutrientLabel, { color: colors.textSecondary }]}>
-                          {Math.round(prediction.calories || 0)} calories
+                          {Math.round(prediction.calories || 0)} {t('diet.statistics.caloriesUnit')}
                         </Text>
                       </View>
                     </View>
@@ -310,7 +320,7 @@ Each recommendation should be one clear, actionable sentence. Format as a simple
             <View style={styles.section}>
               <View style={styles.recommendationsHeader}>
                 <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 0 }]}>
-                  Personalized Recommendations
+                  {t('diet.statistics.personalizedRecommendations')}
                 </Text>
               </View>
               
@@ -318,7 +328,7 @@ Each recommendation should be one clear, actionable sentence. Format as a simple
                 <View style={[styles.recommendationsCard, { backgroundColor: colors.card, borderColor: colors.border, alignItems: 'center', padding: 32 }]}>
                   <ActivityIndicator size="small" color={Colors.primary} />
                   <Text style={[styles.nutrientLabel, { color: colors.textSecondary, marginTop: 12 }]}>
-                    Analyzing your meal...
+                    {t('diet.statistics.analyzingMeal')}
                   </Text>
                 </View>
               ) : (
