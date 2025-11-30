@@ -82,7 +82,7 @@ export default function LoginScreen() {
         
         // Determine where to navigate based on onboarding progress
         const nextScreen = getFirstIncompleteScreen(savedData);
-        router.replace(nextScreen);
+        router.replace(nextScreen as any);
         
       } catch (error) {
         console.error('Failed to load onboarding data:', error);

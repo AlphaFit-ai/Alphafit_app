@@ -2,7 +2,6 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getAuth,
   initializeAuth,
-  getReactNativePersistence,
   signInWithCredential, 
   GoogleAuthProvider,
   OAuthProvider,
@@ -29,12 +28,8 @@ GoogleSignin.configure({
 // Initialize Firebase (only once)
 const app = getApps().length === 0 ? initializeApp(config.firebase) : getApp();
 
-// Initialize Auth with React Native persistence
-const auth = getApps().length === 1 
-  ? initializeAuth(app, {
-      persistence: getReactNativePersistence(AsyncStorage)
-    })
-  : getAuth(app);
+// Get Auth instance
+const auth = getAuth(app);
 
 const getAuthInstance = () => {
   return auth;

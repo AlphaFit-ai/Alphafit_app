@@ -55,7 +55,11 @@ class ImageService {
     if (response.data.success && response.data.data) {
       // Convert relative URL to absolute URL with backend base
       const imageUrl = response.data.data.imageUrl;
-      return this.toAbsoluteUrl(imageUrl);
+      const absoluteUrl = this.toAbsoluteUrl(imageUrl);
+      if (!absoluteUrl) {
+        throw new Error('Invalid image URL received');
+      }
+      return absoluteUrl;
     }
 
     throw new Error(response.data.message || 'Failed to upload profile picture');
@@ -91,7 +95,11 @@ class ImageService {
     );
 
     if (response.data.success && response.data.data) {
-      return this.toAbsoluteUrl(response.data.data.imageUrl);
+      const absoluteUrl = this.toAbsoluteUrl(response.data.data.imageUrl);
+      if (!absoluteUrl) {
+        throw new Error('Invalid image URL received');
+      }
+      return absoluteUrl;
     }
 
     throw new Error(response.data.message || 'Failed to upload progress photo');
@@ -125,7 +133,11 @@ class ImageService {
     );
 
     if (response.data.success && response.data.data) {
-      return this.toAbsoluteUrl(response.data.data.imageUrl);
+      const absoluteUrl = this.toAbsoluteUrl(response.data.data.imageUrl);
+      if (!absoluteUrl) {
+        throw new Error('Invalid image URL received');
+      }
+      return absoluteUrl;
     }
 
     throw new Error(response.data.message || 'Failed to upload food scan image');

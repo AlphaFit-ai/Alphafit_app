@@ -84,7 +84,7 @@ export default function SplashScreen() {
           
           // Determine where to navigate
           const nextScreen = getFirstIncompleteScreen(savedData);
-          router.replace(nextScreen);
+          router.replace(nextScreen as any);
           
         } catch (error: any) {
           // Handle different error types

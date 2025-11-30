@@ -1,35 +1,35 @@
 import apiClient from './apiClient';
 
 export interface OnboardingData {
-  source?: string;
+  source?: 'instagram' | 'facebook' | 'tiktok' | 'threads' | 'x' | 'youtube' | 'google' | 'others';
   dateOfBirth?: {
     month: number;
     day: number;
     year: number;
   };
-  gender?: string;
+  gender?: 'male' | 'female';
   height?: {
     value: number;
-    unit: string;
+    unit: 'imperial' | 'metric';
     feet?: number;
     inches?: number;
     cm?: number;
   };
   weight?: {
     value: number;
-    unit: string;
+    unit: 'imperial' | 'metric';
     lbs?: number;
     kg?: number;
   };
-  fitnessLevel?: string;
-  activityLevel?: string;
-  workoutsPerWeek?: string;
-  equipment?: string;
-  goal?: string;
+  fitnessLevel?: 'beginner' | 'intermediate' | 'advanced';
+  activityLevel?: 'low' | 'medium' | 'high';
+  workoutsPerWeek?: '0-2' | '3-5' | '6+';
+  equipment?: 'full-gym' | 'dumbbells-barbell' | 'bodyweight-only';
+  goal?: 'lose-fat' | 'get-stronger' | 'build-muscle' | 'stay-fit';
   currentPhysique?: number;
   projectedPhysique?: number;
   // Diet onboarding data
-  dietPreference?: string;
+  dietPreference?: 'vegetarian' | 'vegan' | 'non-veg' | 'flexible';
   allergies?: string;
   hasAllergies?: boolean;
   mealsPerDay?: number;
@@ -46,13 +46,14 @@ export interface OnboardingData {
 }
 
 export interface DietOnboardingData {
-  dietPreference?: string;
+  dietPreference?: 'vegetarian' | 'vegan' | 'non-veg' | 'flexible';
   allergies?: string;
   hasAllergies?: boolean;
   mealsPerDay?: number;
   supplements?: string;
   takesSupplements?: boolean;
   foodImage?: string;
+  scanId?: string;
 }
 
 export interface ProjectionOnboardingData {
