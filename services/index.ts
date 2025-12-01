@@ -3,12 +3,14 @@ export { default as userService } from './userService';
 export { default as firebaseAuthService } from './firebaseAuthService';
 export { default as onboardingService } from './onboardingService';
 export { default as imageService } from './imageService';
+export { barcodeService } from './barcodeService';
 export { chatbotService } from './chatbotService';
 export { foodScanService } from './foodScanService';
 export type { AuthResponse, UserOnboardingData, UserProfile } from './userService';
 export type { AuthResult } from './firebaseAuthService';
 export type { OnboardingData } from './onboardingService';
 export type { ImageUploadResponse, ProgressPhoto, ProgressPhotosResponse } from './imageService';
+export type { BarcodeProductDto } from './barcodeService';
 export type { FoodScanDto, FoodPrediction, ApiResponse, PageResponse } from './foodScanService';
 export type { ChatMessage, ChatResponse } from './chatbotService';
 

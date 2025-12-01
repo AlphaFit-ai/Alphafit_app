@@ -9,7 +9,7 @@ import { ProPlanModal } from '../../components/ProPlanModal';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
 import { useTheme } from '../../context/ThemeContext';
-import { foodScanService, imageService, userService } from '../../services';
+import { barcodeService, foodScanService, imageService, userService } from '../../services';
 import type { FoodScanDto } from '../../services';
 
 export default function FoodScanScreen() {
@@ -84,127 +84,40 @@ export default function FoodScanScreen() {
     setShowBarcodeScanner(true);
   };
 
-  const lookupUPCDatabase = async (barcode: string) => {
-    try {
-      // UPC Item DB API (free tier: 100 requests/day)
-      const response = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${barcode}`);
-      const data = await response.json();
-
-      if (data.code === 'OK' && data.items && data.items.length > 0) {
-        const item = data.items[0];
-        return {
-          product_name: item.title,
-          image_url: item.images?.[0] || '',
-          quantity: item.weight || 'N/A',
-          brand: item.brand,
-          category: item.category
-        };
-      }
-      return null;
-    } catch (error) {
-      console.log('UPC Database lookup failed:', error);
-      return null;
-    }
-  };
-
-  const lookupBarcodeLookup = async (barcode: string) => {
-    try {
-      // Barcode Lookup API (requires API key, but has free tier)
-      // For now, we'll skip this as it requires registration
-      // You can add API key in constants if needed
-      return null;
-    } catch (error) {
-      console.log('Barcode Lookup failed:', error);
-      return null;
-    }
-  };
-
   const handleBarcodeScanned = async ({ type, data }: { type: string; data: string }) => {
     setScannedBarcode(data);
     setShowBarcodeScanner(false);
     setIsProcessing(true);
     setProgressStatus('Looking up product...');
-    setProgressValue(20);
+    setProgressValue(30);
 
     try {
-      // Try Open Food Facts first
-      const offResponse = await fetch(`https://world.openfoodfacts.org/api/v0/product/${data}.json`);
-      const offData = await offResponse.json();
+      // Use barcode service (handles multiple databases on backend)
+      const barcodeResult = await barcodeService.lookupBarcode(data);
 
-      setProgressValue(40);
-
-      let productInfo = null;
-      let source = '';
-
-      if (offData.status === 1 && offData.product) {
-        productInfo = offData.product;
-        source = 'Open Food Facts';
-      } else {
-        // Try UPC Database as fallback
-        setProgressStatus('Trying alternative database...');
-        setProgressValue(60);
-        const upcData = await lookupUPCDatabase(data);
-        
-        if (upcData) {
-          productInfo = {
-            product_name: upcData.product_name,
-            image_url: upcData.image_url,
-            quantity: upcData.quantity,
-            brands: upcData.brand,
-            nutriments: {} // UPC Database doesn't provide nutrition info
-          };
-          source = 'UPC Database';
-        }
-      }
-
-      if (productInfo) {
-        const nutriments = productInfo.nutriments || {};
-
-        // Create a barcode result object (custom format for barcode scans)
-        const barcodeResult = {
-          scan_id: `barcode_${data}_${Date.now()}`,
-          image_url: productInfo.image_url || '',
-          predictions: [{
-            food: productInfo.product_name || 'Unknown Product',
-            confidence: 100,
-            portion_size: productInfo.quantity || 'N/A',
-            portion_weight_g: nutriments.serving_size ? parseFloat(nutriments.serving_size) : 100
-          }],
-          total_nutrition: {
-            calories: Number(nutriments['energy-kcal_100g'] || nutriments.energy_100g || 0),
-            protein: Number(nutriments.proteins_100g || 0),
-            carbs: Number(nutriments.carbohydrates_100g || 0),
-            fat: Number(nutriments.fat_100g || 0),
-            fiber: Number(nutriments.fiber_100g || 0),
-            sugar: Number(nutriments.sugars_100g || 0)
-          },
-          timestamp: new Date().toISOString(),
-          source: source
-        };
-
-        console.log('Barcode nutrition data:', barcodeResult.total_nutrition);
-        console.log('Data source:', source);
-
-        setProgressValue(100);
-        setProgressStatus(`Product found in ${source}!`);
-        setScanResult(barcodeResult as any);
-        
-        // Navigate to barcode result screen
-        setTimeout(() => {
-          setIsProcessing(false);
-          setCurrentStep(6);
-          // Store barcode data in diet context for the barcode result screen
-          updateDietData({ barcodeData: JSON.stringify(barcodeResult) });
-        }, 500);
-      } else {
+      setProgressValue(100);
+      setProgressStatus(`Product found in ${barcodeResult.source}!`);
+      setScanResult(barcodeResult as any);
+      
+      // Navigate to barcode result screen
+      setTimeout(() => {
         setIsProcessing(false);
+        setCurrentStep(6);
+        // Store barcode data in diet context for the barcode result screen
+        updateDietData({ barcodeData: JSON.stringify(barcodeResult) });
+      }, 500);
+    } catch (error: any) {
+      setIsProcessing(false);
+      
+      if (error.message?.includes('Product not found')) {
+        // Product not found in databases - expected behavior
         setProductNotFoundBarcode(data);
         setShowProductNotFoundAlert(true);
+      } else {
+        // Unexpected error - log for debugging
+        console.error('Barcode lookup error:', error);
+        setShowConnectionErrorAlert(true);
       }
-    } catch (error) {
-      console.error('Barcode lookup error:', error);
-      setIsProcessing(false);
-      setShowConnectionErrorAlert(true);
     }
   };
 
