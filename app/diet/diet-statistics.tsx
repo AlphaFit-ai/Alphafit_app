@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -24,20 +25,31 @@ export default function DietStatisticsScreen() {
   const { colors, isDarkMode } = useTheme();
   const { dietData, setCurrentStep } = useDiet();
   const { onboardingData } = useOnboarding();
+  const params = useLocalSearchParams();
   const [scanResult, setScanResult] = useState<FoodScanDto | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState<boolean>(false);
 
-  // Load scan results if we have a scanId in dietData
+  // Load barcode data from route params or scan results from backend
   useEffect(() => {
-    if (dietData.scanId) {
+    if (params.barcodeData && typeof params.barcodeData === 'string') {
+      try {
+        const barcodeResult = JSON.parse(params.barcodeData);
+        setScanResult(barcodeResult);
+        if (barcodeResult.predictions.length > 0) {
+          generateRecommendations(barcodeResult);
+        }
+      } catch (error) {
+        console.error('Failed to parse barcode data:', error);
+      }
+    } else if (dietData.scanId) {
       loadScanResults();
     } else if (!dietData.foodImage) {
       // Redirect to food scan if no data at all
       setCurrentStep(4);
     }
-  }, [dietData.scanId, dietData.foodImage, setCurrentStep]);
+  }, [params.barcodeData, dietData.scanId, dietData.foodImage, setCurrentStep]);
 
   const loadScanResults = async () => {
     if (!dietData.scanId) return;

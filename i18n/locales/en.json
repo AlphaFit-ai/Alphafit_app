@@ -193,7 +193,8 @@
       "barcode": "Barcode",
       "scanFood": "Scan Food",
       "library": "Library",
-      "generate": "Generate"
+      "generate": "Generate",
+      "barcodeResult": "Product Information"
     },
     "statistics": {
       "nutritionFacts": "Nutrition Facts",

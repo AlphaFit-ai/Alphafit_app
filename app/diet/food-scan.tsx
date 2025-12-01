@@ -1,6 +1,7 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { CameraView, Camera } from 'expo-camera';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -26,6 +27,17 @@ export default function FoodScanScreen() {
   const [isPremium, setIsPremium] = useState<boolean>(false);
   const [scanResult, setScanResult] = useState<FoodScanDto | null>(null);
   const [showNoFoodAlert, setShowNoFoodAlert] = useState<boolean>(false);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState<boolean>(false);
+  const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
+  const [hasBarcodeCameraPermission, setHasBarcodeCameraPermission] = useState<boolean>(false);
+  const [showCameraPermissionAlert, setShowCameraPermissionAlert] = useState<boolean>(false);
+  const [showBarcodePermissionAlert, setShowBarcodePermissionAlert] = useState<boolean>(false);
+  const [showProductNotFoundAlert, setShowProductNotFoundAlert] = useState<boolean>(false);
+  const [productNotFoundBarcode, setProductNotFoundBarcode] = useState<string>('');
+  const [showConnectionErrorAlert, setShowConnectionErrorAlert] = useState<boolean>(false);
+  const [showGeneralErrorAlert, setShowGeneralErrorAlert] = useState<boolean>(false);
+  const [generalErrorMessage, setGeneralErrorMessage] = useState<string>('');
+  const [showNoResultsAlert, setShowNoResultsAlert] = useState<boolean>(false);
 
   // Refresh subscription status every time screen is focused
   useFocusEffect(
@@ -50,6 +62,152 @@ export default function FoodScanScreen() {
     return status === 'granted';
   };
 
+  const requestBarcodeCameraPermission = async () => {
+    const { status } = await Camera.requestCameraPermissionsAsync();
+    setHasBarcodeCameraPermission(status === 'granted');
+    return status === 'granted';
+  };
+
+  const openBarcodeScanner = async () => {
+    if (!isPremium) {
+      setShowProModal(true);
+      return;
+    }
+
+    const hasPermission = hasBarcodeCameraPermission || await requestBarcodeCameraPermission();
+    
+    if (!hasPermission) {
+      setShowBarcodePermissionAlert(true);
+      return;
+    }
+
+    setShowBarcodeScanner(true);
+  };
+
+  const lookupUPCDatabase = async (barcode: string) => {
+    try {
+      // UPC Item DB API (free tier: 100 requests/day)
+      const response = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${barcode}`);
+      const data = await response.json();
+
+      if (data.code === 'OK' && data.items && data.items.length > 0) {
+        const item = data.items[0];
+        return {
+          product_name: item.title,
+          image_url: item.images?.[0] || '',
+          quantity: item.weight || 'N/A',
+          brand: item.brand,
+          category: item.category
+        };
+      }
+      return null;
+    } catch (error) {
+      console.log('UPC Database lookup failed:', error);
+      return null;
+    }
+  };
+
+  const lookupBarcodeLookup = async (barcode: string) => {
+    try {
+      // Barcode Lookup API (requires API key, but has free tier)
+      // For now, we'll skip this as it requires registration
+      // You can add API key in constants if needed
+      return null;
+    } catch (error) {
+      console.log('Barcode Lookup failed:', error);
+      return null;
+    }
+  };
+
+  const handleBarcodeScanned = async ({ type, data }: { type: string; data: string }) => {
+    setScannedBarcode(data);
+    setShowBarcodeScanner(false);
+    setIsProcessing(true);
+    setProgressStatus('Looking up product...');
+    setProgressValue(20);
+
+    try {
+      // Try Open Food Facts first
+      const offResponse = await fetch(`https://world.openfoodfacts.org/api/v0/product/${data}.json`);
+      const offData = await offResponse.json();
+
+      setProgressValue(40);
+
+      let productInfo = null;
+      let source = '';
+
+      if (offData.status === 1 && offData.product) {
+        productInfo = offData.product;
+        source = 'Open Food Facts';
+      } else {
+        // Try UPC Database as fallback
+        setProgressStatus('Trying alternative database...');
+        setProgressValue(60);
+        const upcData = await lookupUPCDatabase(data);
+        
+        if (upcData) {
+          productInfo = {
+            product_name: upcData.product_name,
+            image_url: upcData.image_url,
+            quantity: upcData.quantity,
+            brands: upcData.brand,
+            nutriments: {} // UPC Database doesn't provide nutrition info
+          };
+          source = 'UPC Database';
+        }
+      }
+
+      if (productInfo) {
+        const nutriments = productInfo.nutriments || {};
+
+        // Create a barcode result object (custom format for barcode scans)
+        const barcodeResult = {
+          scan_id: `barcode_${data}_${Date.now()}`,
+          image_url: productInfo.image_url || '',
+          predictions: [{
+            food: productInfo.product_name || 'Unknown Product',
+            confidence: 100,
+            portion_size: productInfo.quantity || 'N/A',
+            portion_weight_g: nutriments.serving_size ? parseFloat(nutriments.serving_size) : 100
+          }],
+          total_nutrition: {
+            calories: Number(nutriments['energy-kcal_100g'] || nutriments.energy_100g || 0),
+            protein: Number(nutriments.proteins_100g || 0),
+            carbs: Number(nutriments.carbohydrates_100g || 0),
+            fat: Number(nutriments.fat_100g || 0),
+            fiber: Number(nutriments.fiber_100g || 0),
+            sugar: Number(nutriments.sugars_100g || 0)
+          },
+          timestamp: new Date().toISOString(),
+          source: source
+        };
+
+        console.log('Barcode nutrition data:', barcodeResult.total_nutrition);
+        console.log('Data source:', source);
+
+        setProgressValue(100);
+        setProgressStatus(`Product found in ${source}!`);
+        setScanResult(barcodeResult as any);
+        
+        // Navigate to barcode result screen
+        setTimeout(() => {
+          setIsProcessing(false);
+          setCurrentStep(6);
+          // Store barcode data in diet context for the barcode result screen
+          updateDietData({ barcodeData: JSON.stringify(barcodeResult) });
+        }, 500);
+      } else {
+        setIsProcessing(false);
+        setProductNotFoundBarcode(data);
+        setShowProductNotFoundAlert(true);
+      }
+    } catch (error) {
+      console.error('Barcode lookup error:', error);
+      setIsProcessing(false);
+      setShowConnectionErrorAlert(true);
+    }
+  };
+
   const takePhoto = async () => {
     if (!isPremium) {
       setShowProModal(true);
@@ -59,11 +217,7 @@ export default function FoodScanScreen() {
     const hasPermission = cameraPermission || await requestCameraPermission();
     
     if (!hasPermission) {
-      Alert.alert(
-        'Permission Required',
-        'Camera permission is required to take photos of your meals.',
-        [{ text: 'OK' }]
-      );
+      setShowCameraPermissionAlert(true);
       return;
     }
 
@@ -148,18 +302,15 @@ export default function FoodScanScreen() {
         }, 100);
       } else if (error.message?.includes('timeout') || error.message?.includes('network') || error.code === 'ECONNABORTED') {
         // Network/connection error
-        Alert.alert(
-          'Connection Failed',
-          'Unable to connect to the server. Please check your internet connection and try again.',
-          [{ text: 'OK' }]
-        );
+        setTimeout(() => {
+          setShowConnectionErrorAlert(true);
+        }, 100);
       } else {
         // Other errors
-        Alert.alert(
-          'Error',
-          error.message || 'An unexpected error occurred. Please try again.',
-          [{ text: 'OK' }]
-        );
+        setTimeout(() => {
+          setGeneralErrorMessage(error.message || 'An unexpected error occurred. Please try again.');
+          setShowGeneralErrorAlert(true);
+        }, 100);
       }
     }
   };
@@ -169,13 +320,66 @@ export default function FoodScanScreen() {
       // Navigate to statistics screen
       setCurrentStep(5);
     } else {
-      Alert.alert('No Results', 'Please scan a food image first');
+      setShowNoResultsAlert(true);
     }
   };
 
   return (
     <>
       <ProPlanModal visible={showProModal} onClose={() => setShowProModal(false)} />
+      
+      {/* Barcode Scanner Modal */}
+      <Modal
+        visible={showBarcodeScanner}
+        animationType="slide"
+        onRequestClose={() => setShowBarcodeScanner(false)}
+      >
+        <View style={styles.barcodeScannerContainer}>
+          <CameraView
+            style={styles.barcodeCamera}
+            facing="back"
+            onBarcodeScanned={handleBarcodeScanned}
+            barcodeScannerSettings={{
+              barcodeTypes: [
+                'qr',
+                'ean13',
+                'ean8',
+                'upc_a',
+                'upc_e',
+                'code128',
+                'code39',
+                'code93',
+                'codabar',
+                'itf14',
+                'pdf417',
+                'aztec',
+                'datamatrix'
+              ],
+            }}
+          >
+            <View style={styles.barcodeScannerOverlay}>
+              <View style={styles.barcodeScannerHeader}>
+                <TouchableOpacity
+                  style={styles.barcodeScannerClose}
+                  onPress={() => setShowBarcodeScanner(false)}
+                >
+                  <Ionicons name="close" size={28} color={Colors.white} />
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.barcodeScannerFrame}>
+                <View style={styles.barcodeScannerCorner} />
+              </View>
+              
+              <View style={styles.barcodeScannerInfo}>
+                <Text style={styles.barcodeScannerText}>
+                  Position barcode or QR code within frame
+                </Text>
+              </View>
+            </View>
+          </CameraView>
+        </View>
+      </Modal>
       
       {/* iOS-style No Food Alert */}
       <Modal
@@ -209,6 +413,243 @@ export default function FoodScanScreen() {
               >
                 <Text style={[styles.alertButtonText, styles.alertButtonTextBold]}>
                   Try Again
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Camera Permission Alert */}
+      <Modal
+        visible={showCameraPermissionAlert}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCameraPermissionAlert(false)}
+      >
+        <View style={styles.alertOverlay}>
+          <View style={[styles.alertContainer, { backgroundColor: colors.card }]}>
+            <Text style={[styles.alertTitle, { color: colors.text }]}>
+              Camera Access Required
+            </Text>
+            <Text style={[styles.alertMessage, { color: colors.textSecondary }]}>
+              AlphaFit needs access to your camera to take photos of your meals. Please enable camera access in Settings.
+            </Text>
+            
+            <View style={[styles.alertButtonContainer, { borderTopColor: colors.border }]}>
+              <TouchableOpacity
+                style={styles.alertButton}
+                onPress={() => setShowCameraPermissionAlert(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.alertButtonText}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              <View style={[styles.alertButtonDivider, { backgroundColor: colors.border }]} />
+              <TouchableOpacity
+                style={styles.alertButton}
+                onPress={() => {
+                  setShowCameraPermissionAlert(false);
+                  // Open settings - implement later
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.alertButtonText, styles.alertButtonTextBold]}>
+                  Settings
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Barcode Camera Permission Alert */}
+      <Modal
+        visible={showBarcodePermissionAlert}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowBarcodePermissionAlert(false)}
+      >
+        <View style={styles.alertOverlay}>
+          <View style={[styles.alertContainer, { backgroundColor: colors.card }]}>
+            <Text style={[styles.alertTitle, { color: colors.text }]}>
+              Camera Access Required
+            </Text>
+            <Text style={[styles.alertMessage, { color: colors.textSecondary }]}>
+              AlphaFit needs access to your camera to scan barcodes. Please enable camera access in Settings.
+            </Text>
+            
+            <View style={[styles.alertButtonContainer, { borderTopColor: colors.border }]}>
+              <TouchableOpacity
+                style={styles.alertButton}
+                onPress={() => setShowBarcodePermissionAlert(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.alertButtonText}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              <View style={[styles.alertButtonDivider, { backgroundColor: colors.border }]} />
+              <TouchableOpacity
+                style={styles.alertButton}
+                onPress={() => {
+                  setShowBarcodePermissionAlert(false);
+                  // Open settings - implement later
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.alertButtonText, styles.alertButtonTextBold]}>
+                  Settings
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Product Not Found Alert */}
+      <Modal
+        visible={showProductNotFoundAlert}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowProductNotFoundAlert(false)}
+      >
+        <View style={styles.alertOverlay}>
+          <View style={[styles.alertContainer, { backgroundColor: colors.card }]}>
+            <Text style={[styles.alertTitle, { color: colors.text }]}>
+              Product Not Found
+            </Text>
+            <Text style={[styles.alertMessage, { color: colors.textSecondary }]}>
+              Barcode: {productNotFoundBarcode}{'\n\n'}This product is not in our databases. Please try scanning the food with the camera for better results.
+            </Text>
+            
+            <View style={[styles.alertButtonContainer, { borderTopColor: colors.border }]}>
+              <TouchableOpacity
+                style={styles.alertButton}
+                onPress={() => setShowProductNotFoundAlert(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.alertButtonText}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              <View style={[styles.alertButtonDivider, { backgroundColor: colors.border }]} />
+              <TouchableOpacity
+                style={styles.alertButton}
+                onPress={() => {
+                  setShowProductNotFoundAlert(false);
+                  setTimeout(() => takePhoto(), 300);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.alertButtonText, styles.alertButtonTextBold]}>
+                  Scan Food
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Connection Error Alert */}
+      <Modal
+        visible={showConnectionErrorAlert}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowConnectionErrorAlert(false)}
+      >
+        <TouchableOpacity 
+          style={styles.alertOverlay}
+          activeOpacity={1}
+          onPress={() => setShowConnectionErrorAlert(false)}
+        >
+          <View style={[styles.alertContainer, { backgroundColor: colors.card }]}>
+            <Text style={[styles.alertTitle, { color: colors.text }]}>
+              Connection Failed
+            </Text>
+            <Text style={[styles.alertMessage, { color: colors.textSecondary }]}>
+              Unable to connect to the server. Please check your internet connection and try again.
+            </Text>
+            
+            <View style={[styles.alertButtonContainer, { borderTopColor: colors.border }]}>
+              <TouchableOpacity
+                style={styles.alertButton}
+                onPress={() => setShowConnectionErrorAlert(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.alertButtonText, styles.alertButtonTextBold]}>
+                  OK
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* General Error Alert */}
+      <Modal
+        visible={showGeneralErrorAlert}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowGeneralErrorAlert(false)}
+      >
+        <TouchableOpacity 
+          style={styles.alertOverlay}
+          activeOpacity={1}
+          onPress={() => setShowGeneralErrorAlert(false)}
+        >
+          <View style={[styles.alertContainer, { backgroundColor: colors.card }]}>
+            <Text style={[styles.alertTitle, { color: colors.text }]}>
+              Error
+            </Text>
+            <Text style={[styles.alertMessage, { color: colors.textSecondary }]}>
+              {generalErrorMessage}
+            </Text>
+            
+            <View style={[styles.alertButtonContainer, { borderTopColor: colors.border }]}>
+              <TouchableOpacity
+                style={styles.alertButton}
+                onPress={() => setShowGeneralErrorAlert(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.alertButtonText, styles.alertButtonTextBold]}>
+                  OK
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* No Results Alert */}
+      <Modal
+        visible={showNoResultsAlert}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowNoResultsAlert(false)}
+      >
+        <TouchableOpacity 
+          style={styles.alertOverlay}
+          activeOpacity={1}
+          onPress={() => setShowNoResultsAlert(false)}
+        >
+          <View style={[styles.alertContainer, { backgroundColor: colors.card }]}>
+            <Text style={[styles.alertTitle, { color: colors.text }]}>
+              No Results
+            </Text>
+            <Text style={[styles.alertMessage, { color: colors.textSecondary }]}>
+              Please scan a food image first.
+            </Text>
+            
+            <View style={[styles.alertButtonContainer, { borderTopColor: colors.border }]}>
+              <TouchableOpacity
+                style={styles.alertButton}
+                onPress={() => setShowNoResultsAlert(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.alertButtonText, styles.alertButtonTextBold]}>
+                  OK
                 </Text>
               </TouchableOpacity>
             </View>
@@ -259,7 +700,7 @@ export default function FoodScanScreen() {
           </TouchableOpacity>
 
           <View style={styles.scanOptions}>
-            <TouchableOpacity style={styles.scanOption} onPress={takePhoto} disabled={isProcessing}>
+            <TouchableOpacity style={styles.scanOption} onPress={openBarcodeScanner} disabled={isProcessing}>
               <View style={[styles.scanIconContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Ionicons name="barcode" size={24} color={colors.text} />
               </View>
@@ -442,11 +883,16 @@ const styles = StyleSheet.create({
   },
   alertButtonContainer: {
     borderTopWidth: 0.5,
+    flexDirection: 'row',
   },
   alertButton: {
+    flex: 1,
     paddingVertical: 11,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  alertButtonDivider: {
+    width: 0.5,
   },
   alertButtonText: {
     fontSize: 17,
@@ -455,5 +901,59 @@ const styles = StyleSheet.create({
   },
   alertButtonTextBold: {
     fontFamily: Fonts.semiBold,
+  },
+  // Barcode Scanner Styles
+  barcodeScannerContainer: {
+    flex: 1,
+    backgroundColor: Colors.black,
+  },
+  barcodeCamera: {
+    flex: 1,
+  },
+  barcodeScannerOverlay: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  barcodeScannerHeader: {
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  barcodeScannerClose: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  barcodeScannerFrame: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  barcodeScannerCorner: {
+    width: 250,
+    height: 250,
+    borderWidth: 3,
+    borderColor: Colors.primary,
+    borderRadius: 20,
+    backgroundColor: 'transparent',
+  },
+  barcodeScannerInfo: {
+    paddingBottom: 60,
+    paddingHorizontal: 40,
+    alignItems: 'center',
+  },
+  barcodeScannerText: {
+    fontSize: 16,
+    fontFamily: Fonts.medium,
+    color: Colors.white,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
 });

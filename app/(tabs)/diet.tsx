@@ -4,6 +4,7 @@ import { ActivityIndicator, BackHandler, View } from 'react-native';
 import { useDiet } from '../../context/DietContext';
 import { onboardingService } from '../../services';
 import AllergiesScreen from '../diet/allergies';
+import BarcodeResultScreen from '../diet/barcode-result';
 import DietPreferenceScreen from '../diet/diet-preference';
 import DietStatisticsScreen from '../diet/diet-statistics';
 import FoodScanScreen from '../diet/food-scan';
@@ -94,6 +95,8 @@ export default function DietScreen() {
       return <FoodScanScreen />;
     case 5:
       return <DietStatisticsScreen />;
+    case 6:
+      return <BarcodeResultScreen />;
     default:
       return <DietPreferenceScreen />;
   }

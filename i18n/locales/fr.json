@@ -193,7 +193,8 @@
       "barcode": "Code-barres",
       "scanFood": "Scanner Nourriture",
       "library": "Bibliothèque",
-      "generate": "Générer"
+      "generate": "Générer",
+      "barcodeResult": "Informations sur le Produit"
     },
     "statistics": {
       "nutritionFacts": "Valeurs Nutritionnelles",
