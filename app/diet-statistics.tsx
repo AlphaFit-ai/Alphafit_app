@@ -3,13 +3,13 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
-import { Colors, Fonts, Spacing } from '../../constants';
-import { useDiet } from '../../context/DietContext';
-import { useTheme } from '../../context/ThemeContext';
-import { useOnboarding } from '../../context/OnboardingContext';
-import { chatbotService, foodScanService, userService } from '../../services';
-import type { FoodScanDto } from '../../services';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Colors, Fonts, Spacing } from '../constants';
+import { useDiet } from '../context/DietContext';
+import { useTheme } from '../context/ThemeContext';
+import { useOnboarding } from '../context/OnboardingContext';
+import { chatbotService, foodScanService, userService } from '../services';
+import type { FoodScanDto } from '../services';
 
 interface NutrientInfo {
   label: string;
@@ -25,6 +25,7 @@ export default function DietStatisticsScreen() {
   const { colors, isDarkMode } = useTheme();
   const { dietData, setCurrentStep } = useDiet();
   const { onboardingData } = useOnboarding();
+  const router = useRouter();
   const params = useLocalSearchParams();
   const [scanResult, setScanResult] = useState<FoodScanDto | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -43,24 +44,27 @@ export default function DietStatisticsScreen() {
       } catch (error) {
         console.error('Failed to parse barcode data:', error);
       }
+    } else if (params.scanId && typeof params.scanId === 'string') {
+      loadScanResults(params.scanId);
     } else if (dietData.scanId) {
-      loadScanResults();
+      loadScanResults(dietData.scanId);
     } else if (!dietData.foodImage) {
       // Redirect to food scan if no data at all
       setCurrentStep(4);
     }
-  }, [params.barcodeData, dietData.scanId, dietData.foodImage, setCurrentStep]);
+  }, [params.barcodeData, params.scanId, dietData.scanId, dietData.foodImage, setCurrentStep]);
 
-  const loadScanResults = async () => {
-    if (!dietData.scanId) return;
-    
+  const loadScanResults = async (id?: string) => {
+    const targetId = id || dietData.scanId;
+    if (!targetId) return;
+
     try {
       setLoading(true);
-      const result = await foodScanService.getFoodScan(dietData.scanId);
+      const result = await foodScanService.getFoodScan(targetId);
       setScanResult(result);
-      
+
       // Generate recommendations after loading scan results
-      if (result && result.predictions.length > 0) {
+      if (result && result.predictions && result.predictions.length > 0) {
         generateRecommendations(result);
       }
     } catch (error) {
@@ -72,7 +76,7 @@ export default function DietStatisticsScreen() {
 
   const generateRecommendations = async (scanData: FoodScanDto) => {
     setLoadingRecommendations(true);
-    
+
     try {
       // Fetch complete user profile from MongoDB
       const userProfile = await userService.getUserProfile();
@@ -148,14 +152,14 @@ Each recommendation should be one clear, actionable sentence. Format as a simple
 
       // Call chatbot service
       const response = await chatbotService.sendMessage(prompt, []);
-      
+
       // Parse recommendations from response
       if (response.message) {
         const lines = response.message
           .split('\n')
           .map(line => line.trim())
           .filter(line => line.length > 10 && !line.match(/^(recommendation|here|based)/i));
-        
+
         // Take up to 3 recommendations
         const parsedRecommendations = lines.slice(0, 3);
         setRecommendations(parsedRecommendations.length > 0 ? parsedRecommendations : [
@@ -218,8 +222,10 @@ Each recommendation should be one clear, actionable sentence. Format as a simple
   const topPrediction = scanResult?.predictions?.[0];
   const imageUrl = scanResult?.imageUrl || dietData.foodImage;
 
-  return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+  const isModal = !!params.scanId;
+
+  const content = (
+    <View style={[styles.container, { backgroundColor: colors.background }, isModal && styles.modalContent]}>
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -232,6 +238,18 @@ Each recommendation should be one clear, actionable sentence. Format as a simple
             style={styles.foodImage}
             resizeMode="cover"
           />
+
+          {/* Close Button for Modal */}
+          {params.scanId && (
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => router.back()}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="close" size={24} color={Colors.white} />
+            </TouchableOpacity>
+          )}
+
           {scanResult && scanResult.predictions && scanResult.predictions.length > 0 && (
             <View style={styles.statusBadge}>
               <Text style={styles.statusText}>
@@ -242,7 +260,7 @@ Each recommendation should be one clear, actionable sentence. Format as a simple
         </View>
 
         {/* Show AI Results or Empty State */}
-        {scanResult && scanResult.predictions.length > 0 ? (
+        {scanResult && scanResult.predictions && scanResult.predictions.length > 0 ? (
           <>
             {/* Nutrition Facts */}
             <View style={styles.section}>
@@ -305,7 +323,7 @@ Each recommendation should be one clear, actionable sentence. Format as a simple
             </View>
 
             {/* All Detected Items */}
-            {scanResult.predictions.length > 1 && (
+            {scanResult.predictions && scanResult.predictions.length > 1 && (
               <View style={styles.section}>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>
                   {t('diet.statistics.allDetectedItems')}
@@ -335,7 +353,7 @@ Each recommendation should be one clear, actionable sentence. Format as a simple
                   {t('diet.statistics.personalizedRecommendations')}
                 </Text>
               </View>
-              
+
               {loadingRecommendations ? (
                 <View style={[styles.recommendationsCard, { backgroundColor: colors.card, borderColor: colors.border, alignItems: 'center', padding: 32 }]}>
                   <ActivityIndicator size="small" color={Colors.primary} />
@@ -397,6 +415,21 @@ Each recommendation should be one clear, actionable sentence. Format as a simple
       </ScrollView>
     </View>
   );
+
+  if (isModal) {
+    return (
+      <View style={styles.modalContainer}>
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => router.back()}
+        />
+        {content}
+      </View>
+    );
+  }
+
+  return content;
 }
 
 const styles = StyleSheet.create({
@@ -584,5 +617,33 @@ const styles = StyleSheet.create({
   confidenceText: {
     fontSize: 14,
     fontFamily: Fonts.medium,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    flex: 0,
+    height: '70%',
+    width: '100%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    overflow: 'hidden',
   },
 });

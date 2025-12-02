@@ -1,8 +1,8 @@
 import {
-    Urbanist_400Regular,
-    Urbanist_500Medium,
-    Urbanist_600SemiBold,
-    Urbanist_700Bold,
+  Urbanist_400Regular,
+  Urbanist_500Medium,
+  Urbanist_600SemiBold,
+  Urbanist_700Bold,
 } from '@expo-google-fonts/urbanist';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
@@ -21,28 +21,28 @@ const originalLog = console.log;
 console.log = (message: any, ...args: any[]) => {
   if (typeof message === 'string') {
     // Only allow important logs (app lifecycle, critical operations)
-    const isImportantLog = 
+    const isImportantLog =
       message.includes('Starting') ||
       message.includes('Initialized') ||
       message.includes('Successfully') ||
       message.includes('Completed') ||
       message.includes('User logged in') ||
       message.includes('User registered');
-    
+
     // Suppress non-critical logs
     if (!isImportantLog && (
-        message.includes('Could not load') ||
-        message.includes('Could not sync') ||
-        message.includes('Could not save') ||
-        message.includes('Failed to load') ||
-        message.includes('Failed to sync') ||
-        message.includes('Failed to save') ||
-        message.includes('using local storage') ||
-        message.includes('Authentication expired') ||
-        message.includes('saved to backend') ||
-        message.includes('data saved') ||
-        message.includes('Resource not found') ||
-        message.includes('request for user'))) {
+      message.includes('Could not load') ||
+      message.includes('Could not sync') ||
+      message.includes('Could not save') ||
+      message.includes('Failed to load') ||
+      message.includes('Failed to sync') ||
+      message.includes('Failed to save') ||
+      message.includes('using local storage') ||
+      message.includes('Authentication expired') ||
+      message.includes('saved to backend') ||
+      message.includes('data saved') ||
+      message.includes('Resource not found') ||
+      message.includes('request for user'))) {
       return;
     }
   }
@@ -63,44 +63,44 @@ console.error = (message: any, ...args: any[]) => {
   if (typeof message === 'string') {
     // Network errors (expected when backend is down or no internet)
     if (message.includes('Network error') ||
-        message.includes('ERR_NETWORK') ||
-        message.includes('network_XMLHttpRequest') ||
-        message.includes('Host unreachable')) {
+      message.includes('ERR_NETWORK') ||
+      message.includes('network_XMLHttpRequest') ||
+      message.includes('Host unreachable')) {
       return;
     }
-    
+
     // Backend sync failures (expected when not authenticated or offline)
     if (message.includes('Failed to sync') ||
-        message.includes('Could not load') ||
-        message.includes('Could not sync') ||
-        message.includes('Failed to load onboarding data') ||
-        message.includes('Failed to load theme') ||
-        message.includes('Failed to load language')) {
+      message.includes('Could not load') ||
+      message.includes('Could not sync') ||
+      message.includes('Failed to load onboarding data') ||
+      message.includes('Failed to load theme') ||
+      message.includes('Failed to load language')) {
       return;
     }
-    
+
     // Authentication errors (expected)
     if (message.includes('Request failed with status code 404') ||
-        message.includes('Request failed with status code 401')) {
+      message.includes('Request failed with status code 401')) {
       return;
     }
-    
+
     // Keep awake errors (non-critical)
     if (message.includes('keep awake') || message.includes('Unable to activate keep awake')) {
       return;
     }
   }
-  
+
   // Check if error object contains network error
   if (typeof message === 'object' && message !== null) {
     const errorStr = JSON.stringify(message);
-    if (errorStr.includes('ERR_NETWORK') || 
-        errorStr.includes('Host unreachable') ||
-        errorStr.includes('Network error')) {
+    if (errorStr.includes('ERR_NETWORK') ||
+      errorStr.includes('Host unreachable') ||
+      errorStr.includes('Network error')) {
       return;
     }
   }
-  
+
   originalError(message, ...args);
 };
 
@@ -109,7 +109,7 @@ SplashScreen.preventAutoHideAsync();
 
 function RootContent() {
   const { isDarkMode, colors } = useTheme();
-  
+
   return (
     <>
       <StatusBar style={isDarkMode ? 'light' : 'dark'} backgroundColor={colors.background} />
@@ -125,6 +125,15 @@ function RootContent() {
         <Stack.Screen name="(tabs)" options={{ contentStyle: { backgroundColor: colors.background } }} />
         <Stack.Screen name="diet" options={{ contentStyle: { backgroundColor: colors.background } }} />
         <Stack.Screen name="projection" options={{ contentStyle: { backgroundColor: colors.background } }} />
+        <Stack.Screen name="history" options={{ contentStyle: { backgroundColor: colors.background } }} />
+        <Stack.Screen
+          name="diet-statistics"
+          options={{
+            presentation: 'transparentModal',
+            contentStyle: { backgroundColor: 'transparent' },
+            animation: 'slide_from_bottom'
+          }}
+        />
         <Stack.Screen name="index" options={{ contentStyle: { backgroundColor: colors.background } }} />
       </Stack>
     </>

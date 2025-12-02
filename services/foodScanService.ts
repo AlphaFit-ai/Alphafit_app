@@ -94,7 +94,7 @@ class FoodScanService {
 
     if (response.data.success && response.data.data) {
       const scan = response.data.data;
-      
+
       // Transform predictions to add flat properties for backward compatibility
       if (scan.predictions) {
         scan.predictions = scan.predictions.map(pred => ({
@@ -106,7 +106,7 @@ class FoodScanService {
           fat: pred.nutrition?.fatG || 0,
         }));
       }
-      
+
       return scan;
     }
 
@@ -121,7 +121,7 @@ class FoodScanService {
     size: number = 10
   ): Promise<PageResponse<FoodScanDto>> {
     const response = await apiClient.get<ApiResponse<PageResponse<FoodScanDto>>>(
-      `${this.BASE_PATH}/history`,
+      this.BASE_PATH,
       {
         params: { page, size },
         timeout: 10000,
@@ -152,9 +152,9 @@ class FoodScanService {
       try {
         const scan = await this.getFoodScan(scanId);
 
-      if (scan.status === 'COMPLETED') {
-        return scan;
-      }
+        if (scan.status === 'COMPLETED') {
+          return scan;
+        }
 
         if (scan.status === 'FAILED') {
           throw new Error(scan.errorMessage || 'Food scan processing failed');

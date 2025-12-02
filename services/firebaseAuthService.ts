@@ -1,8 +1,10 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { 
+import {
   getAuth,
   initializeAuth,
-  signInWithCredential, 
+  // @ts-ignore
+  getReactNativePersistence,
+  signInWithCredential,
   GoogleAuthProvider,
   OAuthProvider,
   signInWithEmailAndPassword,
@@ -28,8 +30,16 @@ GoogleSignin.configure({
 // Initialize Firebase (only once)
 const app = getApps().length === 0 ? initializeApp(config.firebase) : getApp();
 
-// Get Auth instance
-const auth = getAuth(app);
+// Initialize Auth with persistence
+let auth;
+try {
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage)
+  });
+} catch (e: any) {
+  // If auth is already initialized, use the existing instance
+  auth = getAuth(app);
+}
 
 const getAuthInstance = () => {
   return auth;
@@ -49,7 +59,7 @@ class FirebaseAuthService {
     try {
       // Check if device supports Google Play Services
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-      
+
       // Sign out first to clear any cached account and force account picker
       // This ensures users can always choose which account to use
       try {
@@ -57,38 +67,38 @@ class FirebaseAuthService {
       } catch (error) {
         // Ignore errors if no account to clear
       }
-      
+
       // Show account picker - users can select any Google account
       const userInfo = await GoogleSignin.signIn();
-      
+
       // Check if user cancelled (no user data returned)
       if (!userInfo.data || !userInfo.data.user) {
         return null;
       }
-      
+
       const idToken = userInfo.data.idToken;
-      
+
       if (!idToken) {
         throw new Error('No ID token received from Google Sign-In');
       }
-      
+
       // Create Firebase credential
       const credential = GoogleAuthProvider.credential(idToken);
-      
+
       // Sign in to Firebase
       const userCredential = await signInWithCredential(getAuthInstance(), credential);
       const token = await userCredential.user.getIdToken();
-      
+
       return {
         user: userCredential.user,
         idToken: token
       };
     } catch (error: any) {
       // Handle user cancellation gracefully
-      if (error.code === '-5' || 
-          error.code === 'SIGN_IN_CANCELLED' || 
-          error.message?.includes('Sign in action cancelled') ||
-          error.message?.includes('User cancelled')) {
+      if (error.code === '-5' ||
+        error.code === 'SIGN_IN_CANCELLED' ||
+        error.message?.includes('Sign in action cancelled') ||
+        error.message?.includes('User cancelled')) {
         // Clear any cached state so next attempt shows account picker
         try {
           await GoogleSignin.signOut();
@@ -97,7 +107,7 @@ class FirebaseAuthService {
         }
         return null;
       }
-      
+
       throw new Error(error.message || 'Failed to sign in with Google');
     }
   }
@@ -110,7 +120,7 @@ class FirebaseAuthService {
       const credential = GoogleAuthProvider.credential(idToken);
       const userCredential = await signInWithCredential(getAuthInstance(), credential);
       const token = await userCredential.user.getIdToken();
-      
+
       return {
         user: userCredential.user,
         idToken: token
@@ -133,7 +143,7 @@ class FirebaseAuthService {
       });
 
       const { identityToken } = appleCredential;
-      
+
       if (!identityToken) {
         throw new Error('No identity token received from Apple');
       }
@@ -172,7 +182,7 @@ class FirebaseAuthService {
     try {
       const userCredential = await signInWithEmailAndPassword(getAuthInstance(), email, password);
       const token = await userCredential.user.getIdToken();
-      
+
       return {
         user: userCredential.user,
         idToken: token
@@ -180,7 +190,7 @@ class FirebaseAuthService {
     } catch (error: any) {
       // Preserve the original error code from Firebase
       let errorMessage = 'Failed to sign in';
-      
+
       switch (error.code) {
         case 'auth/invalid-email':
           errorMessage = 'Invalid email address';
@@ -200,7 +210,7 @@ class FirebaseAuthService {
         default:
           errorMessage = error.message || 'Failed to sign in';
       }
-      
+
       // Create new error but preserve the Firebase error code
       const newError: any = new Error(errorMessage);
       newError.code = error.code;
@@ -212,27 +222,27 @@ class FirebaseAuthService {
    * Create account with email and password
    */
   async registerWithEmail(
-    email: string, 
-    password: string, 
+    email: string,
+    password: string,
     displayName?: string
   ): Promise<AuthResult> {
     try {
       const userCredential = await createUserWithEmailAndPassword(getAuthInstance(), email, password);
-      
+
       // Update display name if provided
       if (displayName) {
         await updateProfile(userCredential.user, { displayName });
       }
-      
+
       const token = await userCredential.user.getIdToken();
-      
+
       return {
         user: userCredential.user,
         idToken: token
       };
     } catch (error: any) {
       let errorMessage = 'Failed to create account';
-      
+
       switch (error.code) {
         case 'auth/email-already-in-use':
           errorMessage = 'An account with this email already exists';
@@ -249,7 +259,7 @@ class FirebaseAuthService {
         default:
           errorMessage = error.message || 'Failed to create account';
       }
-      
+
       throw new Error(errorMessage);
     }
   }
@@ -261,7 +271,7 @@ class FirebaseAuthService {
     try {
       // Sign out from Firebase
       await firebaseSignOut(getAuthInstance());
-      
+
       // Sign out from Google Sign-In if user was signed in
       const isGoogleSignedIn = await GoogleSignin.hasPreviousSignIn();
       if (isGoogleSignedIn) {
@@ -280,7 +290,7 @@ class FirebaseAuthService {
       await sendPasswordResetEmail(getAuthInstance(), email);
     } catch (error: any) {
       let errorMessage = 'Failed to send password reset email';
-      
+
       switch (error.code) {
         case 'auth/invalid-email':
           errorMessage = 'Invalid email address';
@@ -291,7 +301,7 @@ class FirebaseAuthService {
         default:
           errorMessage = error.message || errorMessage;
       }
-      
+
       throw new Error(errorMessage);
     }
   }
@@ -306,13 +316,13 @@ class FirebaseAuthService {
       const response = await fetch(
         `http://100.91.176.251:8080/api/auth/check-email?email=${encodeURIComponent(email)}`
       );
-      
+
       if (!response.ok) {
         return false;
       }
-      
+
       const exists = await response.json();
-      
+
       return exists;
     } catch (error: any) {
       // On error, return false (assume email doesn't exist)
@@ -333,7 +343,7 @@ class FirebaseAuthService {
   async getCurrentUserToken(): Promise<string | null> {
     const user = getAuthInstance().currentUser;
     if (!user) return null;
-    
+
     try {
       return await user.getIdToken();
     } catch (error) {
@@ -347,7 +357,7 @@ class FirebaseAuthService {
   async refreshToken(): Promise<string | null> {
     const user = getAuthInstance().currentUser;
     if (!user) return null;
-    
+
     try {
       return await user.getIdToken(true);
     } catch (error) {

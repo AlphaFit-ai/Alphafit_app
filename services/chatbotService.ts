@@ -28,11 +28,19 @@ class ChatbotService {
       const response = await apiClient.post<ChatResponse>('/chatbot/chat', {
         message: message.trim(),
         conversationHistory: formattedHistory,
+      }, {
+        timeout: 120000 // 2 minutes timeout for AI generation
       });
 
       return response.data;
     } catch (error: any) {
       console.error('Error sending message to chatbot:', error);
+
+      // Check for timeout
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        throw new Error('The AI is taking longer than expected to respond. Please try again later.');
+      }
+
       throw new Error(error.response?.data?.message || 'Failed to send message');
     }
   }

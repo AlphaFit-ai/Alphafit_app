@@ -75,7 +75,7 @@ export default function FoodScanScreen() {
     }
 
     const hasPermission = hasBarcodeCameraPermission || await requestBarcodeCameraPermission();
-    
+
     if (!hasPermission) {
       setShowBarcodePermissionAlert(true);
       return;
@@ -98,7 +98,7 @@ export default function FoodScanScreen() {
       setProgressValue(100);
       setProgressStatus(`Product found in ${barcodeResult.source}!`);
       setScanResult(barcodeResult as any);
-      
+
       // Navigate to barcode result screen
       setTimeout(() => {
         setIsProcessing(false);
@@ -108,7 +108,7 @@ export default function FoodScanScreen() {
       }, 500);
     } catch (error: any) {
       setIsProcessing(false);
-      
+
       if (error.message?.includes('Product not found')) {
         // Product not found in databases - expected behavior
         setProductNotFoundBarcode(data);
@@ -128,7 +128,7 @@ export default function FoodScanScreen() {
     }
 
     const hasPermission = cameraPermission || await requestCameraPermission();
-    
+
     if (!hasPermission) {
       setShowCameraPermissionAlert(true);
       return;
@@ -174,7 +174,7 @@ export default function FoodScanScreen() {
       const uploadedImageUrl = await imageService.uploadFoodScanImage(uri);
       setCapturedImage(uri);
       setUploadedUrl(uploadedImageUrl);
-      
+
       setProgressStatus('Analyzing with AI...');
       setProgressValue(0.3);
 
@@ -188,15 +188,15 @@ export default function FoodScanScreen() {
       );
 
       setScanResult(result);
-      updateDietData({ 
+      updateDietData({
         foodImage: uploadedImageUrl,
-        scanId: result.id 
+        scanId: result.id
       });
 
       // Navigate to diet statistics screen (step 5)
       setProgressStatus('Complete!');
       setProgressValue(1);
-      
+
       // Small delay to show completion
       setTimeout(() => {
         setCurrentStep(5);
@@ -207,7 +207,7 @@ export default function FoodScanScreen() {
       setIsProcessing(false);
       setProgressStatus('');
       setProgressValue(0);
-      
+
       // Check if it's a "no food detected" error
       if (error.message?.includes('No food detected')) {
         setTimeout(() => {
@@ -228,19 +228,10 @@ export default function FoodScanScreen() {
     }
   };
 
-  const handleFinish = () => {
-    if (scanResult) {
-      // Navigate to statistics screen
-      setCurrentStep(5);
-    } else {
-      setShowNoResultsAlert(true);
-    }
-  };
-
   return (
     <>
       <ProPlanModal visible={showProModal} onClose={() => setShowProModal(false)} />
-      
+
       {/* Barcode Scanner Modal */}
       <Modal
         visible={showBarcodeScanner}
@@ -279,11 +270,11 @@ export default function FoodScanScreen() {
                   <Ionicons name="close" size={28} color={Colors.white} />
                 </TouchableOpacity>
               </View>
-              
+
               <View style={styles.barcodeScannerFrame}>
                 <View style={styles.barcodeScannerCorner} />
               </View>
-              
+
               <View style={styles.barcodeScannerInfo}>
                 <Text style={styles.barcodeScannerText}>
                   Position barcode or QR code within frame
@@ -293,7 +284,7 @@ export default function FoodScanScreen() {
           </CameraView>
         </View>
       </Modal>
-      
+
       {/* iOS-style No Food Alert */}
       <Modal
         visible={showNoFoodAlert}
@@ -301,8 +292,8 @@ export default function FoodScanScreen() {
         animationType="fade"
         onRequestClose={() => setShowNoFoodAlert(false)}
       >
-        <TouchableOpacity 
-          style={styles.alertOverlay} 
+        <TouchableOpacity
+          style={styles.alertOverlay}
           activeOpacity={1}
           onPress={() => setShowNoFoodAlert(false)}
         >
@@ -313,7 +304,7 @@ export default function FoodScanScreen() {
             <Text style={[styles.alertMessage, { color: colors.textSecondary }]}>
               Please upload a clear photo of food items. Make sure the food is well-lit and centered.
             </Text>
-            
+
             <View style={[styles.alertButtonContainer, { borderTopColor: colors.border }]}>
               <TouchableOpacity
                 style={styles.alertButton}
@@ -348,7 +339,7 @@ export default function FoodScanScreen() {
             <Text style={[styles.alertMessage, { color: colors.textSecondary }]}>
               AlphaFit needs access to your camera to take photos of your meals. Please enable camera access in Settings.
             </Text>
-            
+
             <View style={[styles.alertButtonContainer, { borderTopColor: colors.border }]}>
               <TouchableOpacity
                 style={styles.alertButton}
@@ -392,7 +383,7 @@ export default function FoodScanScreen() {
             <Text style={[styles.alertMessage, { color: colors.textSecondary }]}>
               AlphaFit needs access to your camera to scan barcodes. Please enable camera access in Settings.
             </Text>
-            
+
             <View style={[styles.alertButtonContainer, { borderTopColor: colors.border }]}>
               <TouchableOpacity
                 style={styles.alertButton}
@@ -436,7 +427,7 @@ export default function FoodScanScreen() {
             <Text style={[styles.alertMessage, { color: colors.textSecondary }]}>
               Barcode: {productNotFoundBarcode}{'\n\n'}This product is not in our databases. Please try scanning the food with the camera for better results.
             </Text>
-            
+
             <View style={[styles.alertButtonContainer, { borderTopColor: colors.border }]}>
               <TouchableOpacity
                 style={styles.alertButton}
@@ -472,7 +463,7 @@ export default function FoodScanScreen() {
         animationType="fade"
         onRequestClose={() => setShowConnectionErrorAlert(false)}
       >
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.alertOverlay}
           activeOpacity={1}
           onPress={() => setShowConnectionErrorAlert(false)}
@@ -484,7 +475,7 @@ export default function FoodScanScreen() {
             <Text style={[styles.alertMessage, { color: colors.textSecondary }]}>
               Unable to connect to the server. Please check your internet connection and try again.
             </Text>
-            
+
             <View style={[styles.alertButtonContainer, { borderTopColor: colors.border }]}>
               <TouchableOpacity
                 style={styles.alertButton}
@@ -507,7 +498,7 @@ export default function FoodScanScreen() {
         animationType="fade"
         onRequestClose={() => setShowGeneralErrorAlert(false)}
       >
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.alertOverlay}
           activeOpacity={1}
           onPress={() => setShowGeneralErrorAlert(false)}
@@ -519,7 +510,7 @@ export default function FoodScanScreen() {
             <Text style={[styles.alertMessage, { color: colors.textSecondary }]}>
               {generalErrorMessage}
             </Text>
-            
+
             <View style={[styles.alertButtonContainer, { borderTopColor: colors.border }]}>
               <TouchableOpacity
                 style={styles.alertButton}
@@ -542,7 +533,7 @@ export default function FoodScanScreen() {
         animationType="fade"
         onRequestClose={() => setShowNoResultsAlert(false)}
       >
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.alertOverlay}
           activeOpacity={1}
           onPress={() => setShowNoResultsAlert(false)}
@@ -554,7 +545,7 @@ export default function FoodScanScreen() {
             <Text style={[styles.alertMessage, { color: colors.textSecondary }]}>
               Please scan a food image first.
             </Text>
-            
+
             <View style={[styles.alertButtonContainer, { borderTopColor: colors.border }]}>
               <TouchableOpacity
                 style={styles.alertButton}
@@ -571,71 +562,81 @@ export default function FoodScanScreen() {
       </Modal>
 
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.content}>
-          <Text style={[styles.title, { color: colors.text }]}>{t('diet.foodScan.title')}</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('diet.foodScan.subtitle')}</Text>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.content}>
+            <View style={styles.headerRow}>
+              <View>
+                <Text style={[styles.title, { color: colors.text }]}>{t('diet.foodScan.title')}</Text>
+                <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('diet.foodScan.subtitle')}</Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.historyButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+                onPress={() => router.push('/history')}
+              >
+                <Ionicons name="time-outline" size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
 
-                    <TouchableOpacity style={styles.imageContainer} onPress={takePhoto} activeOpacity={0.8} disabled={isProcessing}>
-            {capturedImage ? (
-              <Image source={{ uri: capturedImage }} style={styles.foodImage} />
-            ) : (
-              <Image 
-                source={require('../../assets/images/diet/scan_diet.png')} 
-                style={styles.foodImage}
-                resizeMode="cover"
-              />
-            )}
-            {isProcessing && (
-              <View style={styles.loadingOverlay}>
-                <ActivityIndicator size="large" color={Colors.primary} />
-                <Text style={styles.loadingText}>{progressStatus}</Text>
-                <View style={styles.progressBarContainer}>
-                  <View style={[styles.progressBar, { width: `${progressValue * 100}%` }]} />
+            <TouchableOpacity style={styles.imageContainer} onPress={takePhoto} activeOpacity={0.8} disabled={isProcessing}>
+              {capturedImage ? (
+                <Image source={{ uri: capturedImage }} style={styles.foodImage} />
+              ) : (
+                <Image
+                  source={require('../../assets/images/diet/scan_diet.png')}
+                  style={styles.foodImage}
+                  resizeMode="cover"
+                />
+              )}
+              {isProcessing && (
+                <View style={styles.loadingOverlay}>
+                  <ActivityIndicator size="large" color={Colors.primary} />
+                  <Text style={styles.loadingText}>{progressStatus}</Text>
+                  <View style={styles.progressBarContainer}>
+                    <View style={[styles.progressBar, { width: `${progressValue * 100}%` }]} />
+                  </View>
                 </View>
-              </View>
-            )}
-            {capturedImage && !isProcessing && (
-              <View style={styles.imageOverlay}>
-                <TouchableOpacity style={styles.overlayButton} onPress={() => {
-                  setCapturedImage(null);
-                  setUploadedUrl(null);
-                  setScanResult(null);
-                }}>
-                  <Ionicons name="close" size={24} color={Colors.white} />
-                </TouchableOpacity>
-              </View>
-            )}
-          </TouchableOpacity>
-
-          <View style={styles.scanOptions}>
-            <TouchableOpacity style={styles.scanOption} onPress={openBarcodeScanner} disabled={isProcessing}>
-              <View style={[styles.scanIconContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <Ionicons name="barcode" size={24} color={colors.text} />
-              </View>
-              <Text style={[styles.scanOptionText, { color: colors.text }]}>{t('diet.foodScan.barcode')}</Text>
+              )}
+              {capturedImage && !isProcessing && (
+                <View style={styles.imageOverlay}>
+                  <TouchableOpacity style={styles.overlayButton} onPress={() => {
+                    setCapturedImage(null);
+                    setUploadedUrl(null);
+                    setScanResult(null);
+                  }}>
+                    <Ionicons name="close" size={24} color={Colors.white} />
+                  </TouchableOpacity>
+                </View>
+              )}
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.scanOption} onPress={takePhoto} disabled={isProcessing}>
-              <View style={[styles.scanIconContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <Ionicons name="camera" size={24} color={colors.text} />
-              </View>
-              <Text style={[styles.scanOptionText, { color: colors.text }]}>{t('diet.foodScan.scanFood')}</Text>
-            </TouchableOpacity>
+            <View style={styles.scanOptions}>
+              <TouchableOpacity style={styles.scanOption} onPress={openBarcodeScanner} disabled={isProcessing}>
+                <View style={[styles.scanIconContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <Ionicons name="barcode" size={24} color={colors.text} />
+                </View>
+                <Text style={[styles.scanOptionText, { color: colors.text }]}>{t('diet.foodScan.barcode')}</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity style={styles.scanOption} onPress={pickFromLibrary} disabled={isProcessing}>
-              <View style={[styles.scanIconContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <Ionicons name="image" size={24} color={colors.text} />
-              </View>
-              <Text style={[styles.scanOptionText, { color: colors.text }]}>{t('diet.foodScan.library')}</Text>
-            </TouchableOpacity>
+              <TouchableOpacity style={styles.scanOption} onPress={takePhoto} disabled={isProcessing}>
+                <View style={[styles.scanIconContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <Ionicons name="camera" size={24} color={colors.text} />
+                </View>
+                <Text style={[styles.scanOptionText, { color: colors.text }]}>{t('diet.foodScan.scanFood')}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.scanOption} onPress={pickFromLibrary} disabled={isProcessing}>
+                <View style={[styles.scanIconContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <Ionicons name="image" size={24} color={colors.text} />
+                </View>
+                <Text style={[styles.scanOptionText, { color: colors.text }]}>{t('diet.foodScan.library')}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
       </View>
     </>
   );
@@ -660,7 +661,20 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontFamily: Fonts.bold,
     marginBottom: 8,
-    alignSelf: 'flex-start',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingHorizontal: Spacing.screenPaddingHorizontal,
+  },
+  historyButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   subtitle: {
     fontSize: 15,

@@ -29,12 +29,12 @@ class ImageService {
    */
   async uploadProfilePicture(imageUri: string): Promise<string> {
     const formData = new FormData();
-    
+
     // Create file object from URI
     const filename = imageUri.split('/').pop() || 'profile.jpg';
     const match = /\.(\w+)$/.exec(filename);
     const type = match ? `image/${match[1]}` : 'image/jpeg';
-    
+
     formData.append('file', {
       uri: imageUri,
       name: filename,
@@ -72,11 +72,11 @@ class ImageService {
    */
   async uploadProgressPhoto(imageUri: string, type: 'front' | 'side' | 'back' = 'front'): Promise<string> {
     const formData = new FormData();
-    
+
     const filename = imageUri.split('/').pop() || 'progress.jpg';
     const match = /\.(\w+)$/.exec(filename);
     const fileType = match ? `image/${match[1]}` : 'image/jpeg';
-    
+
     formData.append('file', {
       uri: imageUri,
       name: filename,
@@ -110,11 +110,11 @@ class ImageService {
    */
   async uploadFoodScanImage(imageUri: string): Promise<string> {
     const formData = new FormData();
-    
+
     const filename = imageUri.split('/').pop() || 'food.jpg';
     const match = /\.(\w+)$/.exec(filename);
     const type = match ? `image/${match[1]}` : 'image/jpeg';
-    
+
     formData.append('file', {
       uri: imageUri,
       name: filename,
@@ -148,7 +148,7 @@ class ImageService {
    */
   async getProfilePicture(): Promise<string | null> {
     const response = await apiClient.get<ImageUploadResponse>('/images/profile');
-    
+
     if (response.data.success && response.data.data) {
       return this.toAbsoluteUrl(response.data.data.imageUrl);
     }
@@ -207,17 +207,17 @@ class ImageService {
       // Launch picker
       const result = source === 'camera'
         ? await ImagePicker.launchCameraAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 0.8,
-          })
+          mediaTypes: 'Images' as any,
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.8,
+        })
         : await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 0.8,
-          });
+          mediaTypes: 'Images' as any,
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.8,
+        });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         return result.assets[0].uri;
@@ -235,18 +235,18 @@ class ImageService {
    */
   private toAbsoluteUrl(url: string | null): string | null {
     if (!url) return null;
-    
+
     // If URL already starts with http:// or https://, return as is
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
     }
-    
+
     // Remove '/api' from base URL since we'll add it with the path
     const baseUrl = config.API_BASE_URL.replace('/api', '');
-    
+
     // Ensure url starts with /
     const path = url.startsWith('/') ? url : `/${url}`;
-    
+
     return `${baseUrl}${path}`;
   }
 }

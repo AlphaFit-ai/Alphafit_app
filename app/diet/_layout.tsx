@@ -4,7 +4,7 @@ import { useTheme } from '../../context/ThemeContext';
 
 function DietStack() {
   const { colors } = useTheme();
-  
+
   return (
     <Stack
       screenOptions={{
@@ -18,6 +18,8 @@ function DietStack() {
       <Stack.Screen name="allergies" />
       <Stack.Screen name="meals" />
       <Stack.Screen name="supplements" />
+
+      <Stack.Screen name="barcode-result" options={{ presentation: 'modal' }} />
     </Stack>
   );
 }
