@@ -340,5 +340,23 @@
     "legs": "Jambes",
     "aiRecommendations": "Recommandations IA",
     "rescan": "Rescanner le Corps"
+  },
+  "home": {
+    "nutritionToday": "Nutrition Aujourd'hui",
+    "protein": "Protéines",
+    "carbs": "Glucides",
+    "fats": "Lipides",
+    "quickStats": "Stats Rapides",
+    "yourJourney": "Votre Parcours",
+    "recentScans": "Scans Récents",
+    "seeAll": "Voir Tout",
+    "todayWorkouts": "Entraînements d'Aujourd'hui",
+    "progressOverview": "Aperçu des Progrès",
+    "weeklyProgress": "Progrès Hebdomadaire",
+    "workoutsCompleted": "Entraînements Terminés",
+    "quickActions": "Actions Rapides",
+    "scanMeal": "Scanner Repas",
+    "scanBody": "Scanner Corps",
+    "lastMeal": "Dernier Repas"
   }
 }

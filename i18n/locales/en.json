@@ -7,7 +7,7 @@
   },
   "imageUpload": {
     "selectSource": "Select Image Source",
-    "selectSourceMessage": "Choose where you want to get your photo",
+    "selectSourceMessage": "Choose where you want to get your photo from",
     "camera": "Camera",
     "gallery": "Gallery"
   },
@@ -23,11 +23,11 @@
     "terms": "By continuing, you agree to our Terms of Service and Privacy Policy",
     "invalidEmail": "Please enter a valid email address",
     "noAccount": "Don't have an account?",
-    "signUp": "Sign Up"
+    "signUp": "Sign up"
   },
   "register": {
     "title": "CREATE ACCOUNT",
-    "subtitle": "Start your fitness transformation journey",
+    "subtitle": "Start your physique transformation journey",
     "fullName": "Full Name",
     "fullNamePlaceholder": "Enter your name",
     "email": "Email",
@@ -42,7 +42,7 @@
     "privacyPolicy": "Privacy Policy",
     "createAccount": "Create Account",
     "alreadyHaveAccount": "Already have an account?",
-    "signIn": "Sign In",
+    "signIn": "Sign in",
     "termsRequired": "Terms Required",
     "errors": {
       "nameRequired": "Full name is required",
@@ -50,7 +50,7 @@
       "emailRequired": "Email is required",
       "emailInvalid": "Please enter a valid email address",
       "passwordRequired": "Password is required",
-      "passwordWeak": "Password must be 8+ characters with uppercase, lowercase, and number",
+      "passwordWeak": "Password must be 8+ chars with uppercase, lowercase & number",
       "passwordMissing": "Missing: ",
       "passwordMinLength": "At least 8 characters",
       "passwordLowercase": "One lowercase letter",
@@ -80,12 +80,12 @@
       "december": "December"
     },
     "gender": {
-      "title": "What's your gender?",
+      "title": "What is your gender?",
       "male": "Male",
       "female": "Female"
     },
     "height": {
-      "title": "What's your height & weight?",
+      "title": "What is your height & weight?",
       "heightLabel": "Height",
       "weightLabel": "Weight",
       "imperial": "Imperial",
@@ -99,7 +99,7 @@
     },
     "workouts": {
       "title": "How many workouts do you do per week?",
-      "subtitle": "Workouts now and then"
+      "subtitle": "Workouts from time to time"
     },
     "fitnessLevel": {
       "title": "What is your current fitness level?",
@@ -108,17 +108,17 @@
       "advanced": "Advanced"
     },
     "equipment": {
-      "title": "What kind of equipment do you have access to?",
-      "fullGym": "Full gym",
+      "title": "What type of equipment do you have access to?",
+      "fullGym": "Full Gym",
       "dumbbellsBarbell": "Dumbbells-Barbell",
-      "bodyweightOnly": "Body weight only"
+      "bodyweightOnly": "Bodyweight Only"
     },
     "goal": {
-      "title": "What is your main fitness goal right now?",
-      "loseFat": "Lose fat",
-      "getStronger": "Get stronger",
-      "buildMuscle": "Build muscle",
-      "stayFit": "Stay fit"
+      "title": "What is your main fitness goal now?",
+      "loseFat": "Lose Fat",
+      "getStronger": "Get Stronger",
+      "buildMuscle": "Build Muscle",
+      "stayFit": "Stay Fit"
     },
     "intro": {
       "title": "AI Physique Projection",
@@ -140,8 +140,8 @@
     "step": "{{current}} of {{total}}"
   },
   "workoutScreen": {
-    "title": "Custom Workouts",
-    "description": "Learn the basics with simple beginner routines. Follow along with our Push/Pull/Legs split.",
+    "title": "Personalized Workouts",
+    "description": "Learn the basics with simple routines for beginners. Follow our Push/Pull/Legs plan.",
     "pushDay": "Push Day",
     "pullDay": "Pull Day",
     "legDay": "Leg Day",
@@ -340,5 +340,23 @@
     "legs": "Legs",
     "aiRecommendations": "AI Recommendations",
     "rescan": "Rescan Body"
+  },
+  "home": {
+    "nutritionToday": "Nutrition Today",
+    "protein": "Protein",
+    "carbs": "Carbs",
+    "fats": "Fats",
+    "quickStats": "Quick Stats",
+    "yourJourney": "Your Journey",
+    "recentScans": "Recent Scans",
+    "seeAll": "See All",
+    "todayWorkouts": "Today's Workouts",
+    "progressOverview": "Progress Overview",
+    "weeklyProgress": "Weekly Progress",
+    "workoutsCompleted": "Workouts Completed",
+    "quickActions": "Quick Actions",
+    "scanMeal": "Scan Meal",
+    "scanBody": "Scan Body",
+    "lastMeal": "Last Meal"
   }
 }

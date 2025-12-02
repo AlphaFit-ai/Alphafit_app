@@ -262,7 +262,7 @@
     "scan": "Escanear",
     "scanSubtitle": "Escanea tus proyecciones"
   },
-    "notifications": {
+  "notifications": {
     "title": "Notificaciones",
     "unread": "no leídas",
     "markAllRead": "Marcar todo como leído",
@@ -340,5 +340,23 @@
     "legs": "Piernas",
     "aiRecommendations": "Recomendaciones de IA",
     "rescan": "Reescanear Cuerpo"
+  },
+  "home": {
+    "nutritionToday": "Nutrición Hoy",
+    "protein": "Proteínas",
+    "carbs": "Carbohidratos",
+    "fats": "Grasas",
+    "quickStats": "Estadísticas Rápidas",
+    "yourJourney": "Tu Viaje",
+    "recentScans": "Escaneos Recientes",
+    "seeAll": "Ver Todo",
+    "todayWorkouts": "Entrenamientos de Hoy",
+    "progressOverview": "Resumen de Progreso",
+    "weeklyProgress": "Progreso Semanal",
+    "workoutsCompleted": "Entrenamientos Completados",
+    "quickActions": "Acciones Rápidas",
+    "scanMeal": "Escanear Comida",
+    "scanBody": "Escanear Cuerpo",
+    "lastMeal": "Última Comida"
   }
 }

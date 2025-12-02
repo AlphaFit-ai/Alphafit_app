@@ -2,12 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useDiet } from '../../context/DietContext';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useProjection } from '../../context/ProjectionContext';
 import { useTheme } from '../../context/ThemeContext';
+import { FoodScanDto } from '../../services/foodScanService';
 
 interface QuickStatCard {
   label: string;
@@ -32,61 +33,24 @@ export default function HomeScreen() {
   const { projectionData } = useProjection();
   const { dietData } = useDiet();
 
+  // State for real data
+  const [quote, setQuote] = React.useState<string>('');
+  const [loading, setLoading] = React.useState<boolean>(true);
+  const [refreshing, setRefreshing] = React.useState<boolean>(false);
+  const [nutrition, setNutrition] = React.useState({
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+  });
+  const [todayScansCount, setTodayScansCount] = React.useState<number>(0);
+  const [recentFoodName, setRecentFoodName] = React.useState<string>('');
+  const [recentScans, setRecentScans] = React.useState<FoodScanDto[]>([]);
+
   // Get user's name or default greeting
   const userName = onboardingData.email?.split('@')[0] || 'User';
   const userGoal = onboardingData.goal || 'Build Muscle';
   const fitnessLevel = onboardingData.fitnessLevel || 'Intermediate';
-
-  // Mock data - will be replaced with actual user data
-  const quickStats: QuickStatCard[] = [
-    {
-      label: 'Physique Score',
-      value: '97',
-      icon: 'trophy',
-      color: Colors.warning,
-      route: '/(tabs)/projections',
-    },
-    {
-      label: 'Calories Today',
-      value: '1,850',
-      icon: 'flame',
-      color: Colors.error,
-      route: '/(tabs)/diet',
-    },
-    {
-      label: 'Workouts',
-      value: '12/20',
-      icon: 'barbell',
-      color: Colors.primary,
-      route: '/(tabs)/workouts',
-    },
-    {
-      label: 'Body Fat',
-      value: '18%',
-      icon: 'analytics',
-      color: Colors.success,
-      route: '/(tabs)/projections',
-    },
-  ];
-
-  const todayWorkouts: WorkoutCard[] = [
-    {
-      name: 'Upper Body Strength',
-      duration: '45 min',
-      calories: '320 kcal',
-      image: '../../assets/images/home/goal-banner.png',
-    },
-    {
-      name: 'Core & Abs',
-      duration: '30 min',
-      calories: '180 kcal',
-      image: '../../assets/images/home/goal-banner.png',
-    },
-  ];
-
-  const handleNavigate = (route: string) => {
-    router.push(route as any);
-  };
 
   // Motivational quotes based on user's goal
   const motivationalQuotes = {
@@ -117,7 +81,141 @@ export default function HomeScreen() {
     return quotes[Math.floor(Math.random() * quotes.length)];
   };
 
-  const motivationalQuote = getRandomQuote();
+  const generateQuote = async (foodName: string) => {
+    try {
+      const prompt = `Generate a short, inspiring quote for ${userName} who wants to "${userGoal}". 
+      ${foodName ? `They recently ate ${foodName}.` : ''} 
+      The quote MUST be strictly under 3 lines. Do not use any emojis. Do not use quotes around the text.
+      Focus on consistency and health.`;
+
+      const response = await import('../../services').then(m => m.chatbotService.sendMessage(prompt, [], false));
+      if (response && response.message) {
+        setQuote(response.message.replace(/"/g, '').trim());
+      } else {
+        setQuote(getRandomQuote());
+      }
+    } catch (error) {
+      console.error('Failed to generate quote:', error);
+      setQuote(getRandomQuote());
+    }
+  };
+
+  const fetchHomeData = async () => {
+    try {
+      setLoading(true);
+
+      // 1. Fetch today's food scans for nutrition summary
+      const scansResponse = await import('../../services').then(m => m.foodScanService.getUserFoodScans(0, 50));
+      const today = new Date().toDateString();
+
+      let totalCals = 0;
+      let totalProtein = 0;
+      let totalCarbs = 0;
+      let totalFat = 0;
+      let lastFood = '';
+
+      const todayScans = scansResponse.content.filter(scan => {
+        const scanDate = new Date(scan.createdAt).toDateString();
+        return scanDate === today && scan.status === 'COMPLETED';
+      });
+
+      setTodayScansCount(todayScans.length);
+
+      // Set recent scans (last 3 completed scans)
+      const completedScans = scansResponse.content.filter(scan => scan.status === 'COMPLETED');
+      setRecentScans(completedScans.slice(0, 3));
+
+      todayScans.forEach(scan => {
+        if (scan.nutritionSummary) {
+          totalCals += scan.nutritionSummary.totalCalories || 0;
+          totalProtein += scan.nutritionSummary.totalProteinG || 0;
+          totalCarbs += scan.nutritionSummary.totalCarbsG || 0;
+          totalFat += scan.nutritionSummary.totalFatG || 0;
+        }
+        // Get name of most recent food
+        if (!lastFood && scan.predictions && scan.predictions.length > 0) {
+          lastFood = scan.predictions[0].foodName;
+        }
+      });
+
+      setNutrition({
+        calories: Math.round(totalCals),
+        protein: Math.round(totalProtein),
+        carbs: Math.round(totalCarbs),
+        fat: Math.round(totalFat),
+      });
+      setRecentFoodName(lastFood);
+
+      // 2. Generate personalized quote using LLM
+      await generateQuote(lastFood);
+
+    } catch (error) {
+      console.error('Failed to fetch home data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch real data on mount
+  React.useEffect(() => {
+    fetchHomeData();
+  }, []);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    fetchHomeData().then(() => setRefreshing(false));
+  }, []);
+
+  // Real data stats
+  const quickStats: QuickStatCard[] = [
+    {
+      label: 'Last Scan',
+      value: recentFoodName ? recentFoodName.substring(0, 15) + (recentFoodName.length > 15 ? '...' : '') : '--',
+      icon: 'restaurant',
+      color: Colors.primary,
+      route: '/history',
+    },
+    {
+      label: 'Calories Today',
+      value: nutrition.calories.toLocaleString(),
+      icon: 'flame',
+      color: Colors.error,
+      route: '/(tabs)/diet',
+    },
+    {
+      label: 'Scans Today',
+      value: todayScansCount.toString(),
+      icon: 'camera',
+      color: Colors.warning,
+      route: '/history',
+    },
+    {
+      label: 'Sleep',
+      value: projectionData.sleepHours ? `${projectionData.sleepHours}h` : '--',
+      icon: 'moon',
+      color: Colors.success,
+      route: '/(tabs)/projections',
+    },
+  ];
+
+  const todayWorkouts: WorkoutCard[] = [
+    {
+      name: 'Upper Body Strength',
+      duration: '45 min',
+      calories: '320 kcal',
+      image: '../../assets/images/home/goal-banner.png',
+    },
+    {
+      name: 'Core & Abs',
+      duration: '30 min',
+      calories: '180 kcal',
+      image: '../../assets/images/home/goal-banner.png',
+    },
+  ];
+
+  const handleNavigate = (route: string) => {
+    router.push(route as any);
+  };
 
   // Calculate age from date of birth
   const calculateAge = (dob: { month: number; day: number; year: number } | undefined) => {
@@ -149,6 +247,9 @@ export default function HomeScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+        }
       >
         {/* Motivational Banner */}
         <View
@@ -159,11 +260,8 @@ export default function HomeScreen() {
             },
           ]}
         >
-          <View style={styles.quoteIconContainer}>
-            <Ionicons name="barbell" size={24} color={Colors.primary} />
-          </View>
           <Text style={[styles.motivationalQuote, { color: colors.text }]}>
-            {motivationalQuote}
+            {quote || getRandomQuote()}
           </Text>
         </View>
 
@@ -222,8 +320,8 @@ export default function HomeScreen() {
               <View style={styles.userStatItem}>
                 <Ionicons name="resize-outline" size={20} color={colors.textSecondary} />
                 <Text style={[styles.userStatValue, { color: colors.text }]}>
-                  {onboardingData.height.unit === 'metric' 
-                    ? `${onboardingData.height.cm} cm` 
+                  {onboardingData.height.unit === 'metric'
+                    ? `${onboardingData.height.cm} cm`
                     : `${onboardingData.height.feet}'${onboardingData.height.inches}"`}
                 </Text>
               </View>
@@ -327,6 +425,55 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Recent Scans */}
+        {recentScans.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                {t('home.recentScans', 'Recent Scans')}
+              </Text>
+              <TouchableOpacity onPress={() => handleNavigate('/history')}>
+                <Text style={[styles.seeAll, { color: Colors.primary }]}>
+                  {t('home.seeAll', 'See All')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.recentScansList}>
+              {recentScans.map((scan, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.recentScanCard,
+                    {
+                      backgroundColor: isDarkMode ? Colors.gray[800] : Colors.white,
+                      borderColor: isDarkMode ? Colors.gray[700] : Colors.gray[200],
+                    },
+                  ]}
+                  onPress={() => router.push({ pathname: '/diet-statistics', params: { scanId: scan.id } } as any)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.recentScanImageContainer}>
+                    <Image
+                      source={{ uri: scan.imageUrl }}
+                      style={styles.recentScanImage}
+                      resizeMode="cover"
+                    />
+                  </View>
+                  <View style={styles.recentScanInfo}>
+                    <Text style={[styles.recentScanName, { color: colors.text }]} numberOfLines={1}>
+                      {scan.predictions?.[0]?.foodName || 'Unknown Food'}
+                    </Text>
+                    <Text style={[styles.recentScanCalories, { color: colors.textSecondary }]}>
+                      {scan.nutritionSummary?.totalCalories || 0} kcal
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
         {/* Progress Overview */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -418,21 +565,21 @@ export default function HomeScreen() {
           >
             <View style={styles.nutritionRow}>
               <View style={styles.nutritionItem}>
-                <Text style={[styles.nutritionValue, { color: Colors.success }]}>142g</Text>
+                <Text style={[styles.nutritionValue, { color: Colors.success }]}>{nutrition.protein}g</Text>
                 <Text style={[styles.nutritionLabel, { color: colors.textSecondary }]}>
                   {t('home.protein', 'Protein')}
                 </Text>
               </View>
               <View style={styles.nutritionDivider} />
               <View style={styles.nutritionItem}>
-                <Text style={[styles.nutritionValue, { color: Colors.warning }]}>185g</Text>
+                <Text style={[styles.nutritionValue, { color: Colors.warning }]}>{nutrition.carbs}g</Text>
                 <Text style={[styles.nutritionLabel, { color: colors.textSecondary }]}>
                   {t('home.carbs', 'Carbs')}
                 </Text>
               </View>
               <View style={styles.nutritionDivider} />
               <View style={styles.nutritionItem}>
-                <Text style={[styles.nutritionValue, { color: Colors.primary }]}>62g</Text>
+                <Text style={[styles.nutritionValue, { color: Colors.primary }]}>{nutrition.fat}g</Text>
                 <Text style={[styles.nutritionLabel, { color: colors.textSecondary }]}>
                   {t('home.fats', 'Fats')}
                 </Text>
@@ -677,22 +824,21 @@ const styles = StyleSheet.create({
   },
   actionsGrid: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 16,
   },
   actionButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+    padding: 16,
     borderRadius: Spacing.radius.lg,
     gap: 8,
   },
   actionText: {
+    color: Colors.white,
     fontSize: Fonts.sizes.base,
     fontFamily: Fonts.semiBold,
-    color: Colors.white,
   },
   nutritionCard: {
     borderRadius: Spacing.radius.lg,
@@ -701,11 +847,12 @@ const styles = StyleSheet.create({
   },
   nutritionRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
   nutritionItem: {
-    flex: 1,
     alignItems: 'center',
+    flex: 1,
   },
   nutritionValue: {
     fontSize: Fonts.sizes.xl,
@@ -719,22 +866,60 @@ const styles = StyleSheet.create({
   nutritionDivider: {
     width: 1,
     height: 40,
-    backgroundColor: Colors.gray[300],
+    backgroundColor: Colors.gray[200],
   },
   floatingChatButton: {
     position: 'absolute',
-    right: 20,
     bottom: 20,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 8,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 4 },
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowRadius: 4.65,
+    elevation: 8,
     zIndex: 1000,
+  },
+  recentScansList: {
+    gap: 12,
+    paddingRight: 20,
+  },
+  recentScanCard: {
+    width: 200,
+    borderRadius: Spacing.radius.lg,
+    borderWidth: 1,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  recentScanImageContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: Spacing.radius.md,
+    overflow: 'hidden',
+  },
+  recentScanImage: {
+    width: '100%',
+    height: '100%',
+  },
+  recentScanInfo: {
+    flex: 1,
+  },
+  recentScanName: {
+    fontSize: Fonts.sizes.base,
+    fontFamily: Fonts.semiBold,
+    marginBottom: 4,
+  },
+  recentScanCalories: {
+    fontSize: Fonts.sizes.sm,
+    fontFamily: Fonts.regular,
   },
 });

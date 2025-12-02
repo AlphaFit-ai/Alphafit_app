@@ -31,19 +31,43 @@ export default function ChatbotScreen() {
   const [userProfilePicture, setUserProfilePicture] = useState<string | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
 
+  const [showScrollBottom, setShowScrollBottom] = useState(false);
+
   useEffect(() => {
     checkChatbotHealth();
     loadUserProfilePicture();
     loadConversationHistory();
   }, []);
 
+  // Auto-scroll to bottom when history is loaded
+  useEffect(() => {
+    if (!isLoadingHistory) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: false });
+      }, 100);
+    }
+  }, [isLoadingHistory]);
+
   const loadConversationHistory = async () => {
     try {
       setIsLoadingHistory(true);
       const history = await chatbotService.getConversationHistory();
-      
+
       if (history && history.length > 0) {
-        setMessages(history);
+        // Filter out system prompts that might have been saved in history
+        const filteredHistory = history.filter(msg => {
+          const content = msg.content.toLowerCase();
+          // Filter out messages that look like system prompts
+          const isSystemPrompt =
+            content.includes('as a nutrition expert') ||
+            content.includes('generate a short, inspiring quote') ||
+            content.includes('analyze this meal') ||
+            content.includes('generate a response');
+
+          return !isSystemPrompt;
+        });
+
+        setMessages(filteredHistory);
       } else {
         // Show welcome message if no history
         setMessages([{
@@ -88,6 +112,16 @@ export default function ChatbotScreen() {
     } catch (error) {
       setIsChatbotAvailable(false);
     }
+  };
+
+  const handleScroll = (event: any) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 50;
+    setShowScrollBottom(!isCloseToBottom);
+  };
+
+  const scrollToBottom = () => {
+    scrollViewRef.current?.scrollToEnd({ animated: true });
   };
 
   const handleSendMessage = async () => {
@@ -164,10 +198,10 @@ export default function ChatbotScreen() {
             isUser
               ? { backgroundColor: Colors.primary }
               : {
-                  backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100],
-                  borderColor: isDarkMode ? Colors.gray[700] : Colors.gray[200],
-                  borderWidth: 1,
-                },
+                backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100],
+                borderColor: isDarkMode ? Colors.gray[700] : Colors.gray[200],
+                borderWidth: 1,
+              },
           ]}
         >
           <Text
@@ -213,6 +247,7 @@ export default function ChatbotScreen() {
             AI Coach
           </Text>
         </View>
+        <View style={styles.headerRightPlaceholder} />
       </View>
 
       {/* Messages */}
@@ -227,6 +262,8 @@ export default function ChatbotScreen() {
           contentContainerStyle={styles.messagesContent}
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
         >
           {isLoadingHistory ? (
             <View style={styles.loadingContainer}>
@@ -252,6 +289,17 @@ export default function ChatbotScreen() {
             </View>
           )}
         </ScrollView>
+
+        {/* Scroll to Bottom Button */}
+        {showScrollBottom && (
+          <TouchableOpacity
+            style={[styles.scrollToBottomButton, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.white }]}
+            onPress={scrollToBottom}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="arrow-down" size={20} color={Colors.primary} />
+          </TouchableOpacity>
+        )}
 
         {/* Input Area */}
         <View
@@ -311,12 +359,12 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: Spacing.screenPaddingHorizontal,
     paddingVertical: 8,
     borderBottomWidth: 1,
   },
   backButton: {
-    marginRight: 12,
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -325,14 +373,15 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
+  },
+  headerRightPlaceholder: {
+    width: 40,
   },
   headerTitle: {
     fontSize: Fonts.sizes.lg,
     fontFamily: Fonts.bold,
-    marginBottom: 2,
   },
   headerSubtitle: {
     fontSize: Fonts.sizes.xs,
@@ -347,6 +396,7 @@ const styles = StyleSheet.create({
   messagesContent: {
     paddingHorizontal: Spacing.screenPaddingHorizontal,
     paddingVertical: 16,
+    paddingBottom: 20,
   },
   messageContainer: {
     flexDirection: 'row',
@@ -385,6 +435,22 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'flex-end',
     marginBottom: 16,
+  },
+  scrollToBottomButton: {
+    position: 'absolute',
+    right: 20,
+    bottom: 90,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    zIndex: 10,
   },
   inputContainer: {
     flexDirection: 'row',

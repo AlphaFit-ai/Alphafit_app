@@ -17,7 +17,7 @@ class ChatbotService {
   /**
    * Send a message to the chatbot
    */
-  async sendMessage(message: string, conversationHistory: ChatMessage[]): Promise<ChatResponse> {
+  async sendMessage(message: string, conversationHistory: ChatMessage[], saveHistory: boolean = true): Promise<ChatResponse> {
     try {
       // Format conversation history for API
       const formattedHistory = conversationHistory.map(msg => ({
@@ -28,6 +28,7 @@ class ChatbotService {
       const response = await apiClient.post<ChatResponse>('/chatbot/chat', {
         message: message.trim(),
         conversationHistory: formattedHistory,
+        saveHistory,
       }, {
         timeout: 120000 // 2 minutes timeout for AI generation
       });
