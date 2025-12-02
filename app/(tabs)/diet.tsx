@@ -6,7 +6,7 @@ import { onboardingService } from '../../services';
 import AllergiesScreen from '../diet/allergies';
 import BarcodeResultScreen from '../diet/barcode-result';
 import DietPreferenceScreen from '../diet/diet-preference';
-import DietStatisticsScreen from '../diet-statistics';
+import DietStatisticsScreen from '../diet/diet-statistics';
 import FoodScanScreen from '../diet/food-scan';
 import MealsScreen from '../diet/meals';
 import SupplementsScreen from '../diet/supplements';

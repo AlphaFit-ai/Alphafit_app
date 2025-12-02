@@ -127,7 +127,7 @@ function RootContent() {
         <Stack.Screen name="projection" options={{ contentStyle: { backgroundColor: colors.background } }} />
         <Stack.Screen name="history" options={{ contentStyle: { backgroundColor: colors.background } }} />
         <Stack.Screen
-          name="diet-statistics"
+          name="diet/diet-statistics"
           options={{
             presentation: 'transparentModal',
             contentStyle: { backgroundColor: 'transparent' },

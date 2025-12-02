@@ -62,7 +62,7 @@ export default function HistoryScreen() {
 
     const handlePressItem = (scan: FoodScanDto) => {
         router.push({
-            pathname: '/diet-statistics',
+            pathname: '/diet/diet-statistics',
             params: { scanId: scan.id }
         });
     };

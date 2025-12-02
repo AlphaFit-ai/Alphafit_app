@@ -180,6 +180,7 @@ export default function ChatbotScreen() {
 
   const renderMessage = (message: ChatMessage, index: number) => {
     const isUser = message.role === 'user';
+    const timeString = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     return (
       <View
@@ -211,6 +212,14 @@ export default function ChatbotScreen() {
             ]}
           >
             {message.content}
+          </Text>
+          <Text
+            style={[
+              styles.messageTime,
+              { color: isUser ? 'rgba(255, 255, 255, 0.7)' : colors.textSecondary },
+            ]}
+          >
+            {timeString}
           </Text>
         </View>
         {isUser && (
@@ -430,6 +439,12 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     lineHeight: 24,
   },
+  messageTime: {
+    fontSize: 10,
+    fontFamily: Fonts.regular,
+    alignSelf: 'flex-end',
+    marginTop: 4,
+  },
   loadingContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
@@ -456,7 +471,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     paddingHorizontal: Spacing.screenPaddingHorizontal,
-    paddingVertical: 20,
+    paddingBottom: 30,
+    paddingTop: 10,
   },
   input: {
     flex: 1,

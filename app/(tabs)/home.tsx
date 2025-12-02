@@ -450,7 +450,7 @@ export default function HomeScreen() {
                       borderColor: isDarkMode ? Colors.gray[700] : Colors.gray[200],
                     },
                   ]}
-                  onPress={() => router.push({ pathname: '/diet-statistics', params: { scanId: scan.id } } as any)}
+                  onPress={() => router.push({ pathname: '/diet/diet-statistics', params: { scanId: scan.id } } as any)}
                   activeOpacity={0.7}
                 >
                   <View style={styles.recentScanImageContainer}>

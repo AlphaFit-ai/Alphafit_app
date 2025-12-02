@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useDiet } from '../context/DietContext';
-import { useOnboarding } from '../context/OnboardingContext';
-import { chatbotService, foodScanService, userService } from '../services';
-import type { FoodScanDto } from '../services';
-import FoodScanDetails from '../components/FoodScanDetails';
+import { useDiet } from '../../context/DietContext';
+import { useOnboarding } from '../../context/OnboardingContext';
+import { chatbotService, foodScanService, userService } from '../../services';
+import type { FoodScanDto } from '../../services';
+import FoodScanDetails from '../../components/FoodScanDetails';
 
 export default function DietStatisticsScreen() {
   const { dietData, setCurrentStep } = useDiet();
@@ -116,7 +116,7 @@ export default function DietStatisticsScreen() {
 
       // Create prompt for LLM with full user context
       const prompt = `As a nutrition expert, analyze this meal and provide 3 concise, actionable recommendations for this specific user. IMPORTANT: Respond in ${responseLang}.
-
+      
 User Profile:
 ${userContext || 'Limited user data available.'}
 
@@ -127,15 +127,17 @@ Meal Analysis:
 - Carbs: ${totalNutrition.carbs.toFixed(1)}g
 - Fat: ${totalNutrition.fat.toFixed(1)}g
 
-Provide exactly 3 personalized recommendations in ${responseLang}:
+Provide exactly 3 personalized recommendations in ${responseLang}.
+CRITICAL INSTRUCTIONS:
+- Address the user directly using "you" (e.g., "You should...", "Your goal...").
+- Keep each recommendation SHORT and CLEAR (maximum 15 words per recommendation).
+- OUTPUT FORMAT: Return ONLY 3 lines of text. Do NOT use numbers, bullets, dashes, or introductory phrases.
+- Do NOT include any headers or labels like "First Recommendation:".
+- Do NOT say "Here are your recommendations". Just start with the first recommendation.
 
-1. FIRST RECOMMENDATION (MOST IMPORTANT): Analyze how this meal aligns with their specific fitness goal (${userData.goal || 'their goal'}). Provide a strategic recommendation about how they can improve their nutrition plan to better achieve their goal. Focus on overall dietary strategy, macronutrient distribution for their goal, or meal planning improvements.
-
-2. SECOND RECOMMENDATION: Provide practical advice about this specific meal - suggest complementary foods, portion adjustments, or meal timing to optimize results.
-
-3. THIRD RECOMMENDATION: Give general wellness advice related to hydration, meal frequency, or nutrient diversity that supports their fitness journey.
-
-Each recommendation should be one clear, actionable sentence. Format as a simple list without numbering or bullet points.`;
+1. Strategic advice based on goal (${userData.goal}).
+2. Practical advice for this meal.
+3. General wellness advice.`;
 
       // Call chatbot service
       const response = await chatbotService.sendMessage(prompt, [], false);
@@ -144,13 +146,17 @@ Each recommendation should be one clear, actionable sentence. Format as a simple
       if (response.message) {
         const lines = response.message
           .split('\n')
-          .map(line => line.trim())
-          .filter(line => line.length > 10 && !line.match(/^(recommendation|here|based)/i));
+          .map(line => line.trim().replace(/^[-*•\d\s.)]+/, '')) // Remove bullets, numbers, and leading symbols
+          .filter(line =>
+            line.length > 10 &&
+            !line.match(/^(here|based|recommendation|sure|certainly|ok|okay|these|following|please)/i) &&
+            !line.includes(':') // Filter out lines that look like headers (e.g., "Recommendation 1:")
+          );
 
         // Take up to 3 recommendations
         const parsedRecommendations = lines.slice(0, 3);
         setRecommendations(parsedRecommendations.length > 0 ? parsedRecommendations : [
-          'Consider balancing your meal with more vegetables for added nutrients.',
+          'Consider balancing your meal with more vegetables.',
           'Stay hydrated by drinking water with your meal.',
           'Monitor your portion sizes to align with your fitness goals.'
         ]);

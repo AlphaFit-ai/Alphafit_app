@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
     },
     modalContent: {
         flex: 0,
-        height: '70%',
+        height: '90%',
         width: '100%',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
