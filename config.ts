@@ -5,7 +5,7 @@ export const config = {
   // If backend is unreachable, replace with your computer's local IP (run ipconfig)
   API_BASE_URL: __DEV__
     ? 'http://100.91.179.70:8080/api'
-    : 'https://your-production-api.com/api',
+    : 'http://62.171.131.141:8080/api',
   API_TIMEOUT: 30000,
 
   // Firebase Configuration
