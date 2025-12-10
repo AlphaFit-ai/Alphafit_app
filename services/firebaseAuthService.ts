@@ -314,7 +314,7 @@ class FirebaseAuthService {
     try {
       // Use backend API to check email existence
       const response = await fetch(
-        `http://100.91.176.251:8080/api/auth/check-email?email=${encodeURIComponent(email)}`
+        `${config.API_BASE_URL}/auth/check-email?email=${encodeURIComponent(email)}`
       );
 
       if (!response.ok) {
