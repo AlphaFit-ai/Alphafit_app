@@ -3,7 +3,7 @@ export const config = {
   // Backend API Configuration
   // Physical device: Using detected device IP
   // If backend is unreachable, replace with your computer's local IP (run ipconfig)
-  API_BASE_URL: 'http://62.171.131.141:30081/api',
+  API_BASE_URL: 'http://62.171.131.141:30081',
   API_TIMEOUT: 30000,
 
   // Firebase Configuration

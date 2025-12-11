@@ -241,13 +241,10 @@ class ImageService {
       return url;
     }
 
-    // Remove '/api' from base URL since we'll add it with the path
-    const baseUrl = config.API_BASE_URL.replace('/api', '');
-
     // Ensure url starts with /
     const path = url.startsWith('/') ? url : `/${url}`;
 
-    return `${baseUrl}${path}`;
+    return `${config.API_BASE_URL}${path}`;
   }
 }
 
