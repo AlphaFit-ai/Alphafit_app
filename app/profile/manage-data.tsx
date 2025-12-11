@@ -196,12 +196,6 @@ export default function ManageDataScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.infoCard}>
-          <Ionicons name="information-circle-outline" size={24} color={Colors.primary} />
-          <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-            {t('manageData.infoMessage')}
-          </Text>
-        </View>
 
         <View style={[styles.dataList, { backgroundColor: isDarkMode ? Colors.gray[900] : Colors.gray[50] }]}>
           {data.map(renderDataItem)}
@@ -219,23 +213,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-  },
-  infoCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    margin: Spacing.md,
-    padding: Spacing.md,
-    backgroundColor: Colors.primary + '10',
-    borderRadius: Spacing.radius.md,
-    borderWidth: 1,
-    borderColor: Colors.primary + '30',
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 13,
-    fontFamily: Fonts.regular,
-    lineHeight: 18,
   },
   dataList: {
     marginHorizontal: Spacing.md,
