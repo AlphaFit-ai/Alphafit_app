@@ -77,12 +77,15 @@ spec:
         
         stage('Update Manifests') {
             steps {
-                container('node') { // Use node container for git (it has git)
+                container('node') {
                     script {
                         echo "Updating Kubernetes Manifests..."
                         
                         withCredentials([usernamePassword(credentialsId: GIT_CREDS_ID, usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
                             sh """
+                                # Install git (alpine doesn't have it by default)
+                                apk add --no-cache git
+                                
                                 # Clone the manifest repository using HTTP credentials
                                 rm -rf manifests
                                 git clone https://${GIT_USER}:${GIT_PASS}@github.com/AlphaFit-ai/Alphafit-manifests.git manifests
