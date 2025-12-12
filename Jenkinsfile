@@ -59,15 +59,11 @@ spec:
                         withCredentials([usernamePassword(credentialsId: HARBOR_CREDS_ID, usernameVariable: 'HARBOR_USER', passwordVariable: 'HARBOR_PASS')]) {
                             sh '''
                                 # Create Docker Config for Kaniko
-                                # We use specific quoting to mix Groovy vars (HARBOR_URL) and Shell vars (HARBOR_USER/PASS)
                                 echo "{\\"auths\\": { \\"https://''' + env.HARBOR_URL + '''\\": { \\"username\\": \\"$HARBOR_USER\\", \\"password\\": \\"$HARBOR_PASS\\" } } }" > /kaniko/.docker/config.json
                                 
-                                # Change to app directory
-                                cd AlphaFit_app
-                                
-                                # Run Kaniko Executor
+                                # Run Kaniko Executor with full path to app directory
                                 /kaniko/executor \\
-                                  --context `pwd` \\
+                                  --context ${WORKSPACE}/AlphaFit_app \\
                                   --dockerfile Dockerfile.web \\
                                   --destination ''' + env.HARBOR_URL + '''/''' + env.PROJECT_NAME + '''/''' + env.IMAGE_NAME + ''':${BUILD_NUMBER} \\
                                   --destination ''' + env.HARBOR_URL + '''/''' + env.PROJECT_NAME + '''/''' + env.IMAGE_NAME + ''':latest \\
