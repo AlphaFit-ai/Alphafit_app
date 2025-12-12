@@ -70,18 +70,19 @@ spec:
                     script {
                         echo "Building and Pushing with Kaniko..."
                         withCredentials([usernamePassword(credentialsId: HARBOR_CREDS_ID, usernameVariable: 'HARBOR_USER', passwordVariable: 'HARBOR_PASS')]) {
-                            sh """
+                            sh '''
                                 # Create Docker Config for Kaniko
-                                echo \"{\\\\\"auths\\\\\": { \\\\\"https://${HARBOR_URL}\\\\\": { \\\\\"username\\\\\": \\\\\"\\$HARBOR_USER\\\\\", \\\\\"password\\\\\": \\\\\"\\$HARBOR_PASS\\\\\" } } }\" > /kaniko/.docker/config.json
+                                # We use specific quoting to mix Groovy vars (HARBOR_URL) and Shell vars (HARBOR_USER/PASS)
+                                echo "{\\"auths\\": { \\"https://''' + env.HARBOR_URL + '''\\": { \\"username\\": \\"$HARBOR_USER\\", \\"password\\": \\"$HARBOR_PASS\\" } } }" > /kaniko/.docker/config.json
                                 
                                 # Run Kaniko Executor
                                 /kaniko/executor \\
                                   --context `pwd`/AlphaFit_app \\
                                   --dockerfile Dockerfile.web \\
-                                  --destination ${HARBOR_URL}/${PROJECT_NAME}/${IMAGE_NAME}:${BUILD_NUMBER} \\
-                                  --destination ${HARBOR_URL}/${PROJECT_NAME}/${IMAGE_NAME}:latest \\
+                                  --destination ''' + env.HARBOR_URL + '''/''' + env.PROJECT_NAME + '''/''' + env.IMAGE_NAME + ''':${BUILD_NUMBER} \\
+                                  --destination ''' + env.HARBOR_URL + '''/''' + env.PROJECT_NAME + '''/''' + env.IMAGE_NAME + ''':latest \\
                                   --skip-tls-verify
-                            """
+                            '''
                         }
                     }
                 }
