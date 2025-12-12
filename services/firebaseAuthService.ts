@@ -52,47 +52,78 @@ export interface AuthResult {
 
 class FirebaseAuthService {
   /**
-   * Sign in with Google using native Google Sign-In
+   * Sign in with Google using native Google Sign-In (mobile) or Firebase popup (web)
    * @returns AuthResult if successful, null if user cancelled
    */
   async signInWithGoogle(): Promise<AuthResult | null> {
     try {
-      // Check if device supports Google Play Services
-      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      // Detect platform - web vs native
+      const isWeb = typeof window !== 'undefined' && window.document;
 
-      // Sign out first to clear any cached account and force account picker
-      // This ensures users can always choose which account to use
-      try {
-        await GoogleSignin.signOut();
-      } catch (error) {
-        // Ignore errors if no account to clear
+      if (isWeb) {
+        // Web: Use Firebase's web popup sign-in
+        const { signInWithPopup } = await import('firebase/auth');
+        const provider = new GoogleAuthProvider();
+
+        // Optional: Add scopes if needed
+        // provider.addScope('profile');
+        // provider.addScope('email');
+
+        try {
+          const result = await signInWithPopup(getAuthInstance(), provider);
+          const token = await result.user.getIdToken();
+
+          return {
+            user: result.user,
+            idToken: token
+          };
+        } catch (error: any) {
+          // Handle popup closed or cancelled
+          if (error.code === 'auth/popup-closed-by-user' ||
+            error.code === 'auth/cancelled-popup-request') {
+            return null;
+          }
+          throw error;
+        }
+      } else {
+        // Native: Use react-native-google-signin
+        // Check if device supports Google Play Services
+        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+
+        // Sign out first to clear any cached account and force account picker
+        // This ensures users can always choose which account to use
+        try {
+          await GoogleSignin.signOut();
+        } catch (error) {
+          // Ignore errors if no account to clear
+        }
+
+        // Show account picker - users can select any Google account
+        const userInfo = await GoogleSignin.signIn();
+
+        // Check if user cancelled (no user data returned)
+        if (!userInfo.data || !userInfo.data.user) {
+          return null;
+        }
+
+        const idToken = userInfo.data.idToken;
+
+        if (!idToken) {
+          throw new Error('No ID token received from Google Sign-In');
+        }
+
+        // Create Firebase credential
+        const credential = GoogleAuthProvider.credential(idToken);
+
+        // Sign in to Firebase
+        const userCredential = await signInWithCredential(getAuthInstance(), credential);
+        const token = await userCredential.user.getIdToken();
+
+        return {
+          user: userCredential.user,
+          idToken: token
+        };
       }
-
-      // Show account picker - users can select any Google account
-      const userInfo = await GoogleSignin.signIn();
-
-      // Check if user cancelled (no user data returned)
-      if (!userInfo.data || !userInfo.data.user) {
-        return null;
-      }
-
-      const idToken = userInfo.data.idToken;
-
-      if (!idToken) {
-        throw new Error('No ID token received from Google Sign-In');
-      }
-
-      // Create Firebase credential
-      const credential = GoogleAuthProvider.credential(idToken);
-
-      // Sign in to Firebase
-      const userCredential = await signInWithCredential(getAuthInstance(), credential);
-      const token = await userCredential.user.getIdToken();
-
-      return {
-        user: userCredential.user,
-        idToken: token
-      };
     } catch (error: any) {
       // Handle user cancellation gracefully
       if (error.code === '-5' ||
@@ -101,7 +132,9 @@ class FirebaseAuthService {
         error.message?.includes('User cancelled')) {
         // Clear any cached state so next attempt shows account picker
         try {
-          await GoogleSignin.signOut();
+          if (typeof window === 'undefined') {
+            await GoogleSignin.signOut();
+          }
         } catch (signOutError) {
           // Ignore sign out errors
         }

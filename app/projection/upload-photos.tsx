@@ -2,8 +2,8 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
-import { Button } from '../../components';
+import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Platform, Modal } from 'react-native';
+
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useProjection } from '../../context/ProjectionContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -44,41 +44,28 @@ export default function UploadPhotosScreen() {
     },
   ]);
 
+
   const [isUploading, setIsUploading] = useState<string | null>(null);
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
+
+  const showAlert = (title: string, message: string) => {
+    setAlertConfig({ visible: true, title, message });
+  };
 
   const pickImage = async (photoId: string) => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [3, 4],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      await uploadPhoto(photoId, result.assets[0].uri);
-    }
+    showAlert('Coming Soon', 'Photo upload feature is coming soon!');
   };
 
   const takePhoto = async (photoId: string) => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(
-        'Permission Required',
-        'Camera permission is required to take photos',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [3, 4],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      await uploadPhoto(photoId, result.assets[0].uri);
-    }
+    showAlert('Coming Soon', 'Photo capture feature is coming soon!');
   };
 
   const uploadPhoto = async (photoId: string, uri: string) => {
@@ -86,15 +73,15 @@ export default function UploadPhotosScreen() {
     try {
       // Map photoId to progress type
       const progressType = photoId as 'front' | 'side' | 'back';
-      
+
       // Upload to MinIO
       const uploadedUrl = await imageService.uploadProgressPhoto(uri, progressType);
-      
+
       // Update local state
       setPhotos((prev) =>
         prev.map((photo) =>
-          photo.id === photoId 
-            ? { ...photo, uri, uploadedUrl } 
+          photo.id === photoId
+            ? { ...photo, uri, uploadedUrl }
             : photo
         )
       );
@@ -124,114 +111,137 @@ export default function UploadPhotosScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+    <>
+      {/* iOS-style Alert Modal */}
+      <Modal
+        visible={alertConfig.visible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setAlertConfig({ visible: false, title: '', message: '' })}
       >
-        <Text style={[styles.title, { color: colors.text }]}>
-          {t('bodyScan.uploadTitle')}
-        </Text>
+        <TouchableOpacity
+          style={styles.alertOverlay}
+          activeOpacity={1}
+          onPress={() => setAlertConfig({ visible: false, title: '', message: '' })}
+        >
+          <View style={[styles.alertContainer, { backgroundColor: colors.card }]}>
+            <Text style={[styles.alertTitle, { color: colors.text }]}>
+              {alertConfig.title}
+            </Text>
+            <Text style={[styles.alertMessage, { color: colors.textSecondary }]}>
+              {alertConfig.message}
+            </Text>
 
-        <View style={styles.photosContainer}>
-          {photos.map((photo) => (
-            <TouchableOpacity
-              key={photo.id}
-              style={[
-                styles.photoCard,
-                {
-                  backgroundColor: photo.uploadedUrl
-                    ? Colors.success + '20'
-                    : isDarkMode
-                    ? Colors.gray[800]
-                    : Colors.gray[50],
-                  borderColor: photo.uploadedUrl
-                    ? Colors.success
-                    : isDarkMode
-                    ? Colors.gray[700]
-                    : Colors.gray[200],
-                },
-              ]}
-              onPress={() => pickImage(photo.id)}
-              activeOpacity={0.7}
-              disabled={isUploading === photo.id}
-            >
-              <Image source={photo.image} style={styles.photoImage} resizeMode="contain" />
-              
-              {isUploading === photo.id && (
-                <View style={styles.loadingOverlay}>
-                  <ActivityIndicator size="large" color={Colors.primary} />
-                  <Text style={[styles.loadingText, { color: colors.text }]}>
-                    {t('common.uploading')}
-                  </Text>
-                </View>
-              )}
-              
-              <View style={styles.photoInfo}>
-                <View style={styles.photoTextContainer}>
-                  <Text style={[styles.photoLabel, { color: colors.text }]}>
-                    {t(photo.translationKey)}
-                  </Text>
-                  <Text style={[styles.photoHint, { color: colors.textSecondary }]}>
-                    {photo.uploadedUrl ? t('bodyScan.uploaded') : t('bodyScan.tapToUpload')}
-                  </Text>
-                </View>
-                
-                {!photo.uploadedUrl && isUploading !== photo.id && (
-                  <TouchableOpacity
-                    style={[
-                      styles.uploadIcon,
-                      {
-                        backgroundColor: isDarkMode ? Colors.gray[700] : Colors.gray[200],
-                      },
-                    ]}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      takePhoto(photo.id);
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="camera" size={20} color={colors.text} />
-                  </TouchableOpacity>
-                )}
-                
-                {photo.uploadedUrl && (
-                  <View
-                    style={[
-                      styles.uploadIcon,
-                      {
-                        backgroundColor: Colors.success,
-                      },
-                    ]}
-                  >
-                    <Ionicons
-                      name="checkmark"
-                      size={20}
-                      color={Colors.white}
-                    />
+            <View style={[styles.alertButtonContainer, { borderTopColor: colors.border }]}>
+              <TouchableOpacity
+                style={styles.alertButton}
+                onPress={() => setAlertConfig({ visible: false, title: '', message: '' })}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.alertButtonText, styles.alertButtonTextBold]}>
+                  OK
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={[styles.title, { color: colors.text }]}>
+            {t('bodyScan.uploadTitle')}
+          </Text>
+
+          <View style={styles.photosContainer}>
+            {photos.map((photo) => (
+              <TouchableOpacity
+                key={photo.id}
+                style={[
+                  styles.photoCard,
+                  {
+                    backgroundColor: photo.uploadedUrl
+                      ? Colors.success + '20'
+                      : isDarkMode
+                        ? Colors.gray[800]
+                        : Colors.gray[50],
+                    borderColor: photo.uploadedUrl
+                      ? Colors.success
+                      : isDarkMode
+                        ? Colors.gray[700]
+                        : Colors.gray[200],
+                  },
+                ]}
+                onPress={() => pickImage(photo.id)}
+                activeOpacity={0.7}
+                disabled={isUploading === photo.id}
+              >
+                <Image source={photo.image} style={styles.photoImage} resizeMode="contain" />
+
+                {isUploading === photo.id && (
+                  <View style={styles.loadingOverlay}>
+                    <ActivityIndicator size="large" color={Colors.primary} />
+                    <Text style={[styles.loadingText, { color: colors.text }]}>
+                      {t('common.uploading')}
+                    </Text>
                   </View>
                 )}
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
 
-        <View style={styles.buttonContainer}>
-          <Button
-            title={
-              allPhotosUploaded
-                ? t('bodyScan.startAnalysis')
-                : t('bodyScan.uploadMore', { count: photos.filter((p) => !p.uri).length })
-            }
-            onPress={handleAnalyze}
-            disabled={!allPhotosUploaded}
-            icon={allPhotosUploaded ? 'sparkles' : undefined}
-            iconPosition="left"
-          />
-        </View>
-      </ScrollView>
-    </View>
+                <View style={styles.photoInfo}>
+                  <View style={styles.photoTextContainer}>
+                    <Text style={[styles.photoLabel, { color: colors.text }]}>
+                      {t(photo.translationKey)}
+                    </Text>
+                    <Text style={[styles.photoHint, { color: colors.textSecondary }]}>
+                      {photo.uploadedUrl ? t('bodyScan.uploaded') : t('bodyScan.tapToUpload')}
+                    </Text>
+                  </View>
+
+                  {!photo.uploadedUrl && isUploading !== photo.id && (
+                    <TouchableOpacity
+                      style={[
+                        styles.uploadIcon,
+                        {
+                          backgroundColor: isDarkMode ? Colors.gray[700] : Colors.gray[200],
+                        },
+                      ]}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        takePhoto(photo.id);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="camera" size={20} color={colors.text} />
+                    </TouchableOpacity>
+                  )}
+
+                  {photo.uploadedUrl && (
+                    <View
+                      style={[
+                        styles.uploadIcon,
+                        {
+                          backgroundColor: Colors.success,
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name="checkmark"
+                        size={20}
+                        color={Colors.white}
+                      />
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+    </>
   );
 }
 
@@ -306,7 +316,57 @@ const styles = StyleSheet.create({
     fontSize: Fonts.sizes.sm,
     fontFamily: Fonts.medium,
   },
-  buttonContainer: {
-    marginTop: 'auto',
+  // iOS-style Alert
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
+  alertContainer: {
+    width: 270,
+    borderRadius: 14,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  alertTitle: {
+    fontSize: 17,
+    fontFamily: Fonts.semiBold,
+    textAlign: 'center',
+    paddingTop: 20,
+    paddingHorizontal: 16,
+  },
+  alertMessage: {
+    fontSize: 13,
+    fontFamily: Fonts.regular,
+    textAlign: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 20,
+    lineHeight: 18,
+  },
+  alertButtonContainer: {
+    borderTopWidth: 0.5,
+    flexDirection: 'row',
+  },
+  alertButton: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  alertButtonText: {
+    fontSize: 17,
+    fontFamily: Fonts.regular,
+    color: Colors.primary,
+  },
+  alertButtonTextBold: {
+    fontFamily: Fonts.semiBold,
+  },
+
 });

@@ -225,8 +225,6 @@
     "supportSection": "Support",
     "appSettings": "Paramètres de l'Application",
     "accountDetails": "Détails du Compte",
-    "notifications": "Notifications",
-    "notificationsSubtitle": "Gérer vos notifications",
     "subscription": "Abonnement",
     "subscriptionSubtitle": "Gérer votre abonnement Pro",
     "support": "Support",
@@ -261,12 +259,6 @@
     "homeSubtitle": "Votre parcours fitness personnalisé commence ici",
     "scan": "Scanner",
     "scanSubtitle": "Scannez vos projections"
-  },
-  "notifications": {
-    "title": "Notifications",
-    "unread": "non lues",
-    "markAllRead": "Tout marquer comme lu",
-    "empty": "Pas encore de notifications"
   },
   "projection": {
     "sleep": {

@@ -1,9 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { ProPlanModal } from '../../components';
+
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -160,8 +159,8 @@ const workoutPrograms: WorkoutProgram[] = [
 export default function WorkoutsScreen() {
   const { t } = useTranslation();
   const { colors, isDarkMode } = useTheme();
-  const [selectedDay, setSelectedDay] = useState<WorkoutDay | null>(null);
-  const [showProModal, setShowProModal] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<WorkoutDay | null>('push');
+
 
   const selectedProgram = selectedDay ? workoutPrograms.find(p => p.day === selectedDay) : null;
 
@@ -180,123 +179,101 @@ export default function WorkoutsScreen() {
       </View>
 
       <View style={styles.workoutCards}>
-          {workoutPrograms.map((program) => (
-            <TouchableOpacity
-              key={program.day}
+        {workoutPrograms.map((program) => (
+          <TouchableOpacity
+            key={program.day}
+            style={[
+              styles.workoutCard,
+              {
+                backgroundColor: isDarkMode ? Colors.gray[800] : Colors.white,
+                borderColor: selectedDay === program.day ? (isDarkMode ? Colors.primary : Colors.black) : (isDarkMode ? Colors.gray[700] : Colors.gray[100])
+              },
+              selectedDay === program.day && [
+                styles.workoutCardActive,
+                { backgroundColor: isDarkMode ? Colors.primary : Colors.black }
+              ],
+            ]}
+            onPress={() => setSelectedDay(program.day)}
+            activeOpacity={0.7}
+          >
+            <Image
+              source={program.icon}
               style={[
-                styles.workoutCard,
-                { 
-                  backgroundColor: isDarkMode ? Colors.gray[800] : Colors.white,
-                  borderColor: selectedDay === program.day ? (isDarkMode ? Colors.primary : Colors.black) : (isDarkMode ? Colors.gray[700] : Colors.gray[100])
-                },
-                selectedDay === program.day && [
-                  styles.workoutCardActive,
-                  { backgroundColor: isDarkMode ? Colors.primary : Colors.black }
-                ],
+                styles.workoutIcon,
               ]}
-              onPress={() => setSelectedDay(program.day)}
-              activeOpacity={0.7}
-            >
-              <Image 
-                source={program.icon} 
-                style={[
-                  styles.workoutIcon,
-                ]}
-                resizeMode="contain"
-              />
-              <Text style={[
-                styles.workoutTitle,
-                { color: selectedDay === program.day ? Colors.white : colors.text },
-                selectedDay === program.day && styles.workoutTitleActive,
-              ]}>
-                {program.title}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {selectedProgram && (
-          <View style={[styles.programDetails, { backgroundColor: colors.background }]}>
-            <Text style={[styles.programTitle, { color: colors.text }]}>{selectedProgram.title} - {selectedProgram.subtitle.replace(/\n/g, ', ')}</Text>
-            
-            <View style={styles.durationContainer}>
-              <Ionicons name="time-outline" size={18} color={isDarkMode ? Colors.gray[500] : Colors.gray[400]} />
-              <Text style={[styles.durationText, { color: colors.textSecondary }]}>{selectedProgram.duration}</Text>
-            </View>
-
-            <View style={styles.exercisesList}>
-              {selectedProgram.exercises.map((exercise, index) => (
-                <View 
-                  key={index} 
-                  style={[
-                    styles.exerciseCard,
-                    { 
-                      backgroundColor: isDarkMode ? Colors.gray[800] : Colors.white,
-                      borderColor: isDarkMode ? Colors.gray[700] : Colors.gray[100]
-                    }
-                  ]}
-                >
-                  <View style={styles.exerciseHeader}>
-                    <Text style={[styles.exerciseName, { color: colors.text }]}>{exercise.name}</Text>
-                    {exercise.tag && (
-                      <View style={[styles.exerciseTag, { backgroundColor: isDarkMode ? Colors.primary : Colors.black }]}>
-                        <Text style={styles.exerciseTagText}>{exercise.tag}</Text>
-                      </View>
-                    )}
-                  </View>
-                  
-                  <View style={styles.exerciseInfo}>
-                    <Text style={[styles.exerciseStats, { color: colors.textSecondary }]}>
-                      Sets: <Text style={[styles.exerciseStatsValue, { color: colors.text }]}>{exercise.sets}</Text>
-                      {'  '}
-                      Reps: <Text style={[styles.exerciseStatsValue, { color: colors.text }]}>{exercise.reps}</Text>
-                    </Text>
-                  </View>
-
-                  <Text style={[styles.exerciseDescription, { color: colors.textSecondary }]}>{exercise.description}</Text>
-
-                  <TouchableOpacity 
-                    style={[
-                      styles.demoButton,
-                      { backgroundColor: isDarkMode ? Colors.primary : Colors.black }
-                    ]} 
-                    disabled
-                  >
-                    <Ionicons name="play-circle" size={16} color={Colors.white} />
-                    <Text style={styles.demoButtonText}>{exercise.demo}</Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
-
-        <View style={styles.proSection}>
-          <View style={[styles.lockIconContainer, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}>
-            <Ionicons name="lock-closed" size={28} color={colors.text} />
-          </View>
-          <Text style={[styles.proTitle, { color: colors.text }]}>{t('workoutScreen.unlockProTitle')}</Text>
-          <Text style={[styles.proDescription, { color: colors.textSecondary }]}>
-            {t('workoutScreen.unlockProDescription')}
-          </Text>
-
-          <TouchableOpacity activeOpacity={0.8} style={{ width: '100%' }} onPress={() => setShowProModal(true)}>
-            <LinearGradient
-              colors={[Colors.gold, Colors.goldDark]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.upgradeToProButton}
-            >
-              <Ionicons name="trophy" size={20} color={Colors.white} />
-              <Text style={styles.upgradeToProText}>{t('workoutScreen.upgradeToPro')}</Text>
-          </LinearGradient>
-        </TouchableOpacity>
+              resizeMode="contain"
+            />
+            <Text style={[
+              styles.workoutTitle,
+              { color: selectedDay === program.day ? Colors.white : colors.text },
+              selectedDay === program.day && styles.workoutTitleActive,
+            ]}>
+              {program.title}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
-      <ProPlanModal visible={showProModal} onClose={() => setShowProModal(false)} />
+      {selectedProgram && (
+        <View style={[styles.programDetails, { backgroundColor: colors.background }]}>
+          <Text style={[styles.programTitle, { color: colors.text }]}>{selectedProgram.title} - {selectedProgram.subtitle.replace(/\n/g, ', ')}</Text>
+
+          <View style={styles.durationContainer}>
+            <Ionicons name="time-outline" size={18} color={isDarkMode ? Colors.gray[500] : Colors.gray[400]} />
+            <Text style={[styles.durationText, { color: colors.textSecondary }]}>{selectedProgram.duration}</Text>
+          </View>
+
+          <View style={styles.exercisesList}>
+            {selectedProgram.exercises.map((exercise, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.exerciseCard,
+                  {
+                    backgroundColor: isDarkMode ? Colors.gray[800] : Colors.white,
+                    borderColor: isDarkMode ? Colors.gray[700] : Colors.gray[100]
+                  }
+                ]}
+              >
+                <View style={styles.exerciseHeader}>
+                  <Text style={[styles.exerciseName, { color: colors.text }]}>{exercise.name}</Text>
+                  {exercise.tag && (
+                    <View style={[styles.exerciseTag, { backgroundColor: isDarkMode ? Colors.primary : Colors.black }]}>
+                      <Text style={styles.exerciseTagText}>{exercise.tag}</Text>
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.exerciseInfo}>
+                  <Text style={[styles.exerciseStats, { color: colors.textSecondary }]}>
+                    Sets: <Text style={[styles.exerciseStatsValue, { color: colors.text }]}>{exercise.sets}</Text>
+                    {'  '}
+                    Reps: <Text style={[styles.exerciseStatsValue, { color: colors.text }]}>{exercise.reps}</Text>
+                  </Text>
+                </View>
+
+                <Text style={[styles.exerciseDescription, { color: colors.textSecondary }]}>{exercise.description}</Text>
+
+                <TouchableOpacity
+                  style={[
+                    styles.demoButton,
+                    { backgroundColor: isDarkMode ? Colors.primary : Colors.black }
+                  ]}
+                  disabled
+                >
+                  <Ionicons name="play-circle" size={16} color={Colors.white} />
+                  <Text style={styles.demoButtonText}>{exercise.demo}</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
+
     </ScrollView>
   );
-}const styles = StyleSheet.create({
+} const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.white,
@@ -466,48 +443,5 @@ export default function WorkoutsScreen() {
     fontFamily: Fonts.semiBold,
     color: Colors.white,
   },
-  proSection: {
-    marginHorizontal: Spacing.screenPaddingHorizontal,
-    alignItems: 'center',
-    paddingVertical: 32,
-  },
-  lockIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  proTitle: {
-    fontSize: 22,
-    fontFamily: Fonts.bold,
-    fontWeight: '700',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  proDescription: {
-    fontSize: 14,
-    fontFamily: Fonts.regular,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 24,
-    paddingHorizontal: 16,
-  },
-  upgradeToProButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 48,
-    paddingVertical: 16,
-    borderRadius: 24,
-    gap: 8,
-    width: '100%',
-  },
-  upgradeToProText: {
-    fontSize: 16,
-    fontFamily: Fonts.bold,
-    fontWeight: '700',
-    color: Colors.white,
-  },
+
 });

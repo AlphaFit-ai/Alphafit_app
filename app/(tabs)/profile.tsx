@@ -64,7 +64,7 @@ export default function ProfileScreen() {
     } catch (error: any) {
       const is404 = error?.response?.status === 404;
       const is401 = error?.response?.status === 401;
-      
+
       if (is404 || is401) {
         // User doesn't exist or session expired - sign out and redirect to login
         await firebaseAuthService.signOut();
@@ -88,7 +88,7 @@ export default function ProfileScreen() {
   const handleProfilePictureUpdate = async (imageUrl: string) => {
     // Update local state immediately for instant feedback
     setUserProfilePicture(imageUrl);
-    
+
     // Force immediate refresh to sync with backend
     await loadUserData(true);
   };
@@ -136,7 +136,7 @@ export default function ProfileScreen() {
     {
       icon: 'settings-outline',
       title: 'Settings',
-      subtitle: 'Language, Theme, Notifications',
+      subtitle: 'Language, Theme',
       type: 'navigation',
       onPress: () => router.push('/profile/settings'),
     },
@@ -293,8 +293,8 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ScrollView 
-      style={[styles.container, { backgroundColor: colors.background }]} 
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl
@@ -348,9 +348,9 @@ export default function ProfileScreen() {
       <TouchableOpacity
         style={[styles.logoutButton, { borderColor: Colors.red }]}
         activeOpacity={0.7}
-        onPress={() => setAlertConfig({ 
-          visible: true, 
-          title: 'Logout', 
+        onPress={() => setAlertConfig({
+          visible: true,
+          title: 'Logout',
           message: 'Are you sure you want to logout?',
           buttons: [
             { text: 'Cancel', style: 'cancel' },
@@ -374,12 +374,12 @@ export default function ProfileScreen() {
       <View style={{ height: 40 }} />
 
       <ProPlanModal visible={showProModal} onClose={() => setShowProModal(false)} />
-      <Alert 
-        visible={alertConfig.visible} 
-        title={alertConfig.title} 
+      <Alert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
         message={alertConfig.message}
         buttons={alertConfig.buttons}
-        onClose={() => setAlertConfig({ visible: false, title: '' })} 
+        onClose={() => setAlertConfig({ visible: false, title: '' })}
       />
       <LanguageSelector
         visible={showLanguageSelector}
@@ -401,10 +401,10 @@ export default function ProfileScreen() {
             <Text style={[styles.modalMessage, { color: colors.textSecondary }]}>
               This will permanently delete your account and all your data. This action cannot be undone.
             </Text>
-            
+
             <Text style={[styles.modalLabel, { color: colors.text }]}>Type "Delete my account" to confirm:</Text>
             <TextInput
-              style={[styles.confirmationInput, { 
+              style={[styles.confirmationInput, {
                 backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100],
                 color: colors.text,
                 borderColor: colors.border
@@ -464,14 +464,6 @@ const styles = StyleSheet.create({
   },
   avatarWrapper: {
     marginBottom: 20,
-    shadowColor: Colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
   },
   userName: {
     fontSize: 24,

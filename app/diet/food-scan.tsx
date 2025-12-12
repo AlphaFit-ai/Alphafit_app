@@ -667,6 +667,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     paddingHorizontal: Spacing.screenPaddingHorizontal,
+    gap: 16,
+    width: '100%',
   },
   historyButton: {
     width: 44,
@@ -684,6 +686,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     width: '100%',
+    maxWidth: 500,
     aspectRatio: 1,
     borderRadius: 24,
     overflow: 'hidden',
@@ -691,6 +694,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
+    alignSelf: 'center',
   },
   foodImage: {
     width: '100%',

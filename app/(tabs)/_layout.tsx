@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Image, Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GradientText, ProPlanModal } from '../../components';
-import NotificationModal from '../../components/NotificationModal';
+
 import { Colors, Fonts } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
 import { imageService } from '../../services';
@@ -17,7 +17,7 @@ export default function TabsLayout() {
   const { colors, isDarkMode } = useTheme();
   const insets = useSafeAreaInsets();
   const [showProModal, setShowProModal] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
+
   const [userProfilePicture, setUserProfilePicture] = useState<string | null>(null);
 
   const loadUserProfilePicture = useCallback(async () => {
@@ -54,18 +54,13 @@ export default function TabsLayout() {
         <View style={[styles.webSidebar as any, { backgroundColor: colors.card }]}>
           <View style={[styles.webSidebarHeader as any, { borderBottomColor: colors.border }]}>
             <View style={styles.webLogoContainer as any}>
-              <Image 
-                source={require('../../assets/images/logo.png')} 
+              <Image
+                source={require('../../assets/images/logo.png')}
                 style={styles.faviconImage as any}
               />
               <GradientText text="ALPHAFIT AI" style={styles.webLogoText as any} />
             </View>
-            <TouchableOpacity style={styles.webNotificationButton as any} activeOpacity={0.7}>
-              <View style={styles.webNotificationContainer as any}>
-                <Ionicons name="notifications-outline" size={24} color={colors.icon} />
-                <View style={styles.webNotificationBadge as any} />
-              </View>
-            </TouchableOpacity>
+
           </View>
           <View style={styles.webNavContainer as any}>
             {navItems.map((item) => {
@@ -109,8 +104,8 @@ export default function TabsLayout() {
           },
           headerLeft: () => (
             <View style={styles.headerLeft}>
-              <Image 
-                source={require('../../assets/images/logo.png')} 
+              <Image
+                source={require('../../assets/images/logo.png')}
                 style={styles.faviconImage}
               />
               <GradientText text="ALPHAFIT AI" style={styles.logoText} />
@@ -118,16 +113,7 @@ export default function TabsLayout() {
           ),
           headerRight: () => (
             <View style={styles.headerRight}>
-              <TouchableOpacity 
-                style={styles.notificationButton} 
-                activeOpacity={0.7}
-                onPress={() => setShowNotifications(true)}
-              >
-                <View style={styles.notificationContainer}>
-                  <Ionicons name="notifications-outline" size={24} color={colors.text} />
-                  <View style={styles.notificationBadge} />
-                </View>
-              </TouchableOpacity>
+
               <TouchableOpacity style={styles.proIconButton} activeOpacity={0.7} onPress={() => setShowProModal(true)}>
                 <Ionicons name="trophy" size={24} color={Colors.gold} />
               </TouchableOpacity>
@@ -136,11 +122,11 @@ export default function TabsLayout() {
           headerTitle: '',
           tabBarActiveTintColor: colors.text,
           tabBarInactiveTintColor: Colors.gray[400],
-          sceneStyle: { 
+          sceneStyle: {
             backgroundColor: colors.background,
-            ...(isWeb && { 
+            ...(isWeb && {
               marginLeft: 240,
-              paddingHorizontal: 40,
+              paddingHorizontal: 60,
             })
           },
           tabBarStyle: isWeb ? { display: 'none' } : {
@@ -156,118 +142,118 @@ export default function TabsLayout() {
           lazy: false,
         }}
       >
-      <Tabs.Screen
-        name="home"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconWrapper, focused && styles.iconWrapperActive]}>
-              <Feather 
-                name="home" 
-                size={isWeb ? 28 : 24} 
-                color={color} 
-              />
-            </View>
-          ),
-          ...(isWeb && {
-            tabBarLabel: ({ color }) => <Text style={[styles.webLabel, { color }]}>Home</Text>,
-          }),
-        }}
-      />
-      <Tabs.Screen
-        name="workouts"
-        options={{
-          title: 'Workouts',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconWrapper, focused && styles.iconWrapperActive]}>
-              <Ionicons 
-                name={focused ? "barbell" : "barbell-outline"} 
-                size={isWeb ? 28 : 24} 
-                color={color} 
-              />
-            </View>
-          ),
-          ...(isWeb && {
-            tabBarLabel: ({ color }) => <Text style={[styles.webLabel, { color }]}>Workouts</Text>,
-          }),
-        }}
-      />
-      <Tabs.Screen
-        name="projections"
-        options={{
-          title: '',
-          tabBarIcon: ({ focused }) => (
-            <View style={styles.scanIconWrapper}>
-              <View style={[styles.scanIconContainer, focused && styles.scanIconContainerActive, isWeb && styles.webScanIcon]}>
-                <Ionicons 
-                  name="scan" 
-                  size={isWeb ? 24 : 32} 
-                  color={Colors.white} />
-              </View>
-            </View>
-          ),
-          tabBarLabel: () => null,
-          tabBarItemStyle: {
-            top: 0,
-          },
-          ...(isWeb && {
-            tabBarLabel: ({ color }) => <Text style={[styles.webLabel, { color }]}>Scan</Text>,
-          }),
-        }}
-      />
-      <Tabs.Screen
-        name="diet"
-        options={{
-          title: 'Diet',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconWrapper, focused && styles.iconWrapperActive]}>
-              <Ionicons 
-                name={focused ? "restaurant" : "restaurant-outline"} 
-                size={isWeb ? 28 : 24} 
-                color={color} 
-              />
-            </View>
-          ),
-          ...(isWeb && {
-            tabBarLabel: ({ color }) => <Text style={[styles.webLabel, { color }]}>Diet</Text>,
-          }),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, focused }) => (
-            userProfilePicture ? (
-              <View style={[styles.profileAvatarWrapper, focused && styles.profileAvatarWrapperActive]}>
-                <Image 
-                  key={userProfilePicture}
-                  source={{ uri: userProfilePicture, cache: 'reload' }} 
-                  style={styles.profileAvatar}
-                  resizeMode="cover"
+        <Tabs.Screen
+          name="home"
+          options={{
+            title: 'Home',
+            tabBarIcon: ({ color, focused }) => (
+              <View style={[styles.iconWrapper, focused && styles.iconWrapperActive]}>
+                <Feather
+                  name="home"
+                  size={isWeb ? 28 : 24}
+                  color={color}
                 />
               </View>
-            ) : (
-              <View style={[styles.profileIconContainer, focused && styles.iconWrapperActive, isWeb && styles.webProfileIcon]}>
-                <Ionicons 
-                  name={focused ? "person" : "person-outline"} 
-                  size={isWeb ? 24 : 20} 
-                  color={color} 
+            ),
+            ...(isWeb && {
+              tabBarLabel: ({ color }) => <Text style={[styles.webLabel, { color }]}>Home</Text>,
+            }),
+          }}
+        />
+        <Tabs.Screen
+          name="workouts"
+          options={{
+            title: 'Workouts',
+            tabBarIcon: ({ color, focused }) => (
+              <View style={[styles.iconWrapper, focused && styles.iconWrapperActive]}>
+                <Ionicons
+                  name={focused ? "barbell" : "barbell-outline"}
+                  size={isWeb ? 28 : 24}
+                  color={color}
                 />
               </View>
-            )
-          ),
-          ...(isWeb && {
-            tabBarLabel: ({ color }) => <Text style={[styles.webLabel, { color }]}>Profile</Text>,
-          }),
-        }}
+            ),
+            ...(isWeb && {
+              tabBarLabel: ({ color }) => <Text style={[styles.webLabel, { color }]}>Workouts</Text>,
+            }),
+          }}
+        />
+        <Tabs.Screen
+          name="projections"
+          options={{
+            title: '',
+            tabBarIcon: ({ focused }) => (
+              <View style={styles.scanIconWrapper}>
+                <View style={[styles.scanIconContainer, focused && styles.scanIconContainerActive, isWeb && styles.webScanIcon]}>
+                  <Ionicons
+                    name="scan"
+                    size={isWeb ? 24 : 32}
+                    color={Colors.white} />
+                </View>
+              </View>
+            ),
+            tabBarLabel: () => null,
+            tabBarItemStyle: {
+              top: 0,
+            },
+            ...(isWeb && {
+              tabBarLabel: ({ color }) => <Text style={[styles.webLabel, { color }]}>Scan</Text>,
+            }),
+          }}
+        />
+        <Tabs.Screen
+          name="diet"
+          options={{
+            title: 'Diet',
+            tabBarIcon: ({ color, focused }) => (
+              <View style={[styles.iconWrapper, focused && styles.iconWrapperActive]}>
+                <Ionicons
+                  name={focused ? "restaurant" : "restaurant-outline"}
+                  size={isWeb ? 28 : 24}
+                  color={color}
+                />
+              </View>
+            ),
+            ...(isWeb && {
+              tabBarLabel: ({ color }) => <Text style={[styles.webLabel, { color }]}>Diet</Text>,
+            }),
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: 'Profile',
+            tabBarIcon: ({ color, focused }) => (
+              userProfilePicture ? (
+                <View style={[styles.profileAvatarWrapper, focused && styles.profileAvatarWrapperActive]}>
+                  <Image
+                    key={userProfilePicture}
+                    source={{ uri: userProfilePicture, cache: 'reload' }}
+                    style={styles.profileAvatar}
+                    resizeMode="cover"
+                  />
+                </View>
+              ) : (
+                <View style={[styles.profileIconContainer, focused && styles.iconWrapperActive, isWeb && styles.webProfileIcon]}>
+                  <Ionicons
+                    name={focused ? "person" : "person-outline"}
+                    size={isWeb ? 24 : 20}
+                    color={color}
+                  />
+                </View>
+              )
+            ),
+            ...(isWeb && {
+              tabBarLabel: ({ color }) => <Text style={[styles.webLabel, { color }]}>Profile</Text>,
+            }),
+          }}
         />
       </Tabs>
       <ProPlanModal visible={showProModal} onClose={() => setShowProModal(false)} />
-      <NotificationModal visible={showNotifications} onClose={() => setShowNotifications(false)} />
+
     </>
   );
-}const styles = StyleSheet.create({
+} const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -288,21 +274,7 @@ export default function TabsLayout() {
   proIconButton: {
     padding: 4,
   },
-  notificationButton: {
-    padding: 4,
-  },
-  notificationContainer: {
-    position: 'relative',
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.primary,
-  },
+
   iconWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -455,21 +427,7 @@ export default function TabsLayout() {
     fontSize: 16,
     marginLeft: 16,
   },
-  webNotificationButton: {
-    padding: 4,
-  },
-  webNotificationContainer: {
-    position: 'relative',
-  },
-  webNotificationBadge: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.primary,
-  },
+
   webScanIconContainer: {
     width: 48,
     height: 48,

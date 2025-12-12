@@ -4,7 +4,7 @@ import { ActivityIndicator, BackHandler, StyleSheet, View } from 'react-native';
 import { useProjection } from '../../context/ProjectionContext';
 import { useTheme } from '../../context/ThemeContext';
 import { onboardingService } from '../../services';
-import ScanBodyScreen from '../projection/scan-body';
+
 import SleepScreen from '../projection/sleep';
 import StatisticsScreen from '../projection/statistics';
 import StepsScreen from '../projection/steps';
@@ -25,14 +25,14 @@ export default function ProjectionsScreen() {
   const findFirstIncompleteStep = async () => {
     try {
       const data = await onboardingService.getProjectionOnboardingData();
-      
+
       if (!data) {
         // No data at all, start from sleep screen
         setCurrentStep(1);
       } else {
         // Load saved data into context
         loadProjectionData(data);
-        
+
         // Check each field and find first incomplete step
         if (!data.sleepHours) {
           setCurrentStep(1); // Sleep
@@ -41,12 +41,7 @@ export default function ProjectionsScreen() {
         } else if (!data.stressLevel) {
           setCurrentStep(3); // Stress
         } else if (!data.frontPhotoUrl || !data.sidePhotoUrl || !data.backPhotoUrl) {
-          // Check if we need scan body screen or upload photos
-          if (!data.frontPhotoUrl && !data.sidePhotoUrl && !data.backPhotoUrl) {
-            setCurrentStep(4); // Scan body (intro to photos)
-          } else {
-            setCurrentStep(5); // Upload photos (some photos missing)
-          }
+          setCurrentStep(4); // Upload photos (photos missing)
         } else {
           // All data complete, show statistics
           setCurrentStep(0); // Statistics
@@ -96,8 +91,6 @@ export default function ProjectionsScreen() {
       case 3:
         return <StressScreen />;
       case 4:
-        return <ScanBodyScreen />;
-      case 5:
         return <UploadPhotosScreen />;
       default:
         return <StatisticsScreen />;

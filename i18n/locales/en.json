@@ -225,8 +225,6 @@
     "supportSection": "Support",
     "appSettings": "App Settings",
     "accountDetails": "Account Details",
-    "notifications": "Notifications",
-    "notificationsSubtitle": "Manage your notification",
     "subscription": "Subscription",
     "subscriptionSubtitle": "Manage your Pro subscription",
     "support": "Support",
@@ -261,12 +259,6 @@
     "homeSubtitle": "Your personalized fitness journey starts here",
     "scan": "Scan",
     "scanSubtitle": "Scan your projections"
-  },
-  "notifications": {
-    "title": "Notifications",
-    "unread": "unread",
-    "markAllRead": "Mark all read",
-    "empty": "No notifications yet"
   },
   "projection": {
     "sleep": {

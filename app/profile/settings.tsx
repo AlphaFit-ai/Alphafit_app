@@ -11,42 +11,10 @@ export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
   const { isDarkMode, toggleTheme, colors } = useTheme();
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const currentLanguage = i18n.language || 'en';
   const languageNames: { [key: string]: string } = { en: 'English', es: 'Español', fr: 'Français' };
-
-  // Load preferences from backend
-  React.useEffect(() => {
-    loadPreferences();
-  }, []);
-
-  const loadPreferences = async () => {
-    try {
-      const profile = await userService.getUserProfile();
-      if (profile.preferences) {
-        setNotificationsEnabled(profile.preferences.notificationsEnabled ?? true);
-      }
-    } catch (error) {
-      console.error('Failed to load preferences:', error);
-    }
-  };
-
-  const handleNotificationToggle = async (value: boolean) => {
-    setNotificationsEnabled(value);
-    
-    // Sync with backend
-    try {
-      await userService.updateUserProfile({
-        preferences: {
-          notificationsEnabled: value
-        }
-      });
-    } catch (error) {
-      console.error('Failed to sync notification settings with backend:', error);
-    }
-  };
 
   const handleLanguageSelect = (language: { code: string; name: string; flag: string }) => {
     Animated.sequence([
@@ -61,7 +29,7 @@ export default function SettingsScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-    
+
     // i18n will handle backend sync automatically via languageChanged event
     i18n.changeLanguage(language.code);
   };
@@ -77,7 +45,7 @@ export default function SettingsScreen() {
               </View>
               <Text style={[styles.settingTitle, { color: colors.text }]}>{t('profile.language')}</Text>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.settingRight}
               onPress={() => setShowLanguageSelector(true)}
               activeOpacity={0.7}
@@ -102,23 +70,6 @@ export default function SettingsScreen() {
             />
           </View>
 
-          <View style={[styles.settingItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.settingLeft}>
-              <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}>
-                <Ionicons name="notifications-outline" size={22} color={colors.icon} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.settingTitle, { color: colors.text }]}>{t('profile.notifications')}</Text>
-                <Text style={[styles.settingSubtitle, { color: colors.textSecondary }]}>{t('profile.notificationsSubtitle')}</Text>
-              </View>
-            </View>
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={handleNotificationToggle}
-              trackColor={{ false: Colors.gray[300], true: Colors.primary }}
-              thumbColor={Colors.white}
-            />
-          </View>
         </Animated.View>
       </ScrollView>
 

@@ -44,7 +44,6 @@ export interface AuthResponse {
 export interface UserPreferences {
   theme?: 'light' | 'dark';
   language?: string;
-  notificationsEnabled?: boolean;
 }
 
 export interface UserProfile {
@@ -67,22 +66,22 @@ export interface UserProfile {
 
 class UserService {
   // Authentication endpoints - All auth handled through Firebase ID tokens
-  
+
   /**
    * Authenticate user with Firebase token
    * Backend will verify the token and create/return user session
    */
   async authenticateUser(firebaseIdToken: string, provider?: 'google' | 'apple' | 'email'): Promise<AuthResponse> {
-    const response = await apiClient.post('/auth/firebase', { 
+    const response = await apiClient.post('/auth/firebase', {
       idToken: firebaseIdToken,
-      provider: provider 
+      provider: provider
     });
-    
+
     if (response.data.token) {
       await AsyncStorage.setItem('authToken', response.data.token);
       await AsyncStorage.setItem('userId', response.data.userId);
     }
-    
+
     return response.data;
   }
 
@@ -100,17 +99,17 @@ class UserService {
    * Prefer using Firebase auth with authenticateUser instead
    */
   async registerWithEmail(email: string, password: string, fullName?: string): Promise<AuthResponse> {
-    const response = await apiClient.post('/auth/register', { 
-      email, 
+    const response = await apiClient.post('/auth/register', {
+      email,
       password,
-      fullName 
+      fullName
     });
-    
+
     if (response.data.token) {
       await AsyncStorage.setItem('authToken', response.data.token);
       await AsyncStorage.setItem('userId', response.data.userId);
     }
-    
+
     return response.data;
   }
 
@@ -119,16 +118,16 @@ class UserService {
    * Prefer using Firebase auth with authenticateUser instead
    */
   async loginWithEmail(email: string, password: string): Promise<AuthResponse> {
-    const response = await apiClient.post('/auth/login', { 
-      email, 
-      password 
+    const response = await apiClient.post('/auth/login', {
+      email,
+      password
     });
-    
+
     if (response.data.token) {
       await AsyncStorage.setItem('authToken', response.data.token);
       await AsyncStorage.setItem('userId', response.data.userId);
     }
-    
+
     return response.data;
   }
 
