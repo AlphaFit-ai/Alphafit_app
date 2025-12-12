@@ -61,9 +61,9 @@ spec:
                                 # Create Docker Config for Kaniko
                                 echo "{\\"auths\\": { \\"https://''' + env.HARBOR_URL + '''\\": { \\"username\\": \\"$HARBOR_USER\\", \\"password\\": \\"$HARBOR_PASS\\" } } }" > /kaniko/.docker/config.json
                                 
-                                # Run Kaniko Executor with full path to app directory
+                                # Run Kaniko Executor with workspace as context
                                 /kaniko/executor \\
-                                  --context ${WORKSPACE}/AlphaFit_app \\
+                                  --context ${WORKSPACE} \\
                                   --dockerfile Dockerfile.web \\
                                   --destination ''' + env.HARBOR_URL + '''/''' + env.PROJECT_NAME + '''/''' + env.IMAGE_NAME + ''':${BUILD_NUMBER} \\
                                   --destination ''' + env.HARBOR_URL + '''/''' + env.PROJECT_NAME + '''/''' + env.IMAGE_NAME + ''':latest \\
