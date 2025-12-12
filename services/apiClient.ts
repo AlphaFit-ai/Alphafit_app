@@ -1,6 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { config } from '../config';
+import { storage } from './storage';
 
 const apiClient = axios.create({
   baseURL: config.API_BASE_URL,
@@ -13,7 +13,7 @@ const apiClient = axios.create({
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   async (config) => {
-    const token = await AsyncStorage.getItem('authToken');
+    const token = await storage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -39,11 +39,11 @@ apiClient.interceptors.response.use(
 
     // Handle specific HTTP status codes
     const status = error.response?.status;
-    
+
     if (status === 401) {
       // Handle unauthorized access - clear auth token silently
-      await AsyncStorage.removeItem('authToken');
-      await AsyncStorage.removeItem('userId');
+      await storage.removeItem('authToken');
+      await storage.removeItem('userId');
     } else if (status === 404) {
       // Resource not found - expected for some optional endpoints
     } else if (status === 500) {
@@ -53,7 +53,7 @@ apiClient.interceptors.response.use(
         console.error('Server error:', errorMessage);
       }
     }
-    
+
     return Promise.reject(error);
   }
 );

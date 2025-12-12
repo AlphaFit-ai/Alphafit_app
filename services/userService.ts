@@ -1,5 +1,5 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from './apiClient';
+import { storage } from './storage';
 
 export interface UserOnboardingData {
   fullName?: string;
@@ -78,8 +78,8 @@ class UserService {
     });
 
     if (response.data.token) {
-      await AsyncStorage.setItem('authToken', response.data.token);
-      await AsyncStorage.setItem('userId', response.data.userId);
+      await storage.setItem('authToken', response.data.token);
+      await storage.setItem('userId', response.data.userId);
     }
 
     return response.data;
@@ -106,8 +106,8 @@ class UserService {
     });
 
     if (response.data.token) {
-      await AsyncStorage.setItem('authToken', response.data.token);
-      await AsyncStorage.setItem('userId', response.data.userId);
+      await storage.setItem('authToken', response.data.token);
+      await storage.setItem('userId', response.data.userId);
     }
 
     return response.data;
@@ -124,8 +124,8 @@ class UserService {
     });
 
     if (response.data.token) {
-      await AsyncStorage.setItem('authToken', response.data.token);
-      await AsyncStorage.setItem('userId', response.data.userId);
+      await storage.setItem('authToken', response.data.token);
+      await storage.setItem('userId', response.data.userId);
     }
 
     return response.data;
@@ -160,13 +160,13 @@ class UserService {
 
   // Logout
   async logout(): Promise<void> {
-    await AsyncStorage.removeItem('authToken');
-    await AsyncStorage.removeItem('userId');
+    await storage.removeItem('authToken');
+    await storage.removeItem('userId');
   }
 
   // Check if user is authenticated
   async isAuthenticated(): Promise<boolean> {
-    const token = await AsyncStorage.getItem('authToken');
+    const token = await storage.getItem('authToken');
     return !!token;
   }
 }
