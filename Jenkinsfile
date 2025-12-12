@@ -75,9 +75,12 @@ spec:
                                 # We use specific quoting to mix Groovy vars (HARBOR_URL) and Shell vars (HARBOR_USER/PASS)
                                 echo "{\\"auths\\": { \\"https://''' + env.HARBOR_URL + '''\\": { \\"username\\": \\"$HARBOR_USER\\", \\"password\\": \\"$HARBOR_PASS\\" } } }" > /kaniko/.docker/config.json
                                 
+                                # Change to app directory
+                                cd AlphaFit_app
+                                
                                 # Run Kaniko Executor
                                 /kaniko/executor \\
-                                  --context `pwd`/AlphaFit_app \\
+                                  --context `pwd` \\
                                   --dockerfile Dockerfile.web \\
                                   --destination ''' + env.HARBOR_URL + '''/''' + env.PROJECT_NAME + '''/''' + env.IMAGE_NAME + ''':${BUILD_NUMBER} \\
                                   --destination ''' + env.HARBOR_URL + '''/''' + env.PROJECT_NAME + '''/''' + env.IMAGE_NAME + ''':latest \\
