@@ -51,19 +51,6 @@ spec:
             }
         }
         
-        stage('Build Web App') {
-            steps {
-                container('node') {
-                    dir('AlphaFit_app') {
-                        sh '''
-                            npm ci
-                            npm run build:web
-                        '''
-                    }
-                }
-            }
-        }
-        
         stage('Build & Push Image') {
             steps {
                 container('kaniko') {
