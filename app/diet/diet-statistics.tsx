@@ -122,7 +122,7 @@ ${userContext || 'Limited user data available.'}
 
 Meal Analysis:
 - Foods: ${foodItems}
-- Total Calories: ${Math.round(totalNutrition.calories)} kcal
+- Total Calories: ${Math.round(totalNutrition.calories)} cal
 - Protein: ${totalNutrition.protein.toFixed(1)}g
 - Carbs: ${totalNutrition.carbs.toFixed(1)}g
 - Fat: ${totalNutrition.fat.toFixed(1)}g

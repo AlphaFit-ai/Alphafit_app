@@ -113,7 +113,7 @@ export default function FoodScanDetails({
                                         <Text style={[styles.nutrientValue, { color: colors.text }]}>
                                             {Math.round(totalNutrition.calories)}
                                         </Text>
-                                        <Text style={[styles.nutrientUnit, { color: colors.textSecondary }]}>kcal</Text>
+                                        <Text style={[styles.nutrientUnit, { color: colors.textSecondary }]}>cal</Text>
                                     </View>
                                 </View>
 

@@ -202,13 +202,13 @@ export default function HomeScreen() {
     {
       name: 'Upper Body Strength',
       duration: '45 min',
-      calories: '320 kcal',
+      calories: '320 cal',
       image: '../../assets/images/home/goal-banner.png',
     },
     {
       name: 'Core & Abs',
       duration: '30 min',
-      calories: '180 kcal',
+      calories: '180 cal',
       image: '../../assets/images/home/goal-banner.png',
     },
   ];
@@ -465,7 +465,7 @@ export default function HomeScreen() {
                       {scan.predictions?.[0]?.foodName || 'Unknown Food'}
                     </Text>
                     <Text style={[styles.recentScanCalories, { color: colors.textSecondary }]}>
-                      {scan.nutritionSummary?.totalCalories || 0} kcal
+                      {scan.nutritionSummary?.totalCalories || 0} cal
                     </Text>
                   </View>
                 </TouchableOpacity>

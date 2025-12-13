@@ -83,187 +83,187 @@ export default function BarcodeResultScreen() {
           headerShadowVisible: false,
         }}
       />
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
 
-      {/* Product Image */}
-      {product.image_url && (
-        <View style={styles.imageContainer}>
-          <Image 
-            source={{ uri: product.image_url }} 
-            style={styles.productImage}
-            resizeMode="contain"
-          />
-        </View>
-      )}
-
-      {/* Nutrition Facts Card */}
-      <View style={[styles.card, { backgroundColor: colors.card }]}>
-        {/* Product Name */}
-        <View style={styles.productNameContainer}>
-          <Text style={[styles.productName, { color: colors.text }]}>
-            {prediction.food}
-          </Text>
-          {prediction.portion_size && prediction.portion_size !== 'N/A' && (
-            <Text style={[styles.portionSize, { color: colors.textSecondary }]}>
-              {prediction.portion_size}
-            </Text>
-          )}
-          {product.source && (
-            <View style={styles.sourceBadge}>
-              <Ionicons name="information-circle-outline" size={14} color={Colors.primary} />
-              <Text style={styles.sourceText}>{product.source}</Text>
-            </View>
-          )}
-        </View>
-
-        <Text style={[styles.cardTitle, { color: colors.text }]}>
-          {t('diet.statistics.nutritionFacts') || 'Nutrition Facts'}
-        </Text>
-        <Text style={[styles.servingSize, { color: colors.textSecondary }]}>
-          Per 100g
-        </Text>
-
-        {/* Calories */}
-        <View style={styles.caloriesContainer}>
-          <View style={styles.caloriesRow}>
-            <Ionicons name="flame" size={32} color={Colors.error} />
-            <View style={styles.caloriesTextContainer}>
-              <Text style={[styles.caloriesValue, { color: colors.text }]}>
-                {Math.round(nutrition.calories)}
-              </Text>
-              <Text style={[styles.caloriesLabel, { color: colors.textSecondary }]}>
-                {t('diet.statistics.caloriesUnit') || 'kcal'}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Macronutrients */}
-        <View style={styles.macrosContainer}>
-          {/* First Row */}
-          <View style={styles.macroRow}>
-            {/* Protein */}
-            <View style={styles.macroItem}>
-              <View style={[styles.macroIconContainer, { backgroundColor: Colors.primary + '20' }]}>
-                <Ionicons name="fitness" size={24} color={Colors.primary} />
-              </View>
-              <Text style={[styles.macroLabel, { color: colors.textSecondary }]}>
-                {t('diet.statistics.protein') || 'Protein'}
-              </Text>
-              <Text style={[styles.macroValue, { color: colors.text }]}>
-                {nutrition.protein.toFixed(1)}g
-              </Text>
-              <View style={styles.macroBar}>
-                <View 
-                  style={[
-                    styles.macroBarFill, 
-                    { 
-                      backgroundColor: Colors.primary,
-                      width: `${Math.min((nutrition.protein / 30) * 100, 100)}%`
-                    }
-                  ]} 
-                />
-              </View>
-            </View>
-
-            {/* Carbs */}
-            <View style={styles.macroItem}>
-              <View style={[styles.macroIconContainer, { backgroundColor: Colors.warning + '20' }]}>
-                <Ionicons name="leaf" size={24} color={Colors.warning} />
-              </View>
-              <Text style={[styles.macroLabel, { color: colors.textSecondary }]}>
-                {t('diet.statistics.carbs') || 'Carbs'}
-              </Text>
-              <Text style={[styles.macroValue, { color: colors.text }]}>
-                {nutrition.carbs.toFixed(1)}g
-              </Text>
-              <View style={styles.macroBar}>
-                <View 
-                  style={[
-                    styles.macroBarFill, 
-                    { 
-                      backgroundColor: Colors.warning,
-                      width: `${Math.min((nutrition.carbs / 50) * 100, 100)}%`
-                    }
-                  ]} 
-                />
-              </View>
-            </View>
-          </View>
-
-          {/* Second Row */}
-          <View style={styles.macroRow}>
-            {/* Fat */}
-            <View style={styles.macroItem}>
-              <View style={[styles.macroIconContainer, { backgroundColor: Colors.info + '20' }]}>
-                <Ionicons name="water" size={24} color={Colors.info} />
-              </View>
-              <Text style={[styles.macroLabel, { color: colors.textSecondary }]}>
-                {t('diet.statistics.fat') || 'Fat'}
-              </Text>
-              <Text style={[styles.macroValue, { color: colors.text }]}>
-                {nutrition.fat.toFixed(1)}g
-              </Text>
-              <View style={styles.macroBar}>
-                <View 
-                  style={[
-                    styles.macroBarFill, 
-                    { 
-                      backgroundColor: Colors.info,
-                      width: `${Math.min((nutrition.fat / 20) * 100, 100)}%`
-                    }
-                  ]} 
-                />
-              </View>
-            </View>
-
-            {/* Empty space for symmetry */}
-            <View style={styles.macroItem} />
-          </View>
-        </View>
-
-        {/* Additional Nutrients */}
-        {(nutrition.fiber > 0 || nutrition.sugar > 0) && (
-          <View style={styles.additionalNutrients}>
-            {nutrition.fiber > 0 && (
-              <View style={styles.nutrientRow}>
-                <Text style={[styles.nutrientLabel, { color: colors.textSecondary }]}>
-                  Fiber
-                </Text>
-                <Text style={[styles.nutrientValue, { color: colors.text }]}>
-                  {nutrition.fiber.toFixed(1)}g
-                </Text>
-              </View>
-            )}
-            {nutrition.sugar > 0 && (
-              <View style={styles.nutrientRow}>
-                <Text style={[styles.nutrientLabel, { color: colors.textSecondary }]}>
-                  Sugar
-                </Text>
-                <Text style={[styles.nutrientValue, { color: colors.text }]}>
-                  {nutrition.sugar.toFixed(1)}g
-                </Text>
-              </View>
-            )}
+        {/* Product Image */}
+        {product.image_url && (
+          <View style={styles.imageContainer}>
+            <Image
+              source={{ uri: product.image_url }}
+              style={styles.productImage}
+              resizeMode="contain"
+            />
           </View>
         )}
-      </View>
 
-      {/* Action Buttons */}
-      <View style={styles.actionButtons}>
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.secondaryButton]}
-          onPress={() => setCurrentStep(4)}
-        >
-          <Ionicons name="scan" size={20} color={Colors.primary} style={{ marginRight: 8 }} />
-          <Text style={[styles.secondaryButtonText]}>
-            {t('diet.statistics.scanAnother') || 'Scan Another'}
+        {/* Nutrition Facts Card */}
+        <View style={[styles.card, { backgroundColor: colors.card }]}>
+          {/* Product Name */}
+          <View style={styles.productNameContainer}>
+            <Text style={[styles.productName, { color: colors.text }]}>
+              {prediction.food}
+            </Text>
+            {prediction.portion_size && prediction.portion_size !== 'N/A' && (
+              <Text style={[styles.portionSize, { color: colors.textSecondary }]}>
+                {prediction.portion_size}
+              </Text>
+            )}
+            {product.source && (
+              <View style={styles.sourceBadge}>
+                <Ionicons name="information-circle-outline" size={14} color={Colors.primary} />
+                <Text style={styles.sourceText}>{product.source}</Text>
+              </View>
+            )}
+          </View>
+
+          <Text style={[styles.cardTitle, { color: colors.text }]}>
+            {t('diet.statistics.nutritionFacts') || 'Nutrition Facts'}
           </Text>
-        </TouchableOpacity>
-      </View>
+          <Text style={[styles.servingSize, { color: colors.textSecondary }]}>
+            Per 100g
+          </Text>
+
+          {/* Calories */}
+          <View style={styles.caloriesContainer}>
+            <View style={styles.caloriesRow}>
+              <Ionicons name="flame" size={32} color={Colors.error} />
+              <View style={styles.caloriesTextContainer}>
+                <Text style={[styles.caloriesValue, { color: colors.text }]}>
+                  {Math.round(nutrition.calories)}
+                </Text>
+                <Text style={[styles.caloriesLabel, { color: colors.textSecondary }]}>
+                  {t('diet.statistics.caloriesUnit') || 'cal'}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Macronutrients */}
+          <View style={styles.macrosContainer}>
+            {/* First Row */}
+            <View style={styles.macroRow}>
+              {/* Protein */}
+              <View style={styles.macroItem}>
+                <View style={[styles.macroIconContainer, { backgroundColor: Colors.primary + '20' }]}>
+                  <Ionicons name="fitness" size={24} color={Colors.primary} />
+                </View>
+                <Text style={[styles.macroLabel, { color: colors.textSecondary }]}>
+                  {t('diet.statistics.protein') || 'Protein'}
+                </Text>
+                <Text style={[styles.macroValue, { color: colors.text }]}>
+                  {nutrition.protein.toFixed(1)}g
+                </Text>
+                <View style={styles.macroBar}>
+                  <View
+                    style={[
+                      styles.macroBarFill,
+                      {
+                        backgroundColor: Colors.primary,
+                        width: `${Math.min((nutrition.protein / 30) * 100, 100)}%`
+                      }
+                    ]}
+                  />
+                </View>
+              </View>
+
+              {/* Carbs */}
+              <View style={styles.macroItem}>
+                <View style={[styles.macroIconContainer, { backgroundColor: Colors.warning + '20' }]}>
+                  <Ionicons name="leaf" size={24} color={Colors.warning} />
+                </View>
+                <Text style={[styles.macroLabel, { color: colors.textSecondary }]}>
+                  {t('diet.statistics.carbs') || 'Carbs'}
+                </Text>
+                <Text style={[styles.macroValue, { color: colors.text }]}>
+                  {nutrition.carbs.toFixed(1)}g
+                </Text>
+                <View style={styles.macroBar}>
+                  <View
+                    style={[
+                      styles.macroBarFill,
+                      {
+                        backgroundColor: Colors.warning,
+                        width: `${Math.min((nutrition.carbs / 50) * 100, 100)}%`
+                      }
+                    ]}
+                  />
+                </View>
+              </View>
+            </View>
+
+            {/* Second Row */}
+            <View style={styles.macroRow}>
+              {/* Fat */}
+              <View style={styles.macroItem}>
+                <View style={[styles.macroIconContainer, { backgroundColor: Colors.info + '20' }]}>
+                  <Ionicons name="water" size={24} color={Colors.info} />
+                </View>
+                <Text style={[styles.macroLabel, { color: colors.textSecondary }]}>
+                  {t('diet.statistics.fat') || 'Fat'}
+                </Text>
+                <Text style={[styles.macroValue, { color: colors.text }]}>
+                  {nutrition.fat.toFixed(1)}g
+                </Text>
+                <View style={styles.macroBar}>
+                  <View
+                    style={[
+                      styles.macroBarFill,
+                      {
+                        backgroundColor: Colors.info,
+                        width: `${Math.min((nutrition.fat / 20) * 100, 100)}%`
+                      }
+                    ]}
+                  />
+                </View>
+              </View>
+
+              {/* Empty space for symmetry */}
+              <View style={styles.macroItem} />
+            </View>
+          </View>
+
+          {/* Additional Nutrients */}
+          {(nutrition.fiber > 0 || nutrition.sugar > 0) && (
+            <View style={styles.additionalNutrients}>
+              {nutrition.fiber > 0 && (
+                <View style={styles.nutrientRow}>
+                  <Text style={[styles.nutrientLabel, { color: colors.textSecondary }]}>
+                    Fiber
+                  </Text>
+                  <Text style={[styles.nutrientValue, { color: colors.text }]}>
+                    {nutrition.fiber.toFixed(1)}g
+                  </Text>
+                </View>
+              )}
+              {nutrition.sugar > 0 && (
+                <View style={styles.nutrientRow}>
+                  <Text style={[styles.nutrientLabel, { color: colors.textSecondary }]}>
+                    Sugar
+                  </Text>
+                  <Text style={[styles.nutrientValue, { color: colors.text }]}>
+                    {nutrition.sugar.toFixed(1)}g
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+        </View>
+
+        {/* Action Buttons */}
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.secondaryButton]}
+            onPress={() => setCurrentStep(4)}
+          >
+            <Ionicons name="scan" size={20} color={Colors.primary} style={{ marginRight: 8 }} />
+            <Text style={[styles.secondaryButtonText]}>
+              {t('diet.statistics.scanAnother') || 'Scan Another'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

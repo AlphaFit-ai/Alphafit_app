@@ -108,7 +108,7 @@ export default function HistoryScreen() {
                         <View style={styles.statBadge}>
                             <Ionicons name="flame" size={14} color={Colors.primary} />
                             <Text style={[styles.statText, { color: colors.text }]}>
-                                {Math.round(calories)} kcal
+                                {Math.round(calories)} cal
                             </Text>
                         </View>
 
