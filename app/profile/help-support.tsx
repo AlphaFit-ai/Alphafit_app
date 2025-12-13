@@ -21,29 +21,47 @@ export default function HelpSupportScreen() {
   const sections: SupportSection[] = [
     {
       icon: 'help-circle-outline',
-      title: t('profile.support', 'Support'),
-      content: 'Need help? Our support team is here for you 24/7. Contact us for any questions, technical issues, or feedback about the app.',
+      title: t('profile.faq', 'FAQ'),
+      content: 'Find answers to common questions about AlphaFit AI, features, and subscriptions.',
       action: {
-        label: 'Contact Support',
-        onPress: () => Linking.openURL('mailto:support@alphafitai.com'),
+        label: 'View FAQ',
+        onPress: () => Linking.openURL('https://alphafit-ai.com/faq.html'),
+      },
+    },
+    {
+      icon: 'mail-outline',
+      title: t('profile.contact', 'Contact Support'),
+      content: 'Need assistance? Reach out to our support team for help with your account or technical issues.',
+      action: {
+        label: 'Contact Us',
+        onPress: () => Linking.openURL('https://alphafit-ai.com/contact.html'),
       },
     },
     {
       icon: 'shield-checkmark-outline',
       title: t('profile.privacyPolicy', 'Privacy Policy'),
-      content: 'We take your privacy seriously. Your personal data is encrypted and securely stored. We never share your information with third parties without your consent. Your fitness data, photos, and progress are kept confidential and used only to improve your experience.',
+      content: 'Read about how we protect your personal information and data security.',
       action: {
-        label: 'Read Full Policy',
-        onPress: () => Linking.openURL('https://alphafitai.com/privacy'),
+        label: 'Read Policy',
+        onPress: () => Linking.openURL('https://alphafit-ai.com/privacy-policy.html'),
       },
     },
     {
       icon: 'document-text-outline',
       title: t('profile.termsOfService', 'Terms of Service'),
-      content: 'By using AlphaFit AI, you agree to our terms of service. This includes proper use of the app, subscription terms, and community guidelines. We reserve the right to update these terms as needed to improve our service.',
+      content: 'Review the terms and conditions for using the AlphaFit AI platform.',
       action: {
-        label: 'Read Full Terms',
-        onPress: () => Linking.openURL('https://alphafitai.com/terms'),
+        label: 'Read Terms',
+        onPress: () => Linking.openURL('https://alphafit-ai.com/terms-of-service.html'),
+      },
+    },
+    {
+      icon: 'trash-outline',
+      title: t('profile.deleteAccount', 'Delete Account'),
+      content: 'Learn about the process for permanently deleting your account and data.',
+      action: {
+        label: 'Delete Info',
+        onPress: () => Linking.openURL('https://alphafit-ai.com/delete-account.html'),
       },
     },
   ];
@@ -107,7 +125,7 @@ export default function HelpSupportScreen() {
               Still need help?
             </Text>
             <Text style={[styles.contactSubtitle, { color: colors.textSecondary }]}>
-              support@alphafitai.com
+              support@alphafit-ai.com
             </Text>
           </View>
 
