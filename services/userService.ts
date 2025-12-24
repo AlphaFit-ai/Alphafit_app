@@ -69,7 +69,6 @@ class UserService {
 
   /**
    * Authenticate user with Firebase token
-   * Backend will verify the token and create/return user session
    */
   async authenticateUser(firebaseIdToken: string, provider?: 'google' | 'apple' | 'email'): Promise<AuthResponse> {
     const response = await apiClient.post('/auth/firebase', {

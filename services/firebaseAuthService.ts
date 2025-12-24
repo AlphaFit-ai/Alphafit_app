@@ -114,7 +114,7 @@ class FirebaseAuthService {
   }
 
   /**
-   * Sign in with Google using ID token from expo-auth-session (legacy)
+   * Sign in with Google using ID token
    */
   async signInWithGoogleCredential(idToken: string): Promise<AuthResult> {
     try {

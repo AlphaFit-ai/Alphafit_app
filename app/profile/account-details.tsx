@@ -132,7 +132,7 @@ export default function AccountDetailsScreen() {
       const is401 = error?.response?.status === 401;
 
       if (is404 || is401) {
-        // User doesn't exist or session expired - sign out and redirect to login
+        // User doesn't exist or token expired - sign out and redirect to login
         await firebaseAuthService.signOut();
         router.replace('/onboarding/login');
       } else {
