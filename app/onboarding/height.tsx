@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NativeScrollEvent, NativeSyntheticEvent, Platform, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { Button, ProgressBar } from '../../components';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useOnboarding } from '../../context/OnboardingContext';
@@ -15,7 +15,7 @@ export default function HeightScreen() {
   const { updateOnboardingData, setCurrentStep } = useOnboarding();
   const { colors, isDarkMode } = useTheme();
   const { navigateAfterUpdate, isUpdatingFromProfile } = useProfileUpdateNavigation();
-  
+
   const [isMetric, setIsMetric] = useState(true);
   const [selectedFeet, setSelectedFeet] = useState(5);
   const [selectedInches, setSelectedInches] = useState(7);
@@ -49,13 +49,6 @@ export default function HeightScreen() {
     const index = Math.round(yOffset / ITEM_HEIGHT);
     const newCm = Math.max(60, Math.min(250, index + 60));
     setSelectedCm(newCm);
-    
-    // Snap to position on web
-    if (Platform.OS === 'web') {
-      setTimeout(() => {
-        cmScrollRef.current?.scrollTo({ y: (newCm - 60) * ITEM_HEIGHT, animated: true });
-      }, 50);
-    }
   };
 
   const handleFeetScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -63,13 +56,6 @@ export default function HeightScreen() {
     const index = Math.round(yOffset / ITEM_HEIGHT);
     const newFeet = Math.max(2, Math.min(8, index + 2));
     setSelectedFeet(newFeet);
-    
-    // Snap to position on web
-    if (Platform.OS === 'web') {
-      setTimeout(() => {
-        feetScrollRef.current?.scrollTo({ y: (newFeet - 2) * ITEM_HEIGHT, animated: true });
-      }, 50);
-    }
   };
 
   const handleInchesScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -77,13 +63,6 @@ export default function HeightScreen() {
     const index = Math.round(yOffset / ITEM_HEIGHT);
     const newInches = Math.max(0, Math.min(11, index));
     setSelectedInches(newInches);
-    
-    // Snap to position on web
-    if (Platform.OS === 'web') {
-      setTimeout(() => {
-        inchesScrollRef.current?.scrollTo({ y: newInches * ITEM_HEIGHT, animated: true });
-      }, 50);
-    }
   };
 
   const handleWeightScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -92,23 +71,9 @@ export default function HeightScreen() {
     if (isMetric) {
       const newKg = Math.max(30, Math.min(200, index + 30));
       setSelectedKg(newKg);
-      
-      // Snap to position on web
-      if (Platform.OS === 'web') {
-        setTimeout(() => {
-          weightScrollRef.current?.scrollTo({ y: (newKg - 30) * ITEM_HEIGHT, animated: true });
-        }, 50);
-      }
     } else {
       const newLbs = Math.max(60, Math.min(440, index + 60));
       setSelectedLbs(newLbs);
-      
-      // Snap to position on web
-      if (Platform.OS === 'web') {
-        setTimeout(() => {
-          weightScrollRef.current?.scrollTo({ y: (newLbs - 60) * ITEM_HEIGHT, animated: true });
-        }, 50);
-      }
     }
   };
 
@@ -116,7 +81,7 @@ export default function HeightScreen() {
     const heightData = isMetric
       ? { value: selectedCm, unit: 'metric' as const, cm: selectedCm }
       : { value: selectedFeet * 12 + selectedInches, unit: 'imperial' as const, feet: selectedFeet, inches: selectedInches };
-    
+
     const weightData = isMetric
       ? { value: selectedKg, unit: 'metric' as const, kg: selectedKg }
       : { value: selectedLbs, unit: 'imperial' as const, lbs: selectedLbs };
@@ -125,18 +90,18 @@ export default function HeightScreen() {
       height: heightData,
       weight: weightData,
     });
-    
+
     if (!isUpdatingFromProfile) {
       setCurrentStep(4);
     }
-    
+
     // Save to backend in real-time
     try {
       await onboardingService.saveOnboardingData({
         height: heightData,
         weight: weightData,
       });
-      
+
       // Navigate based on context
       if (isUpdatingFromProfile) {
         navigateAfterUpdate();
@@ -152,7 +117,9 @@ export default function HeightScreen() {
         router.push('/onboarding/fitness-level');
       }
     }
-  };  return (
+  };
+
+  return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <ProgressBar currentStep={4} totalSteps={10} />
@@ -184,11 +151,10 @@ export default function HeightScreen() {
                     style={styles.scrollView}
                     contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * 2 }}
                     showsVerticalScrollIndicator={false}
-                    snapToInterval={Platform.OS === 'web' ? undefined : ITEM_HEIGHT}
+                    snapToInterval={ITEM_HEIGHT}
                     decelerationRate="fast"
                     onMomentumScrollEnd={handleCmScroll}
                     onScrollEndDrag={handleCmScroll}
-                    {...(Platform.OS === 'web' && { onScroll: handleCmScroll, scrollEventThrottle: 16 })}
                   >
                     {Array.from({ length: 191 }, (_, i) => i + 60).map((cm) => (
                       <View key={cm} style={[styles.dateOption, { height: ITEM_HEIGHT }]}>
@@ -212,11 +178,10 @@ export default function HeightScreen() {
                       style={styles.scrollView}
                       contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * 2 }}
                       showsVerticalScrollIndicator={false}
-                      snapToInterval={Platform.OS === 'web' ? undefined : ITEM_HEIGHT}
+                      snapToInterval={ITEM_HEIGHT}
                       decelerationRate="fast"
                       onMomentumScrollEnd={handleFeetScroll}
                       onScrollEndDrag={handleFeetScroll}
-                      {...(Platform.OS === 'web' && { onScroll: handleFeetScroll, scrollEventThrottle: 16 })}
                     >
                       {Array.from({ length: 7 }, (_, i) => i + 2).map((ft) => (
                         <View key={ft} style={[styles.dateOption, { height: ITEM_HEIGHT }]}>
@@ -238,11 +203,10 @@ export default function HeightScreen() {
                       style={styles.scrollView}
                       contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * 2 }}
                       showsVerticalScrollIndicator={false}
-                      snapToInterval={Platform.OS === 'web' ? undefined : ITEM_HEIGHT}
+                      snapToInterval={ITEM_HEIGHT}
                       decelerationRate="fast"
                       onMomentumScrollEnd={handleInchesScroll}
                       onScrollEndDrag={handleInchesScroll}
-                      {...(Platform.OS === 'web' && { onScroll: handleInchesScroll, scrollEventThrottle: 16 })}
                     >
                       {Array.from({ length: 12 }, (_, i) => i).map((inch) => (
                         <View key={inch} style={[styles.dateOption, { height: ITEM_HEIGHT }]}>
@@ -271,11 +235,10 @@ export default function HeightScreen() {
                 style={styles.scrollView}
                 contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * 2 }}
                 showsVerticalScrollIndicator={false}
-                snapToInterval={Platform.OS === 'web' ? undefined : ITEM_HEIGHT}
+                snapToInterval={ITEM_HEIGHT}
                 decelerationRate="fast"
                 onMomentumScrollEnd={handleWeightScroll}
                 onScrollEndDrag={handleWeightScroll}
-                {...(Platform.OS === 'web' && { onScroll: handleWeightScroll, scrollEventThrottle: 16 })}
               >
                 {Array.from({ length: isMetric ? 171 : 381 }, (_, i) => i + (isMetric ? 30 : 60)).map((weight) => (
                   <View key={weight} style={[styles.dateOption, { height: ITEM_HEIGHT }]}>
@@ -366,11 +329,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.gray[100],
     borderRadius: Spacing.radius.md,
     overflow: 'hidden',
-    ...(Platform.OS === 'web' && {
-      // Add explicit dimensions for web
-      minHeight: 250,
-      maxHeight: 250,
-    }),
   },
   highlightBar: {
     position: 'absolute',
@@ -387,11 +345,6 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    ...(Platform.OS === 'web' && {
-      // Fix scroll behavior on web
-      height: '100%',
-      overflowY: 'scroll' as any,
-    }),
   },
   dateOption: {
     justifyContent: 'center',

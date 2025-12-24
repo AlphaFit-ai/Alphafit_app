@@ -15,7 +15,7 @@ interface SuccessModalProps {
 
 const SuccessModal = ({ visible, onClose }: SuccessModalProps) => {
   const { t } = useTranslation();
-  
+
   return (
     <Modal
       visible={visible}
@@ -47,7 +47,7 @@ export default function AccountDetailsScreen() {
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  
+
   const [isMetric, setIsMetric] = useState(true);
   const [selectedFeet, setSelectedFeet] = useState(5);
   const [selectedInches, setSelectedInches] = useState(7);
@@ -83,11 +83,11 @@ export default function AccountDetailsScreen() {
     try {
       setIsLoading(true);
       const profile = await userService.getUserProfile();
-      
+
       // Set basic info
       setName(profile.fullName || '');
       setEmail(profile.email || '');
-      
+
       // Set phone number
       if (profile.phoneNumber) {
         // Remove any non-digit characters and format
@@ -104,7 +104,7 @@ export default function AccountDetailsScreen() {
           setPhone(formatPhoneNumber(cleanPhone));
         }
       }
-      
+
       // Set height from onboardingData
       const heightData = profile.onboardingData?.height;
       if (heightData) {
@@ -117,7 +117,7 @@ export default function AccountDetailsScreen() {
           setSelectedInches(heightData.inches);
         }
       }
-      
+
       // Set weight from onboardingData
       const weightData = profile.onboardingData?.weight;
       if (weightData) {
@@ -130,7 +130,7 @@ export default function AccountDetailsScreen() {
     } catch (error: any) {
       const is404 = error?.response?.status === 404;
       const is401 = error?.response?.status === 401;
-      
+
       if (is404 || is401) {
         // User doesn't exist or session expired - sign out and redirect to login
         await firebaseAuthService.signOut();
@@ -218,10 +218,10 @@ export default function AccountDetailsScreen() {
     if (!validateEmail(email)) {
       return;
     }
-    
+
     try {
       setIsSaving(true);
-      
+
       // Prepare height data
       const heightData = isMetric ? {
         value: selectedCm,
@@ -233,7 +233,7 @@ export default function AccountDetailsScreen() {
         feet: selectedFeet,
         inches: selectedInches
       };
-      
+
       // Prepare weight data
       const weightData = isMetric ? {
         value: selectedKg,
@@ -244,7 +244,7 @@ export default function AccountDetailsScreen() {
         unit: 'imperial' as const,
         lbs: selectedLbs
       };
-      
+
       // Prepare update data with onboardingData structure
       const updateData: Partial<UserProfile> = {
         fullName: name,
@@ -255,7 +255,7 @@ export default function AccountDetailsScreen() {
           weight: weightData
         }
       }
-      
+
       await userService.updateUserProfile(updateData);
       setShowSuccessModal(true);
     } catch (error) {
@@ -280,7 +280,7 @@ export default function AccountDetailsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -318,7 +318,7 @@ export default function AccountDetailsScreen() {
           <View style={styles.formSection}>
             <Text style={[styles.label, { color: colors.text }]}>{t('profile.accountDetailsForm.phoneNumber')}</Text>
             <View style={styles.phoneContainer}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.countryCodeContainer, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}
                 activeOpacity={0.7}
               >
@@ -364,7 +364,7 @@ export default function AccountDetailsScreen() {
                       style={styles.pickerScrollView}
                       contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * 2 }}
                       showsVerticalScrollIndicator={false}
-                      snapToInterval={Platform.OS === 'web' ? undefined : ITEM_HEIGHT}
+                      snapToInterval={ITEM_HEIGHT}
                       decelerationRate="fast"
                       onMomentumScrollEnd={handleCmScroll}
                       onScrollEndDrag={handleCmScroll}
@@ -391,7 +391,7 @@ export default function AccountDetailsScreen() {
                         style={styles.pickerScrollView}
                         contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * 2 }}
                         showsVerticalScrollIndicator={false}
-                        snapToInterval={Platform.OS === 'web' ? undefined : ITEM_HEIGHT}
+                        snapToInterval={ITEM_HEIGHT}
                         decelerationRate="fast"
                         onMomentumScrollEnd={handleFeetScroll}
                         onScrollEndDrag={handleFeetScroll}
@@ -417,7 +417,7 @@ export default function AccountDetailsScreen() {
                         style={styles.pickerScrollView}
                         contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * 2 }}
                         showsVerticalScrollIndicator={false}
-                        snapToInterval={Platform.OS === 'web' ? undefined : ITEM_HEIGHT}
+                        snapToInterval={ITEM_HEIGHT}
                         decelerationRate="fast"
                         onMomentumScrollEnd={handleInchesScroll}
                         onScrollEndDrag={handleInchesScroll}
@@ -450,7 +450,7 @@ export default function AccountDetailsScreen() {
                     style={styles.pickerScrollView}
                     contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * 2 }}
                     showsVerticalScrollIndicator={false}
-                    snapToInterval={Platform.OS === 'web' ? undefined : ITEM_HEIGHT}
+                    snapToInterval={ITEM_HEIGHT}
                     decelerationRate="fast"
                     onMomentumScrollEnd={handleWeightScroll}
                     onScrollEndDrag={handleWeightScroll}
@@ -458,25 +458,25 @@ export default function AccountDetailsScreen() {
                   >
                     {isMetric
                       ? Array.from({ length: 171 }, (_, i) => i + 30).map((kg) => (
-                          <View key={kg} style={[styles.dateOption, { height: ITEM_HEIGHT }]}>
-                            <Text style={[
-                              styles.dateText,
-                              kg === selectedKg && styles.dateTextSelected
-                            ]}>
-                              {kg} kg
-                            </Text>
-                          </View>
-                        ))
+                        <View key={kg} style={[styles.dateOption, { height: ITEM_HEIGHT }]}>
+                          <Text style={[
+                            styles.dateText,
+                            kg === selectedKg && styles.dateTextSelected
+                          ]}>
+                            {kg} kg
+                          </Text>
+                        </View>
+                      ))
                       : Array.from({ length: 381 }, (_, i) => i + 60).map((lbs) => (
-                          <View key={lbs} style={[styles.dateOption, { height: ITEM_HEIGHT }]}>
-                            <Text style={[
-                              styles.dateText,
-                              lbs === selectedLbs && styles.dateTextSelected
-                            ]}>
-                              {lbs} lbs
-                            </Text>
-                          </View>
-                        ))
+                        <View key={lbs} style={[styles.dateOption, { height: ITEM_HEIGHT }]}>
+                          <Text style={[
+                            styles.dateText,
+                            lbs === selectedLbs && styles.dateTextSelected
+                          ]}>
+                            {lbs} lbs
+                          </Text>
+                        </View>
+                      ))
                     }
                   </ScrollView>
                 </View>
@@ -487,7 +487,7 @@ export default function AccountDetailsScreen() {
       </ScrollView>
 
       <View style={SharedStyles.footerFloating}>
-        <Button 
+        <Button
           title={isSaving ? t('profile.accountDetailsForm.saving', 'Saving...') : t('profile.accountDetailsForm.saveChanges')}
           onPress={handleSave}
           disabled={!validateEmail(email) || !name.trim() || isSaving}

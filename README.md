@@ -72,19 +72,13 @@ context/      # State management
 constants/    # App constants
 ```
 
-## Tech Stack
+### Tech Stack
 
 - React Native (Expo)
 - TypeScript
 - Firebase SDK
 - Axios
 - Context API
-
-### DevOps
-- **Azure** - Cloud hosting
-- **GitLab** - Version control
-- **Jenkins** - CI/CD
-- **Kubernetes** - Container orchestration
 
 ---
 
@@ -442,7 +436,4 @@ This project is proprietary and confidential. All rights reserved.
 <div align="center">
 
 **Built with ❤️ by the Forge AI Team**
-
-[Website](https://forgeai.com) · [Documentation](./docs) · [API Docs](./API_DOCUMENTATION.md)
-
 </div>

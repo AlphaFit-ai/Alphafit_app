@@ -10,27 +10,6 @@ interface GradientTextProps {
 }
 
 export const GradientText: React.FC<GradientTextProps> = ({ text, style }) => {
-  // Use CSS gradient for web
-  if (Platform.OS === 'web') {
-    return (
-      <Text
-        style={[
-          styles.text,
-          style,
-          {
-            // @ts-ignore - Web-specific CSS properties
-            backgroundImage: `linear-gradient(90deg, ${Colors.primary} 0%, ${Colors.secondary} 100%)`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-          },
-        ]}
-      >
-        {text}
-      </Text>
-    );
-  }
-
   // Use MaskedView for native
   return (
     <MaskedView

@@ -1,7 +1,6 @@
 // Configuration for AlphaFit AI App
 export const config = {
   // Backend API Configuration
-  // Production API URL
   API_BASE_URL: 'https://api.alphafit-ai.com',
   API_TIMEOUT: 30000,
 

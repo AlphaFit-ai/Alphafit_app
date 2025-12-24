@@ -1,15 +1,13 @@
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Platform, StyleSheet, View } from 'react-native';
 import { Fonts } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
 
 function ProfileStack() {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const isWeb = Platform.OS === 'web';
 
-  const stackContent = (
+  return (
     <Stack
       screenOptions={{
         headerStyle: {
@@ -67,36 +65,8 @@ function ProfileStack() {
       />
     </Stack>
   );
-
-  if (isWeb) {
-    return (
-      <View style={[styles.webContainer, { backgroundColor: colors.background }]}>
-        <View style={styles.webContentWrapper}>
-          {stackContent}
-        </View>
-      </View>
-    );
-  }
-
-  return stackContent;
 }
 
 export default function ProfileLayout() {
   return <ProfileStack />;
 }
-
-const styles = StyleSheet.create({
-  webContainer: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  webContentWrapper: {
-    width: '100%',
-    maxWidth: 800,
-    height: '100%',
-    overflow: 'hidden',
-  },
-});
