@@ -34,16 +34,19 @@ export default function SplashScreen() {
   const scaleAnim = new Animated.Value(0.8);
 
   useEffect(() => {
-    // Animate logo
+    // Animate logo and check auth concurrently
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 1000,
+        // Faster animation for a snappier feel
+        duration: 800,
         useNativeDriver: true,
       }),
       Animated.spring(scaleAnim, {
         toValue: 1,
-        friction: 4,
+        // Slightly bouncier for a "pop" effect but faster
+        friction: 5,
+        tension: 40,
         useNativeDriver: true,
       }),
     ]).start();
@@ -111,12 +114,10 @@ export default function SplashScreen() {
       }
     };
 
-    // Wait for animation then check auth
-    const timer = setTimeout(() => {
-      checkAuthAndNavigate();
-    }, 2500);
+    // Execute check immediately
+    checkAuthAndNavigate();
 
-    return () => clearTimeout(timer);
+    return () => {};
   }, []);
 
   return (
