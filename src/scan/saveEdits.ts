@@ -11,15 +11,21 @@ export type SaveOutcome =
   | { kind: 'unsupported' }
   /** 409 twice (the scan changed, or this portion cannot be rescaled). */
   | { kind: 'conflict' }
+  /** 409 for a picked alternative the api cannot apply (no nutrition stored for it): rename instead. */
+  | { kind: 'alternativeUnavailable' }
   /** 400: the api refused a value (grams outside 1 to 5000, an unknown item). */
   | { kind: 'rejected' }
   /** Offline, timeout, server error. */
   | { kind: 'failed'; reason: 'offline' | 'timeout' | 'server' }
   | { kind: 'cancelled' };
 
+/** The api's 409 for an alternative it cannot apply (CONTRACTS 3.7) names the alternative. */
+const ALTERNATIVE_REFUSED = /alternative/i;
+
 /**
  * `PATCH /food-scans/{id}` with the one retry the contract asks for: a 409 means the scan changed
- * under us, so it is fetched again and the same correction is sent once more. A 401 never reaches
+ * under us, so it is fetched again and the same correction is sent once more. A 409 that refuses a
+ * picked alternative is not retried: the screen offers to rename the item instead. A 401 never reaches
  * here (the api client renews the token or signs out).
  */
 export async function saveScanEdits(
@@ -27,13 +33,16 @@ export async function saveScanEdits(
   body: ScanEditBody,
   signal?: AbortSignal
 ): Promise<SaveOutcome> {
+  const picksAlternative = (body.items ?? []).some((item) => item.alternativeClassId !== undefined);
   const attempt = async (): Promise<SaveOutcome | 'retry'> => {
     try {
       return { kind: 'saved', scan: await foodScanService.updateFoodScan(scanId, body, signal) };
     } catch (error) {
-      const { kind, status } = normalizeApiError(error);
+      const { kind, status, message } = normalizeApiError(error);
       if (kind === 'cancelled') return { kind: 'cancelled' };
       if (status === 404) return { kind: 'unsupported' };
+      if (status === 409 && picksAlternative && ALTERNATIVE_REFUSED.test(message))
+        return { kind: 'alternativeUnavailable' };
       if (status === 409) return 'retry';
       if (status === 400) return { kind: 'rejected' };
       return {
@@ -51,7 +60,9 @@ export async function saveScanEdits(
     return { kind: 'conflict' };
   }
   const second = await attempt();
-  return second === 'retry' ? { kind: 'conflict' } : second;
+  if (second !== 'retry') return second;
+  // Still 409 with an alternative in the request: that alternative is what the api refuses.
+  return picksAlternative ? { kind: 'alternativeUnavailable' } : { kind: 'conflict' };
 }
 
 /**

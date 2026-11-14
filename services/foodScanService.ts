@@ -18,7 +18,19 @@ export interface FoodPrediction {
   nutrition: NutritionInfo;
   /** Weight of the portion the nutrition is for (CONTRACTS 3.6); omitted when the scan has none. */
   portionWeightG?: number;
-  alternatives?: { foodName: string; confidence?: number }[];
+  /** This item asks to be checked (CONTRACTS 3.7); omitted when false. */
+  needsConfirmation?: boolean;
+  /**
+   * Other foods it could be. With `classId` and `nutrition` the api can switch the item to one in one
+   * step (`alternativeClassId`); without them it is a name only.
+   */
+  alternatives?: {
+    foodName: string;
+    confidence?: number;
+    classId?: number;
+    portionWeightG?: number;
+    nutrition?: NutritionInfo;
+  }[];
   // Computed properties for backward compatibility
   food?: string;
   calories?: number;
@@ -45,18 +57,23 @@ export interface FoodScanDto {
   createdAt: string;
   completedAt?: string;
   errorMessage?: string;
-  /** The scan asks the user to check it (CONTRACTS 3.6); omitted when false. */
+  /** Some item asks the user to check it (CONTRACTS 3.6, 3.7); omitted when false. */
   needsConfirmation?: boolean;
+  /** Names only: the alternatives of the first item that needs confirmation (older builds read them). */
+  alternatives?: { foodName: string; confidence?: number }[];
   /** The user corrected portions or names. */
   userEdited?: boolean;
 }
 
-/** One corrected item of `PATCH /food-scans/{id}`. */
+/** One corrected item of `PATCH /food-scans/{id}` (CONTRACTS 3.7): at least one optional field. */
 export interface ScanEditItem {
+  /** The item's class id in the scan as it is now. */
   classId: number;
-  /** 1 to 5000. */
-  grams: number;
+  /** 1 to 5000. With `alternativeClassId`, the new portion of that alternative. */
+  grams?: number;
   foodName?: string;
+  /** One of this item's alternatives (with class id and nutrition): the item becomes that food. */
+  alternativeClassId?: number;
 }
 
 export interface ScanEditBody {

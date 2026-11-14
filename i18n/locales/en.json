@@ -414,6 +414,9 @@
   },
   "tabs": {
     "home": "Home",
+    "scanFood": "Scan food",
+    "scanHint": "Opens the food scan",
+    "projections": "Projections",
     "scan": "Scan",
     "workouts": "Workouts",
     "diet": "Diet",
@@ -698,6 +701,14 @@
     "stepOf": "Step {{current}} of {{total}}"
   },
   "scan": {
+    "useAlternative": "Change to {{name}}, {{calories}} cal",
+    "renameTo": "Rename to {{name}}",
+    "renameOnlyNote": "A suggestion without calories only renames the item: its numbers stay as scanned.",
+    "renameOnly": "Rename only",
+    "altUnavailableTitle": "No nutrition data for {{name}}",
+    "altUnavailableMessage": "This choice cannot change the numbers. Rename the item instead (its calories stay as scanned), or scan the meal again.",
+    "altRejected": "That choice is no longer offered for this item. Nothing was changed.",
+    "confirmItemsMessage": "We are not sure about the items marked below. Pick the right food, or tap Looks right if they are correct.",
     "edit": "Edit portions",
     "editDone": "Done",
     "fixIt": "Something look off? Fix it",

@@ -90,6 +90,26 @@ export interface SignInResult {
 }
 
 /**
+ * What every sign-in does once an api token is stored: read the user's onboarding answers, decide
+ * where they continue, and put the answers (and the profile, when the sign-in returned one) into the
+ * query cache. Throws when the request fails; a failure is never treated as "no onboarding data".
+ */
+export async function resumeAfterSignIn(profile?: UserProfile): Promise<SignInResult> {
+  const data = await onboardingService.getOnboardingData();
+  const outcome = resolveOnboardingResume({ data });
+  if (outcome.kind !== 'route') throw new Error('Unexpected resume outcome');
+  queryClient.setQueryData(queryKeys.onboarding, data);
+  if (profile) queryClient.setQueryData(queryKeys.profile, profile);
+  return {
+    data,
+    route: outcome.route,
+    step: outcome.step,
+    complete: outcome.complete,
+    profile,
+  };
+}
+
+/**
  * Finish a sign-in (Google, Apple, email or a new registration): exchange the Firebase ID token for
  * an api token, then read the user's onboarding answers to decide where they continue. The answers
  * and the profile go into the query cache.
@@ -102,16 +122,5 @@ export async function completeSignIn(
   provider: AuthProviderName
 ): Promise<SignInResult> {
   const auth = await userService.authenticateUser(idToken, provider);
-  const data = await onboardingService.getOnboardingData();
-  const outcome = resolveOnboardingResume({ data });
-  if (outcome.kind !== 'route') throw new Error('Unexpected resume outcome');
-  queryClient.setQueryData(queryKeys.onboarding, data);
-  if (auth.user) queryClient.setQueryData(queryKeys.profile, auth.user);
-  return {
-    data,
-    route: outcome.route,
-    step: outcome.step,
-    complete: outcome.complete,
-    profile: auth.user,
-  };
+  return resumeAfterSignIn(auth.user);
 }

@@ -22,6 +22,14 @@ import { StoredPreferences } from '../services/preferences';
 import { setupQueryEnvironment } from '../services/queryClient';
 import { useSession } from '../services/sessionStore';
 
+// Dev-only tools of the browser preview (`npm run preview:serve`). The flag is read at build time: in
+// an app build this is `null` and the folder is not in the bundle.
+const preview: typeof import('../src/preview') | null =
+  process.env.EXPO_PUBLIC_PREVIEW === '1'
+    ? // eslint-disable-next-line @typescript-eslint/no-require-imports -- must be a require so a build without the flag drops it
+      require('../src/preview')
+    : null;
+
 // Keep the splash screen up until the fonts and the saved language and theme are ready.
 SplashScreen.preventAutoHideAsync();
 
@@ -89,8 +97,13 @@ function RootContent() {
               }}
             />
           </Stack.Protected>
+          {/* Dev-only sign-in of the browser preview: closed in every build without the preview flag. */}
+          <Stack.Protected guard={process.env.EXPO_PUBLIC_PREVIEW === '1'}>
+            <Stack.Screen name="dev-sign-in" options={screen} />
+          </Stack.Protected>
         </Stack>
       )}
+      {preview ? <preview.PreviewBridge /> : null}
     </>
   );
 }

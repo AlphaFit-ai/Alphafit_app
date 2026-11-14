@@ -9,6 +9,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useProfilePicture } from '../hooks/queries';
 import { chatbotService, ChatMessage } from '../services';
 import { logError, normalizeApiError } from '../services/apiError';
+import { parseApiDate } from '../services/apiTime';
 import {
   AppImage,
   Button,
@@ -59,7 +60,7 @@ const Bubble = React.memo(function Bubble({
   const { tokens } = useTheme();
   const c = tokens.color;
   const isUser = item.role === 'user';
-  const time = new Date(item.timestamp).toLocaleTimeString([], {
+  const time = parseApiDate(item.timestamp).toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit',
   });

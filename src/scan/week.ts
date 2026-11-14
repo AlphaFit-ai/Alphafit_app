@@ -1,3 +1,4 @@
+import { localDayKey, parseApiDate } from '../../services/apiTime';
 import type { FoodScanDto } from '../../services/foodScanService';
 
 export interface WeekDay {
@@ -11,12 +12,8 @@ export interface WeekDay {
   calories: number;
 }
 
-const pad = (n: number) => String(n).padStart(2, '0');
-
 /** `YYYY-MM-DD` of a date in the phone's own time zone (a scan at 23:30 belongs to that day). */
-export function dayKey(date: Date): string {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-}
+export const dayKey = localDayKey;
 
 /**
  * The last seven days, oldest first, ending today, each with the completed scans of that day. Only the
@@ -36,7 +33,8 @@ export function weekDays(
   const byKey = new Map(days.map((d) => [d.key, d]));
   for (const scan of scans) {
     if (scan.status !== 'COMPLETED') continue;
-    const created = new Date(scan.createdAt);
+    // The api's createdAt is UTC without a zone; read as local time it moved late meals a day.
+    const created = parseApiDate(scan.createdAt);
     if (Number.isNaN(created.getTime())) continue;
     const day = byKey.get(dayKey(created));
     if (!day) continue;

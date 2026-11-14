@@ -7,7 +7,9 @@
  *   node tools/preview/mock-api.js [port]        default port 4010
  *   POST /__mode  {"fail": "offline" | "500" | "401" | null}   make every other route fail (or stop failing)
  */
+const fs = require('fs');
 const http = require('http');
+const path = require('path');
 
 const PORT =
   require.main === module && /^[0-9]+$/.test(process.argv[2] || '')
@@ -76,8 +78,9 @@ const scans = foods.map(([name, kcal, p, c, f], i) => ({
   createdAt: iso(now - i * 3600_000 * (i === 0 ? 1 : 7)),
   completedAt: iso(now - i * 3600_000 * (i === 0 ? 1 : 7) + 4000),
 }));
-// Scan 2 carries the optional fields of CONTRACTS 3.6 (portion weight, alternatives, needsConfirmation),
-// omitted when absent, so the result screen can be looked at with them.
+// Scan 2 carries the per-item fields of CONTRACTS 3.7 (portion weight, needsConfirmation, alternatives
+// with or without nutrition), so the result screen can be looked at with them. The scan-level fields
+// are what the api repeats for older app builds.
 scans[1].predictions = [
   {
     foodName: 'Oatmeal with berries',
@@ -85,6 +88,8 @@ scans[1].predictions = [
     classId: 1,
     portionWeightG: 220,
     nutrition: { calories: 250, proteinG: 8, carbsG: 42, fatG: 5 },
+    needsConfirmation: false,
+    alternatives: [],
   },
   {
     foodName: 'Mixed berries',
@@ -92,29 +97,85 @@ scans[1].predictions = [
     classId: 11,
     portionWeightG: 90,
     nutrition: { calories: 60, proteinG: 3, carbsG: 10, fatG: 2 },
+    needsConfirmation: true,
     alternatives: [
-      { foodName: 'Blueberries', confidence: 0.38 },
+      {
+        foodName: 'Blueberries',
+        confidence: 0.38,
+        classId: 12,
+        portionWeightG: 100,
+        nutrition: { calories: 57, proteinG: 1, carbsG: 14, fatG: 0 },
+      },
+      // Stored before 3.7: a name only. The app offers it as a new name, never as a one-tap switch.
       { foodName: 'Raspberries', confidence: 0.31 },
+      // Nutrition but no weight: offered in one tap, and the api refuses it (409).
+      {
+        foodName: 'Strawberries',
+        confidence: 0.2,
+        classId: 13,
+        nutrition: { calories: 32, proteinG: 1, carbsG: 8, fatG: 0 },
+      },
     ],
   },
 ];
 scans[1].needsConfirmation = true;
+scans[1].alternatives = [
+  { foodName: 'Blueberries', confidence: 0.38 },
+  { foodName: 'Raspberries', confidence: 0.31 },
+];
 
-/** PATCH /food-scans/{id} as the api implements it: rescale by grams / portionWeightG, resum. */
+const NO_NUTRITION =
+  'This alternative has no nutrition data and cannot be applied. Rename the item or scan again.';
+
+/**
+ * PATCH /food-scans/{id} as the api implements it (CONTRACTS 3.6, 3.7): an alternative replaces the
+ * item (name, class id, weight, nutrition) and clears its confirm state; grams rescale from the weight;
+ * then the summary and the scan-level fields are recomputed. Refusals change nothing.
+ */
 function patchScan(scan, body) {
+  const bad = (message) => ({ status: 400, body: { status: 400, message } });
   const next = JSON.parse(JSON.stringify(scan));
   for (const edit of body.items || []) {
     const p = next.predictions.find((x) => x.classId === edit.classId);
-    if (!p) return { status: 400, body: { status: 400, message: 'unknown classId' } };
-    if (!(edit.grams >= 1 && edit.grams <= 5000))
-      return { status: 400, body: { status: 400, message: 'grams out of range' } };
-    const k = edit.grams / p.portionWeightG;
-    for (const key of ['calories', 'proteinG', 'carbsG', 'fatG']) p.nutrition[key] *= k;
-    p.portionWeightG = edit.grams;
+    if (!p) return bad('unknown classId');
+    if (edit.grams === undefined && !edit.foodName && edit.alternativeClassId === undefined)
+      return bad('items[0]: nothing to change');
+    if (edit.alternativeClassId !== undefined) {
+      const alt = (p.alternatives || []).find((a) => a.classId === edit.alternativeClassId);
+      if (!alt) return bad('not one of the alternatives of this item');
+      if (!alt.nutrition || !alt.portionWeightG)
+        return { status: 409, body: { status: 409, message: NO_NUTRITION } };
+      Object.assign(p, {
+        foodName: alt.foodName,
+        classId: alt.classId,
+        confidence: alt.confidence,
+        portionWeightG: alt.portionWeightG,
+        nutrition: { ...alt.nutrition },
+        needsConfirmation: false,
+        alternatives: [],
+      });
+    }
+    if (edit.grams !== undefined) {
+      if (!(edit.grams >= 1 && edit.grams <= 5000)) return bad('grams out of range');
+      const k = edit.grams / p.portionWeightG;
+      for (const key of ['calories', 'proteinG', 'carbsG', 'fatG']) p.nutrition[key] *= k;
+      p.portionWeightG = edit.grams;
+    }
     if (edit.foodName) p.foodName = edit.foodName;
     next.userEdited = true;
   }
-  if (body.confirmed) delete next.needsConfirmation;
+  if (body.confirmed) for (const p of next.predictions) p.needsConfirmation = false;
+  const flagged = next.predictions.find((p) => p.needsConfirmation);
+  if (flagged) {
+    next.needsConfirmation = true;
+    next.alternatives = (flagged.alternatives || []).map(({ foodName, confidence }) => ({
+      foodName,
+      confidence,
+    }));
+  } else {
+    delete next.needsConfirmation;
+    delete next.alternatives;
+  }
   const sum = (key) => next.predictions.reduce((n, p) => n + p.nutrition[key], 0);
   next.nutritionSummary = {
     totalCalories: sum('calories'),
@@ -133,6 +194,91 @@ const svg = (n) =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect width="400" height="400" fill="${colors[n % 4]}"/><circle cx="200" cy="200" r="120" fill="#fff" opacity=".85"/></svg>`;
 
 const ok = (data, message = 'OK') => ({ success: true, message, data, timestamp: iso(now) });
+
+/**
+ * Real food photos for the marketing screenshots: the vision repo's test fixtures (read only; their
+ * licences are in LICENSES.md next to them). FOOD_PHOTOS_DIR overrides the folder.
+ */
+const FOOD_PHOTOS =
+  process.env.FOOD_PHOTOS_DIR ||
+  path.resolve(__dirname, '..', '..', '..', 'Scan_Food', 'tests', 'fixtures', 'images');
+let chatHistory = [];
+
+/**
+ * The data set of the marketing screenshots (tools/preview/marketing.js): a made-up "Demo User", a week
+ * of scans with real photos (public-domain and CC0 files only, so no attribution is owed on a store
+ * page), and a short sample exchange with the coach. Changes this module's data in place. Meals are at
+ * fixed local times of the days before `anchor` (the screenshot's clock), so they read like real meals.
+ */
+function useMarketingData(anchor = Date.now()) {
+  Object.assign(profile, { email: 'demo@example.com', fullName: 'Demo User' });
+  /** Local time `hh:mm`, `daysAgo` days before the anchor. */
+  const at = (daysAgo, hh, mm) => {
+    const d = new Date(anchor);
+    d.setDate(d.getDate() - daysAgo);
+    d.setHours(hh, mm, 0, 0);
+    return d.getTime();
+  };
+  const meal = (id, photo, time, items) => {
+    const sum = (key) => items.reduce((n, item) => n + item.nutrition[key], 0);
+    return {
+      id,
+      userId: 'u1',
+      imageUrl: `http://localhost:${PORT}/images/serve/photos/${photo}.jpg`,
+      predictions: items,
+      nutritionSummary: {
+        totalCalories: sum('calories'),
+        totalProteinG: sum('proteinG'),
+        totalCarbsG: sum('carbsG'),
+        totalFatG: sum('fatG'),
+        itemCount: items.length,
+      },
+      status: 'COMPLETED',
+      createdAt: iso(time),
+      completedAt: iso(time + 3200),
+    };
+  };
+  const item = (foodName, classId, grams, calories, proteinG, carbsG, fatG, confidence = 0.93) => ({
+    foodName,
+    confidence,
+    classId,
+    portionWeightG: grams,
+    nutrition: { calories, proteinG, carbsG, fatG },
+  });
+  scans.length = 0;
+  scans.push(
+    meal('m-1', 'sushi', at(0, 19, 40), [
+      item('Sushi', 95, 260, 410, 21, 62, 9, 0.96),
+      item('Edamame', 60, 80, 98, 9, 7, 4, 0.81),
+    ]),
+    meal('m-2', 'spaghetti', at(0, 12, 35), [
+      item('Spaghetti bolognese', 90, 350, 560, 27, 71, 18),
+    ]),
+    meal('m-3', 'hamburger', at(1, 20, 5), [item('Hamburger', 53, 220, 540, 31, 40, 27)]),
+    meal('m-4', 'cake', at(1, 16, 10), [item('Chocolate cake', 21, 110, 390, 5, 50, 19)]),
+    meal('m-5', 'spaghetti', at(2, 13, 0), [item('Spaghetti', 90, 300, 470, 17, 82, 8)]),
+    meal('m-6', 'sushi', at(3, 19, 25), [item('Sushi', 95, 240, 380, 19, 58, 8)]),
+    meal('m-7', 'hamburger', at(5, 12, 50), [item('Hamburger', 53, 200, 490, 28, 37, 24)])
+  );
+  chatHistory = [
+    ['user', 'I trained legs today. What should I eat tonight to recover?', 9],
+    [
+      'assistant',
+      'Nice session! Go for 30 to 40 g of protein with some carbs: salmon with rice and greens, or a chicken wrap. Drink a big glass of water too.',
+      8,
+    ],
+    ['user', 'And before my run tomorrow morning?', 3],
+    [
+      'assistant',
+      'A light snack 60 to 90 minutes before: a banana or toast with honey. Keep fat and fibre low so your stomach stays calm.',
+      2,
+    ],
+  ].map(([role, content, minutesAgo]) => ({
+    role,
+    content,
+    timestamp: anchor - minutesAgo * 60_000,
+  }));
+}
 
 function route(method, path) {
   if (path === '/auth/check-email') return { body: true, bare: true };
@@ -163,7 +309,7 @@ function route(method, path) {
     return scan ? { body: ok(scan) } : { status: 404, body: { status: 404, message: 'Not found' } };
   }
   if (path === '/chatbot/health') return { body: { success: true, data: true }, bare: true };
-  if (path === '/chatbot/history') return { body: ok([]) };
+  if (path === '/chatbot/history') return { body: ok(chatHistory) };
   if (path === '/chatbot/chat')
     return {
       body: {
@@ -205,6 +351,13 @@ const server = http.createServer((req, res) => {
         .end(JSON.stringify({ fail: failMode, patch: patchMode }));
     });
     return;
+  }
+  const photo = url.pathname.match(/^\/images\/serve\/photos\/([a-z_]+)\.jpg$/);
+  if (photo) {
+    const file = path.join(FOOD_PHOTOS, `${photo[1]}.jpg`);
+    if (!fs.existsSync(file)) return res.writeHead(404).end();
+    res.writeHead(200, { 'Content-Type': 'image/jpeg' });
+    return fs.createReadStream(file).pipe(res);
   }
   if (url.pathname.startsWith('/images/serve/')) {
     const n = parseInt(url.pathname.match(/(\d+)\.svg$/)?.[1] || '0', 10);
@@ -258,4 +411,4 @@ const server = http.createServer((req, res) => {
 if (require.main === module) {
   server.listen(PORT, () => console.log(`mock api on http://localhost:${PORT}`));
 }
-module.exports = { server };
+module.exports = { server, useMarketingData, FOOD_PHOTOS };

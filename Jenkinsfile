@@ -110,6 +110,8 @@ spec:
                         set -eu
                         out="$(mktemp -d)"
                         npx expo export --platform android --output-dir "$out"
+                        # The dev-only browser preview code (docs/CONTRACTS.md section 8) must not be in it.
+                        node scripts/check-bundle.js "$out"
                         rm -rf "$out"
                     '''
                 }

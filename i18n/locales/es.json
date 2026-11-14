@@ -414,6 +414,9 @@
   },
   "tabs": {
     "home": "Inicio",
+    "scanFood": "Escanear comida",
+    "scanHint": "Abre el escaneo de comida",
+    "projections": "Proyecciones",
     "scan": "Escanear",
     "workouts": "Entrenamientos",
     "diet": "Dieta",
@@ -698,6 +701,14 @@
     "stepOf": "Paso {{current}} de {{total}}"
   },
   "scan": {
+    "useAlternative": "Cambiar a {{name}}, {{calories}} cal",
+    "renameTo": "Cambiar el nombre a {{name}}",
+    "renameOnlyNote": "Una sugerencia sin calorías solo cambia el nombre: sus valores se quedan como en el escaneo.",
+    "renameOnly": "Solo cambiar el nombre",
+    "altUnavailableTitle": "No hay datos nutricionales de {{name}}",
+    "altUnavailableMessage": "Esta opción no puede cambiar los valores. Cambia solo el nombre (las calorías se quedan como en el escaneo) o vuelve a escanear la comida.",
+    "altRejected": "Esa opción ya no está disponible para este elemento. No se ha cambiado nada.",
+    "confirmItemsMessage": "No estamos seguros de los elementos marcados abajo. Elige el alimento correcto o toca «Es correcto» si están bien.",
     "edit": "Editar porciones",
     "editDone": "Listo",
     "fixIt": "¿Algo no cuadra? Corrígelo",

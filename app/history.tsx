@@ -8,6 +8,8 @@ import { useTheme } from '../context/ThemeContext';
 import { useScansHistory } from '../hooks/queries';
 import type { FoodScanDto } from '../services';
 import { normalizeApiError } from '../services/apiError';
+import { parseApiDate } from '../services/apiTime';
+import { foodLabel } from '../src/scan/items';
 import {
   AppImage,
   Button,
@@ -47,8 +49,9 @@ function matchesFilter(scan: FoodScanDto, filter: Filter): boolean {
   }
 }
 
+// createdAt is UTC without a zone (CONTRACTS section 1); shown in the phone's own time zone.
 const formatDate = (dateString: string) =>
-  new Date(dateString).toLocaleDateString(undefined, {
+  parseApiDate(dateString).toLocaleDateString(undefined, {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -65,7 +68,7 @@ const HistoryRow = React.memo(function HistoryRow({ scan, onPress }: RowProps) {
   const { t } = useTranslation();
   const { tokens } = useTheme();
   const c = tokens.color;
-  const foodName = scan.predictions?.[0]?.foodName ?? t('common.unknownFood');
+  const foodName = foodLabel(scan.predictions?.[0]?.foodName) || t('common.unknownFood');
   const calories = Math.round(scan.nutritionSummary?.totalCalories || 0);
   const done = scan.status === 'COMPLETED';
   const status = t(STATUS_LABEL_KEYS[scan.status] ?? 'history.status.pending');

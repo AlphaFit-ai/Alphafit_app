@@ -14,6 +14,7 @@ import {
   useRefetchWhenStale,
 } from '../../hooks/queries';
 import { normalizeApiError } from '../../services/apiError';
+import { isSameLocalDay } from '../../services/apiTime';
 import { estimateDailyCalories } from '../../services/calorieTarget';
 import { calculateAge } from '../../services/dateOfBirth';
 import {
@@ -26,6 +27,7 @@ import {
   Text,
   useReduceMotion,
 } from '../../src/ui';
+import { foodLabel } from '../../src/scan/items';
 import { weekDays } from '../../src/scan/week';
 import { enter } from '../../src/ui/motion';
 
@@ -113,11 +115,10 @@ export default function HomeScreen() {
 
   // Derived from the scans: today's totals and the latest completed scans.
   const { nutrition, todayScansCount, recentFoodName, recentScans } = React.useMemo(() => {
-    const today = new Date().toDateString();
+    const now = new Date();
     const completed = scans.filter((scan) => scan.status === 'COMPLETED');
-    const todayScans = completed.filter(
-      (scan) => new Date(scan.createdAt).toDateString() === today
-    );
+    // createdAt is UTC without a zone (CONTRACTS section 1); "today" is the phone's own day.
+    const todayScans = completed.filter((scan) => isSameLocalDay(scan.createdAt, now));
 
     const totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
     todayScans.forEach((scan) => {
@@ -135,8 +136,9 @@ export default function HomeScreen() {
         fat: Math.round(totals.fat),
       },
       todayScansCount: todayScans.length,
-      recentFoodName:
-        todayScans.find((scan) => scan.predictions?.length)?.predictions[0].foodName ?? '',
+      recentFoodName: foodLabel(
+        todayScans.find((scan) => scan.predictions?.length)?.predictions[0].foodName
+      ),
       recentScans: completed.slice(0, 3),
     };
   }, [scans]);
@@ -431,7 +433,7 @@ export default function HomeScreen() {
                   router.push({ pathname: '/diet/diet-statistics', params: { scanId: scan.id } })
                 }
                 accessibilityRole="button"
-                accessibilityLabel={`${scan.predictions?.[0]?.foodName || t('common.unknownFood')}, ${
+                accessibilityLabel={`${foodLabel(scan.predictions?.[0]?.foodName) || t('common.unknownFood')}, ${
                   scan.nutritionSummary?.totalCalories || 0
                 } ${t('home.calUnit')}`}
               >
@@ -442,7 +444,7 @@ export default function HomeScreen() {
                 />
                 <View style={styles.fill}>
                   <Text variant="bodyStrong" numberOfLines={1}>
-                    {scan.predictions?.[0]?.foodName || t('common.unknownFood')}
+                    {foodLabel(scan.predictions?.[0]?.foodName) || t('common.unknownFood')}
                   </Text>
                   <Text variant="caption" tone="muted">
                     {scan.nutritionSummary?.totalCalories || 0} {t('home.calUnit')}

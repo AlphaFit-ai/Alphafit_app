@@ -12,21 +12,26 @@ import { Sheet } from '../ui/Sheet';
 import { Skeleton, SkeletonGroup } from '../ui/Skeleton';
 import { Text } from '../ui/Text';
 import { useToast } from '../ui/Toast';
+import { useDialog } from '../ui/useDialog';
 import type { SaveOutcome } from './saveEdits';
 import {
+  Alternative,
+  canApply,
   confidenceLevel,
   editItems,
   factorOf,
   Factors,
+  foodLabel,
   gramsOf,
   hasEdits,
   itemsFromScan,
   macroShares,
-  needsConfirmation,
+  Picks,
   ScanItem,
   scaled,
   stepFactor,
   totals,
+  withAlternative,
 } from './items';
 
 interface ScanResultProps {
@@ -46,11 +51,12 @@ interface ScanResultProps {
 
 /**
  * The result of a meal scan: the photo, one big calorie number, the protein, carbs and fat split, and
- * the items the model found with an editable portion each. A correction (portion in grams, another
- * food, "Looks right") is saved through `onSave` (PATCH /food-scans/{id}, CONTRACTS 3.6): it shows at
- * once and is put back if the save fails. When the server has no such route (404) the edit stays on
- * screen only and the screen says so. `needsConfirmation`, `alternatives`, `portionWeightG` and
- * `userEdited` are used when the scan carries them; when they are absent nothing changes.
+ * the items the model found with an editable portion each. An item the model is not sure about is
+ * marked and shows its alternatives (CONTRACTS 3.7): one with nutrition switches the item in one tap
+ * (`alternativeClassId`), one without only renames it. A correction (portion in grams, another food,
+ * "Looks right") is saved through `onSave` (PATCH /food-scans/{id}): it shows at once and is put back
+ * if the save fails. When the server has no such route (404) the edit stays on screen only and the
+ * screen says so. Every optional field is used when the scan carries it; absent, nothing changes.
  */
 export function ScanResult({
   scanResult,
@@ -69,6 +75,8 @@ export function ScanResult({
   const items = useMemo(() => itemsFromScan(scanResult), [scanResult]);
   const [factors, setFactors] = useState<Factors>({});
   const [names, setNames] = useState<Record<string, string>>({});
+  // One-tap alternatives picked and not saved yet: the item shows as that food at once.
+  const [picks, setPicks] = useState<Picks>({});
   const [editing, setEditing] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [fixOpen, setFixOpen] = useState(false);
@@ -76,13 +84,14 @@ export function ScanResult({
   // The server has no PATCH route (404): edits live on this screen only, and the screen says so.
   const [screenOnly, setScreenOnly] = useState(!onSave);
   const toast = useToast();
+  const { show: showDialog, dialog } = useDialog();
 
-  const failureText = (outcome: SaveOutcome): string | null => {
+  const failureText = (outcome: SaveOutcome, pickedAlternative: boolean): string | null => {
     switch (outcome.kind) {
       case 'conflict':
         return t('scan.saveConflict');
       case 'rejected':
-        return t('scan.saveRejected');
+        return pickedAlternative ? t('scan.altRejected') : t('scan.saveRejected');
       case 'failed':
         return outcome.reason === 'offline'
           ? t('errors.offline')
@@ -94,21 +103,25 @@ export function ScanResult({
     }
   };
 
-  /** Sends the correction. The edit is already on screen (optimistic); a failure puts it back. */
+  /**
+   * Sends the correction. The edit is already on screen (optimistic); a failure puts it back. Resolves
+   * with how the save went, or null when nothing was sent.
+   */
   const save = async (
     nextFactors: Factors,
     nextNames: Record<string, string>,
-    confirmedFlag?: boolean
-  ) => {
-    if (!onSave || screenOnly || saving) return;
-    const edits = editItems(items, nextFactors, nextNames);
-    const wantsItems = hasEdits(items, nextFactors, nextNames);
+    confirmedFlag?: boolean,
+    nextPicks: Picks = picks
+  ): Promise<SaveOutcome | null> => {
+    if (!onSave || screenOnly || saving) return null;
+    const edits = editItems(items, nextFactors, nextNames, nextPicks);
+    const wantsItems = hasEdits(items, nextFactors, nextNames, nextPicks);
     if (wantsItems && edits === null) {
       // No weight to scale from: this scan can only be corrected on screen.
       setScreenOnly(true);
-      return;
+      return null;
     }
-    if (!wantsItems && !confirmedFlag) return;
+    if (!wantsItems && !confirmedFlag) return null;
     setSaving(true);
     const outcome = await onSave({
       ...(wantsItems && edits ? { items: edits } : {}),
@@ -119,6 +132,7 @@ export function ScanResult({
       // The scan prop now carries the saved numbers: nothing is left to apply on top of it.
       setFactors({});
       setNames({});
+      setPicks({});
       haptic.confirm();
       toast.show(t('scan.saved'), 'success');
     } else if (outcome.kind === 'unsupported') {
@@ -126,16 +140,59 @@ export function ScanResult({
     } else {
       setFactors({});
       setNames({});
+      setPicks({});
       if (confirmedFlag) setConfirmed(false);
-      const text = failureText(outcome);
+      const text = failureText(outcome, Object.keys(nextPicks).length > 0);
       if (text) toast.show(text, 'error');
     }
+    return outcome;
   };
 
-  const total = totals(items, factors);
+  /** Renames the item only: its nutrition stays as scanned. */
+  const rename = (item: ScanItem, alt: Alternative) => {
+    const nextNames = { ...names, [item.key]: alt.name };
+    const nextPicks = { ...picks };
+    delete nextPicks[item.key];
+    setNames(nextNames);
+    setPicks(nextPicks);
+    void save(factors, nextNames, undefined, nextPicks);
+  };
+
+  /** Switches the item to an alternative that carries its own nutrition (`alternativeClassId`). */
+  const pick = async (item: ScanItem, alt: Alternative) => {
+    haptic.select();
+    const nextPicks = { ...picks, [item.key]: alt };
+    const nextFactors = { ...factors };
+    delete nextFactors[item.key];
+    const nextNames = { ...names };
+    delete nextNames[item.key];
+    setPicks(nextPicks);
+    setFactors(nextFactors);
+    setNames(nextNames);
+    const outcome = await save(nextFactors, nextNames, undefined, nextPicks);
+    if (outcome?.kind !== 'alternativeUnavailable') return;
+    haptic.error();
+    showDialog({
+      title: t('scan.altUnavailableTitle', { name: foodLabel(alt.name) }),
+      message: t('scan.altUnavailableMessage'),
+      feedback: 'error',
+      actions: [
+        { label: t('scan.renameOnly'), onPress: () => rename(item, alt) },
+        ...(onScanAnother ? [{ label: t('scan.fixRescan'), onPress: onScanAnother }] : []),
+        { label: t('common.cancel'), tone: 'cancel' as const },
+      ],
+    });
+  };
+
+  // The items as shown: a picked alternative replaces its item until the save comes back.
+  const shown = useMemo(
+    () => items.map((item) => (picks[item.key] ? withAlternative(item, picks[item.key]) : item)),
+    [items, picks]
+  );
+  const total = totals(shown, factors);
   const shares = macroShares(total);
-  const askToConfirm = needsConfirmation(scanResult) && !confirmed;
-  const changed = hasEdits(items, factors, names);
+  const askToConfirm = !confirmed && shown.some((item) => item.needsConfirmation);
+  const changed = hasEdits(items, factors, names, picks);
   const anyAlternatives = items.some((i) => i.alternatives.length > 0);
 
   const macros = [
@@ -237,7 +294,9 @@ export function ScanResult({
                 accessibilityRole="alert"
               >
                 <Text variant="subheading">{t('scan.confirmTitle')}</Text>
-                <Text tone="muted">{t('scan.confirmMessage')}</Text>
+                <Text tone="muted">
+                  {shown.length > 1 ? t('scan.confirmItemsMessage') : t('scan.confirmMessage')}
+                </Text>
                 <Button
                   title={t('scan.confirmYes')}
                   size="medium"
@@ -326,26 +385,44 @@ export function ScanResult({
             <Text variant="heading" accessibilityRole="header">
               {t('diet.statistics.allDetectedItems')}
             </Text>
-            {items.map((item) => {
+            {shown.map((item) => {
               const factor = factorOf(item, factors);
               const macro = scaled(item, factor);
               const level = confidenceLevel(item.confidence);
               const grams = gramsOf(item, factor);
-              const name = names[item.key] ?? item.name;
+              const name = foodLabel(names[item.key] ?? item.name);
+              const flagged = item.needsConfirmation && !confirmed;
+              // The item's own confirm state decides; on an older scan without it, a low confidence
+              // does, until the user confirmed, chose or corrected the food.
+              const unsure =
+                flagged ||
+                (!item.confirmKnown &&
+                  level === 'low' &&
+                  !confirmed &&
+                  !scanResult?.userEdited &&
+                  !picks[item.key]);
+              const renameOnly = item.alternatives.some((alt) => !canApply(alt));
               return (
                 <View
                   key={item.key}
-                  style={[styles.card, { backgroundColor: c.surface, borderColor: c.border }]}
+                  testID={`scan-item-${item.key}`}
+                  style={[
+                    styles.card,
+                    { backgroundColor: c.surface, borderColor: flagged ? c.warning : c.border },
+                  ]}
                 >
                   <View style={styles.rowBetween}>
                     <View style={styles.flex}>
                       <Text variant="bodyStrong" numberOfLines={2}>
                         {name}
                       </Text>
-                      {level === 'low' ? (
-                        <Text variant="caption" tone="warning">
-                          {t('scan.notSure')}
-                        </Text>
+                      {unsure ? (
+                        <View style={styles.rowGap}>
+                          <Ionicons name="help-circle" size={14} color={c.warningText} />
+                          <Text variant="caption" tone="warning">
+                            {t('scan.notSure')}
+                          </Text>
+                        </View>
                       ) : null}
                     </View>
                     <Text variant="bodyStrong">
@@ -392,33 +469,43 @@ export function ScanResult({
                     </Text>
                   ) : null}
 
-                  {item.alternatives.length > 0 && (level === 'low' || askToConfirm || editing) ? (
+                  {item.alternatives.length > 0 && (unsure || editing) ? (
                     <View>
                       <Text variant="caption" tone="muted">
                         {t('scan.alternatives')}
                       </Text>
                       <View style={styles.chips}>
-                        {item.alternatives.map((alt) => (
-                          <PressableScale
-                            key={alt.name}
-                            disabled={saving}
-                            onPress={() => {
-                              const next = { ...names, [item.key]: alt.name };
-                              setNames(next);
-                              void save(factors, next);
-                            }}
-                            feedback
-                            minTarget
-                            accessibilityRole="button"
-                            accessibilityLabel={alt.name}
-                            style={[styles.chip, { backgroundColor: c.accentSoft }]}
-                          >
-                            <Text variant="label" tone="accent">
-                              {alt.name}
-                            </Text>
-                          </PressableScale>
-                        ))}
+                        {item.alternatives.map((alt) => {
+                          const label = foodLabel(alt.name);
+                          const oneTap = canApply(alt);
+                          const calories = oneTap ? Math.round(alt.nutrition.calories) : null;
+                          return (
+                            <PressableScale
+                              key={`${alt.classId ?? ''}-${alt.name}`}
+                              disabled={saving}
+                              onPress={() => (oneTap ? void pick(item, alt) : rename(item, alt))}
+                              feedback={!oneTap}
+                              minTarget
+                              accessibilityRole="button"
+                              accessibilityLabel={
+                                oneTap
+                                  ? t('scan.useAlternative', { name: label, calories })
+                                  : t('scan.renameTo', { name: label })
+                              }
+                              style={[styles.chip, { backgroundColor: c.accentSoft }]}
+                            >
+                              <Text variant="label" tone="accent">
+                                {oneTap ? `${label} · ${calories} ${t('home.calUnit')}` : label}
+                              </Text>
+                            </PressableScale>
+                          );
+                        })}
                       </View>
+                      {renameOnly ? (
+                        <Text variant="caption" tone="subtle" style={styles.chipNote}>
+                          {t('scan.renameOnlyNote')}
+                        </Text>
+                      ) : null}
                     </View>
                   ) : null}
                 </View>
@@ -522,6 +609,7 @@ export function ScanResult({
           ) : null}
         </View>
       </Sheet>
+      {dialog}
     </View>
   );
 }
@@ -579,6 +667,7 @@ const styles = StyleSheet.create({
   stepValue: { minWidth: 64, textAlign: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   chip: { minHeight: 36, borderRadius: 18, paddingHorizontal: 14, justifyContent: 'center' },
+  chipNote: { marginTop: 6 },
   fix: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44 },
   fixList: { gap: 10, paddingBottom: 8 },
 });

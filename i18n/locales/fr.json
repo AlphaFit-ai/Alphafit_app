@@ -414,6 +414,9 @@
   },
   "tabs": {
     "home": "Accueil",
+    "scanFood": "Scanner un repas",
+    "scanHint": "Ouvre le scan de repas",
+    "projections": "Projections",
     "scan": "Scanner",
     "workouts": "Entraînements",
     "diet": "Alimentation",
@@ -698,6 +701,14 @@
     "stepOf": "Étape {{current}} sur {{total}}"
   },
   "scan": {
+    "useAlternative": "Remplacer par {{name}}, {{calories}} cal",
+    "renameTo": "Renommer en {{name}}",
+    "renameOnlyNote": "Une suggestion sans calories ne fait que renommer l’élément : ses valeurs restent celles du scan.",
+    "renameOnly": "Renommer seulement",
+    "altUnavailableTitle": "Pas de valeurs nutritionnelles pour {{name}}",
+    "altUnavailableMessage": "Ce choix ne peut pas changer les valeurs. Renommez plutôt l’élément (ses calories restent celles du scan) ou scannez à nouveau le repas.",
+    "altRejected": "Ce choix n’est plus proposé pour cet élément. Rien n’a été modifié.",
+    "confirmItemsMessage": "Nous ne sommes pas sûrs des éléments signalés ci-dessous. Choisissez le bon aliment, ou touchez « C’est correct » s’ils sont justes.",
     "edit": "Modifier les portions",
     "editDone": "Terminé",
     "fixIt": "Quelque chose ne va pas ? Corrigez",

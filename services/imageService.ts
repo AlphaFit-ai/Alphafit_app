@@ -3,6 +3,7 @@ import apiClient from './apiClient';
 import { config } from '../config';
 import { logError } from './apiError';
 import { FOOD_SCAN_MAX_SIDE, PROFILE_MAX_SIDE, prepareImageForUpload } from './imagePrep';
+import { imageFormData } from './uploadPart';
 
 export interface ImageUploadResponse {
   success: boolean;
@@ -19,18 +20,8 @@ class ImageService {
    */
   async uploadProfilePicture(originalUri: string): Promise<string> {
     const imageUri = await prepareImageForUpload(originalUri, PROFILE_MAX_SIDE);
-    const formData = new FormData();
-
-    // Create file object from URI
-    const filename = imageUri.split('/').pop() || 'profile.jpg';
-    const match = /\.(\w+)$/.exec(filename);
-    const type = match ? `image/${match[1]}` : 'image/jpeg';
-
-    formData.append('file', {
-      uri: imageUri,
-      name: filename,
-      type,
-    } as any);
+    // A file part that works on a phone and in the browser preview (see uploadPart.ts).
+    const formData = await imageFormData(imageUri, 'profile');
 
     const response = await apiClient.post<ImageUploadResponse>('/images/profile', formData, {
       headers: {
@@ -61,17 +52,7 @@ class ImageService {
     imageUri: string,
     type: 'front' | 'side' | 'back' = 'front'
   ): Promise<string> {
-    const formData = new FormData();
-
-    const filename = imageUri.split('/').pop() || 'progress.jpg';
-    const match = /\.(\w+)$/.exec(filename);
-    const fileType = match ? `image/${match[1]}` : 'image/jpeg';
-
-    formData.append('file', {
-      uri: imageUri,
-      name: filename,
-      type: fileType,
-    } as any);
+    const formData = await imageFormData(imageUri, 'progress');
 
     const response = await apiClient.post<ImageUploadResponse>(
       `/images/progress?type=${type}`,
@@ -101,17 +82,7 @@ class ImageService {
   async uploadFoodScanImage(originalUri: string): Promise<string> {
     // A smaller photo uploads faster and is all the model needs.
     const imageUri = await prepareImageForUpload(originalUri, FOOD_SCAN_MAX_SIDE);
-    const formData = new FormData();
-
-    const filename = imageUri.split('/').pop() || 'food.jpg';
-    const match = /\.(\w+)$/.exec(filename);
-    const type = match ? `image/${match[1]}` : 'image/jpeg';
-
-    formData.append('file', {
-      uri: imageUri,
-      name: filename,
-      type,
-    } as any);
+    const formData = await imageFormData(imageUri, 'food');
 
     const response = await apiClient.post<ImageUploadResponse>('/images/food-scan', formData, {
       headers: {

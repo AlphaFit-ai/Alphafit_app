@@ -4,7 +4,7 @@ import {
   persistQueryClientRestore,
   persistQueryClientSave,
 } from '@tanstack/react-query-persist-client';
-import { act, render, screen, waitFor } from '@testing-library/react-native';
+import { act, configure, render, screen, waitFor } from '@testing-library/react-native';
 import React from 'react';
 import { Text } from 'react-native';
 import { AppProviders } from '../context/AppProviders';
@@ -27,11 +27,37 @@ const persist = {
   dehydrateOptions: persistOptions.dehydrateOptions,
 };
 
-/** The persister writes in the background (throttled): wait until the copy is on the device. */
-async function saveToDevice() {
+/**
+ * The persister writes in the background, at most once a second, and `persistQueryClientSave` returns at
+ * once when a write is already scheduled. This test used to poll the device for the copy with `waitFor`,
+ * whose 1 s limit races that throttle: on a loaded machine the write came after the limit. Now it waits
+ * for the write itself, however late it is.
+ */
+async function saveToDevice(): Promise<string> {
+  const realSetItem = (AsyncStorage.setItem as jest.Mock).getMockImplementation()!;
+  const written = new Promise<string>((resolve) => {
+    const spy = jest
+      .spyOn(AsyncStorage, 'setItem')
+      .mockImplementation(async (key: string, value: string) => {
+        await realSetItem(key, value);
+        if (key !== PERSIST_KEY) return;
+        spy.mockImplementation(realSetItem);
+        resolve(value);
+      });
+  });
   await persistQueryClientSave(persist);
-  await waitFor(async () => expect(await AsyncStorage.getItem(PERSIST_KEY)).not.toBeNull());
+  return written;
 }
+
+/** Nothing of a signed-out user on the device: no saved copy, or one without any answer. */
+async function deviceCopyIsEmpty() {
+  const saved = await AsyncStorage.getItem(PERSIST_KEY);
+  return saved === null || JSON.parse(saved).clientState.queries.length === 0;
+}
+
+// `waitFor` only waits for things that happen without a timer (a mocked request, a render); this is the
+// most it may take on a loaded CI agent, not a delay.
+configure({ asyncUtilTimeout: 10_000 });
 
 function Probe() {
   const profile = useProfile();
@@ -78,7 +104,7 @@ describe('the query cache', () => {
 
   it('shows the last known data from the saved copy on the device, without the api', async () => {
     queryClient.setQueryData(queryKeys.profile, { fullName: 'Cached Ann' });
-    await saveToDevice();
+    expect(await saveToDevice()).toContain('Cached Ann');
     queryClient.clear();
     expect(queryClient.getQueryData(queryKeys.profile)).toBeUndefined();
 
@@ -154,10 +180,12 @@ describe('sign-out and the cache', () => {
       await signOut();
     });
 
-    expect(screen.getByTestId('name').props.children).toBe('none');
+    // The cache tells its readers in a zero-delay timer: wait for that render, not a fixed time.
+    await waitFor(() => expect(screen.getByTestId('name').props.children).toBe('none'));
     expect(screen.getByTestId('avatar').props.children).toBe('none');
     expect(screen.getByTestId('goal').props.children).toBe('none');
-    expect(await AsyncStorage.getItem(PERSIST_KEY)).toBeNull();
+    // A throttled write may still land after the removal; it must carry nothing (signOutPersist.test.ts).
+    expect(await deviceCopyIsEmpty()).toBe(true);
   });
 
   it('drops an answer that arrives after sign-out instead of putting the old user back', async () => {

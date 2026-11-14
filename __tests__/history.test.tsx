@@ -147,4 +147,21 @@ describe('History', () => {
     await waitFor(() => expect(pageRequests()).toBeLessThanOrEqual(6));
     expect(await screen.findByRole('button', { name: 'Load older scans' })).toBeTruthy();
   });
+
+  it('shows the api time (UTC, no zone) in the phone time zone', async () => {
+    // 23:30 UTC on the 14th is 00:30 on the 15th in the suite's zone (UTC+1, jest.globalSetup.js).
+    mockApi.get.mockResolvedValueOnce(
+      page([{ ...scan('Late soup'), createdAt: '2026-11-14T23:30:00.123' }], 0, 1)
+    );
+    open();
+    await screen.findByText('Late soup');
+    const shown = new Date(Date.UTC(2026, 10, 14, 23, 30)).toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    expect(shown).toMatch(/15/);
+    expect(screen.getByText(shown)).toBeTruthy();
+  });
 });

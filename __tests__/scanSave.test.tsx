@@ -13,7 +13,7 @@ import { ScanResult } from '../src/scan/ScanResult';
 import { ToastProvider } from '../src/ui';
 
 const config = { headers: new AxiosHeaders() } as InternalAxiosRequestConfig;
-const httpError = (status: number) =>
+const httpError = (status: number, message?: string) =>
   new AxiosError(
     'x',
     'ERR_BAD_RESPONSE',
@@ -24,9 +24,11 @@ const httpError = (status: number) =>
       statusText: '',
       headers: {},
       config,
-      data: {},
+      data: message ? { status, message } : {},
     }
   );
+const NO_NUTRITION =
+  'This alternative has no nutrition data and cannot be applied. Rename the item or scan again.';
 const networkError = () => new AxiosError('Network Error', 'ERR_NETWORK', config, {});
 
 const scan = (grams = 200, extra: Record<string, unknown> = {}) =>
@@ -98,6 +100,25 @@ describe('saveScanEdits status paths', () => {
     expect(patch).toHaveBeenCalledTimes(1);
   });
 
+  it('a 409 refusing a picked alternative is not retried: the screen offers to rename instead', async () => {
+    patch.mockRejectedValue(httpError(409, NO_NUTRITION));
+    const pickBody = { items: [{ classId: 53, alternativeClassId: 104 }] };
+    await expect(saveScanEdits('s1', pickBody)).resolves.toEqual({
+      kind: 'alternativeUnavailable',
+    });
+    expect(patch).toHaveBeenCalledTimes(1);
+    expect(get).not.toHaveBeenCalled();
+  });
+
+  it('a 409 for an alternative that stays after the retry is that alternative being refused', async () => {
+    patch.mockRejectedValue(httpError(409, 'Something else'));
+    const pickBody = { items: [{ classId: 53, alternativeClassId: 104 }] };
+    await expect(saveScanEdits('s1', pickBody)).resolves.toEqual({
+      kind: 'alternativeUnavailable',
+    });
+    expect(patch).toHaveBeenCalledTimes(2);
+  });
+
   it('offline and server errors are failures with a reason', async () => {
     patch.mockRejectedValueOnce(networkError());
     await expect(saveScanEdits('s1', body)).resolves.toEqual({ kind: 'failed', reason: 'offline' });
@@ -112,17 +133,19 @@ describe('editItems', () => {
   it('sends whole grams within 1 to 5000 and the new name only when it changed', () => {
     expect(editItems(items, { [items[0].key]: 0.9 }, {})).toEqual([{ classId: 7, grams: 180 }]);
     expect(editItems(items, {}, { [items[0].key]: 'Caesar salad' })).toEqual([
-      { classId: 7, grams: 200, foodName: 'Caesar salad' },
+      { classId: 7, foodName: 'Caesar salad' },
     ]);
     expect(editItems(items, { [items[0].key]: 4 }, {})?.[0].grams).toBe(800);
     const big = itemsFromScan(scan(5000));
     expect(editItems(big, { [big[0].key]: 4 }, {})?.[0].grams).toBe(5000);
   });
 
-  it('is null when the weight is unknown, so the edit stays on screen', () => {
+  it('is null for a portion change when the weight is unknown, so the edit stays on screen', () => {
     const noWeight = scan();
     delete (noWeight.predictions[0] as { portionWeightG?: number }).portionWeightG;
-    expect(editItems(itemsFromScan(noWeight), {}, {})).toBeNull();
+    const items = itemsFromScan(noWeight);
+    expect(editItems(items, { [items[0].key]: 0.5 }, {})).toBeNull();
+    expect(editItems(items, {}, {})).toEqual([]);
   });
 });
 
@@ -200,10 +223,10 @@ describe('ScanResult saving', () => {
     const onSave = jest.fn().mockResolvedValue({ kind: 'saved', scan: scan(200) });
     open(onSave, scan(200, { needsConfirmation: false }));
     fireEvent.press(screen.getByRole('button', { name: 'Edit portions' }));
-    fireEvent.press(screen.getByRole('button', { name: 'Caesar salad' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Rename to Caesar salad' }));
     await waitFor(() =>
       expect(onSave).toHaveBeenCalledWith({
-        items: [{ classId: 7, grams: 200, foodName: 'Caesar salad' }],
+        items: [{ classId: 7, foodName: 'Caesar salad' }],
       })
     );
   });

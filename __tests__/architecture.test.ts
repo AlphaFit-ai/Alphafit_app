@@ -311,3 +311,42 @@ describe('design system, every screen', () => {
     }
   });
 });
+
+describe('dev-only browser preview (docs/CONTRACTS.md section 8)', () => {
+  const GUARD =
+    /process\.env\.EXPO_PUBLIC_PREVIEW === '1'\s*\?\s*(?:\/\/[^\n]*\n\s*)?require\('(?:\.\.\/)+src\/preview'\)\s*:\s*null/;
+
+  it('loads src/preview only behind the build flag, so an app build drops it', () => {
+    const users = allFiles.filter(
+      (file) => !file.startsWith('src/preview/') && /src\/preview/.test(read(file))
+    );
+    expect(users.sort()).toEqual([
+      'app/_layout.tsx',
+      'app/dev-sign-in.tsx',
+      'app/diet/food-scan.tsx',
+    ]);
+    for (const file of users) {
+      const text = read(file);
+      expect(`${file}: ${GUARD.test(text)}`).toBe(`${file}: true`);
+      // no static import of the folder anywhere
+      expect(`${file}: ${/import[^;]*from '(?:\.\.\/)+src\/preview/.test(text)}`).toBe(
+        `${file}: false`
+      );
+    }
+  });
+
+  it('opens the /dev-sign-in screen only in a preview build', () => {
+    const root = read('app/_layout.tsx');
+    expect(root).toMatch(
+      /<Stack\.Protected guard=\{process\.env\.EXPO_PUBLIC_PREVIEW === '1'\}>\s*<Stack\.Screen name="dev-sign-in"/
+    );
+  });
+
+  it('never imports the preview stubs from app code', () => {
+    for (const file of allFiles) {
+      // a mention in a comment is fine; an import or require is not
+      const imports = /(?:from|require\()\s*'[^']*tools\/preview/.test(read(file));
+      expect(`${file}: ${imports}`).toBe(`${file}: false`);
+    }
+  });
+});

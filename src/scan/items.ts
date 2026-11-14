@@ -1,10 +1,10 @@
-import type { FoodScanDto } from '../../services/foodScanService';
+import type { FoodScanDto, ScanEditItem } from '../../services/foodScanService';
 
 /**
  * What the result screen needs from a scan, read defensively. The api's `FoodScanDto` is the contract
- * (`foodName`, `nutrition.proteinG`...), older screens used flatter names (`food`, `protein`), and the
- * vision service will add `needs_confirmation`, `alternatives` and a portion weight later: none of them
- * is required, and every one is used when it is there.
+ * (`foodName`, `nutrition.proteinG`...), older screens used flatter names (`food`, `protein`). The
+ * confirm state and the alternatives are per item (CONTRACTS 3.7); a scan from an older api has them on
+ * the scan only, and then they belong to the first item. None of these fields is required.
  */
 
 export interface Macros {
@@ -17,6 +17,12 @@ export interface Macros {
 export interface Alternative {
   name: string;
   confidence: number | null;
+  /** Set with `nutrition` when the api can switch the item to this food in one tap (CONTRACTS 3.7). */
+  classId: number | null;
+  /** The alternative's own portion weight, when it has one. */
+  grams: number | null;
+  /** What the item would count with this food instead; null for a name-only suggestion. */
+  nutrition: Macros | null;
 }
 
 export interface ScanItem {
@@ -30,6 +36,25 @@ export interface ScanItem {
   /** Weight of that portion in grams, when the scan says so. */
   baseGrams: number | null;
   alternatives: Alternative[];
+  /** The model asks the user to check this item. */
+  needsConfirmation: boolean;
+  /**
+   * The scan says per item whether it needs checking (CONTRACTS 3.7, `false` included). Without it (an
+   * older scan) a low confidence is the only hint.
+   */
+  confirmKnown: boolean;
+}
+
+/** An alternative the api can apply in one tap (`alternativeClassId`); others can only rename the item. */
+export const canApply = (
+  alt: Alternative
+): alt is Alternative & { classId: number; nutrition: Macros } =>
+  alt.classId !== null && alt.nutrition !== null;
+
+/** Catalogue names come in lower case ("veggie burger"): show them with a capital first letter. */
+export function foodLabel(name: string | null | undefined): string {
+  const text = (name ?? '').trim();
+  return text ? text.charAt(0).toLocaleUpperCase() + text.slice(1) : '';
 }
 
 type Loose = Record<string, unknown>;
@@ -44,8 +69,52 @@ const first = (...values: unknown[]): number | null => {
 };
 const obj = (value: unknown): Loose => (value && typeof value === 'object' ? (value as Loose) : {});
 
+function macrosOf(value: unknown): Macros | null {
+  const n = obj(value);
+  const calories = num(n.calories);
+  if (calories === null) return null;
+  return {
+    calories,
+    protein: first(n.proteinG, n.protein_g) ?? 0,
+    carbs: first(n.carbsG, n.carbs_g) ?? 0,
+    fat: first(n.fatG, n.fat_g) ?? 0,
+  };
+}
+
+function alternativesOf(value: unknown): Alternative[] {
+  const raw = Array.isArray(value) ? (value as unknown[]) : [];
+  return raw
+    .map((a) => {
+      const alt = obj(a);
+      const name = alt.foodName ?? alt.food_name ?? alt.name;
+      if (typeof name !== 'string' || !name) return null;
+      const nutrition = obj(alt.nutrition);
+      const grams = first(alt.portionWeightG, alt.portion_weight_g, nutrition.portion_weight_g);
+      return {
+        name,
+        confidence: num(alt.confidence),
+        classId: first(alt.classId, alt.class_id),
+        grams: grams !== null && grams > 0 ? grams : null,
+        nutrition: macrosOf(alt.nutrition),
+      };
+    })
+    .filter((a): a is Alternative => a !== null);
+}
+
+const hasOwn = (p: Loose, key: string) => Object.prototype.hasOwnProperty.call(p, key);
+
 export function itemsFromScan(scan: FoodScanDto | null | undefined): ScanItem[] {
   const predictions = (scan?.predictions ?? []) as unknown as Loose[];
+  const loose = obj(scan);
+  // An older api put the confirm state and the alternatives on the scan only (CONTRACTS 3.6): each is
+  // then given to the first item. A current api sends them per item and repeats them on the scan.
+  const confirmPerItem = predictions.some(
+    (p) => hasOwn(p, 'needsConfirmation') || hasOwn(p, 'needs_confirmation')
+  );
+  const alternativesPerItem = predictions.some((p) => hasOwn(p, 'alternatives'));
+  const scanNeedsConfirmation =
+    loose.needsConfirmation === true || loose.needs_confirmation === true;
+  const scanAlternatives = alternativesOf(loose.alternatives);
   return predictions.map((p, index) => {
     const nutrition = obj(p.nutrition);
     const info = obj(p.portionInfo);
@@ -56,14 +125,14 @@ export function itemsFromScan(scan: FoodScanDto | null | undefined): ScanItem[] 
       info.weightG,
       info.weight_g
     );
-    const rawAlternatives = Array.isArray(p.alternatives) ? (p.alternatives as unknown[]) : [];
-    const alternatives: Alternative[] = rawAlternatives
-      .map((a) => {
-        const alt = obj(a);
-        const name = alt.foodName ?? alt.food_name ?? alt.name;
-        return typeof name === 'string' && name ? { name, confidence: num(alt.confidence) } : null;
-      })
-      .filter((a): a is Alternative => a !== null);
+    const alternatives = alternativesPerItem
+      ? alternativesOf(p.alternatives)
+      : index === 0
+        ? scanAlternatives
+        : [];
+    const itemNeedsConfirmation = confirmPerItem
+      ? p.needsConfirmation === true || p.needs_confirmation === true
+      : index === 0 && scanNeedsConfirmation;
     const name =
       (typeof p.foodName === 'string' && p.foodName) ||
       (typeof p.food === 'string' && p.food) ||
@@ -81,8 +150,23 @@ export function itemsFromScan(scan: FoodScanDto | null | undefined): ScanItem[] 
       },
       baseGrams: grams !== null && grams > 0 ? grams : null,
       alternatives,
+      needsConfirmation: itemNeedsConfirmation,
+      confirmKnown: confirmPerItem,
     };
   });
+}
+
+/** The item as it would be with `alt` chosen: its name, nutrition and weight, nothing left to confirm. */
+export function withAlternative(item: ScanItem, alt: Alternative): ScanItem {
+  return {
+    ...item,
+    name: alt.name,
+    confidence: alt.confidence,
+    base: alt.nutrition ?? item.base,
+    baseGrams: alt.grams ?? item.baseGrams,
+    alternatives: [],
+    needsConfirmation: false,
+  };
 }
 
 /** True when the scan asks the user to check it (`needs_confirmation`, either spelling, scan or item). */
@@ -165,38 +249,55 @@ export const MIN_GRAMS = 1;
 export const MAX_GRAMS = 5000;
 export const MAX_NAME_LENGTH = 100;
 
+/** Alternatives the user picked, by item key, not saved yet. */
+export type Picks = Record<string, Alternative>;
+
 /**
- * The body items for `PATCH /food-scans/{id}`: every item with its portion in whole grams (1 to 5000)
- * and, when the user picked another food, its new name. Returns null when the correction cannot be
- * expressed: an item has no known weight or no class id.
+ * The body items for `PATCH /food-scans/{id}` (CONTRACTS 3.7): only the items the user changed, each by
+ * its class id with what changed: `alternativeClassId` for a one-tap alternative, `grams` (whole, 1 to
+ * 5000) for a new portion (of the alternative when one was picked), `foodName` for a new name. Empty when
+ * nothing changed; null when a change cannot be expressed (an item without class id, or a portion change
+ * on an item without a known weight), and the edit then stays on screen only.
  */
 export function editItems(
   items: ScanItem[],
   factors: Factors,
-  names: Record<string, string>
-): { classId: number; grams: number; foodName?: string }[] | null {
-  const out: { classId: number; grams: number; foodName?: string }[] = [];
+  names: Record<string, string>,
+  picks: Picks = {}
+): ScanEditItem[] | null {
+  const out: ScanEditItem[] = [];
   for (const item of items) {
-    if (item.classId === null || item.baseGrams === null) return null;
-    const grams = Math.min(
-      MAX_GRAMS,
-      Math.max(MIN_GRAMS, Math.round(item.baseGrams * factorOf(item, factors)))
-    );
+    const alt = picks[item.key];
+    const factor = factorOf(item, factors);
     const renamed = names[item.key];
-    out.push({
-      classId: item.classId,
-      grams,
-      ...(renamed && renamed !== item.name ? { foodName: renamed.slice(0, MAX_NAME_LENGTH) } : {}),
-    });
+    const rename = !alt && renamed && renamed !== item.name ? renamed : undefined;
+    if (!alt && factor === 1 && !rename) continue;
+    if (item.classId === null) return null;
+    const edit: ScanEditItem = { classId: item.classId };
+    if (alt) {
+      if (!canApply(alt)) return null;
+      edit.alternativeClassId = alt.classId;
+    }
+    if (factor !== 1) {
+      const base = alt ? (alt.grams ?? item.baseGrams) : item.baseGrams;
+      if (base === null) return null;
+      edit.grams = Math.min(MAX_GRAMS, Math.max(MIN_GRAMS, Math.round(base * factor)));
+    }
+    if (rename) edit.foodName = rename.slice(0, MAX_NAME_LENGTH);
+    out.push(edit);
   }
-  return out.length > 0 ? out : null;
+  return out;
 }
 
-/** True when the user changed a portion or picked another food. */
+/** True when the user changed a portion, renamed an item or picked an alternative. */
 export function hasEdits(
   items: ScanItem[],
   factors: Factors,
-  names: Record<string, string>
+  names: Record<string, string>,
+  picks: Picks = {}
 ): boolean {
-  return items.some((i) => factorOf(i, factors) !== 1 || (names[i.key] && names[i.key] !== i.name));
+  return items.some(
+    (i) =>
+      factorOf(i, factors) !== 1 || !!picks[i.key] || (!!names[i.key] && names[i.key] !== i.name)
+  );
 }

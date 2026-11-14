@@ -9,7 +9,13 @@ module.exports = defineConfig([
   },
   {
     // Node scripts and config files (CommonJS).
-    files: ['scripts/**/*.js', 'tools/preview/*.js', 'jest.setup.js', '*.config.js'],
+    files: [
+      'scripts/**/*.js',
+      'tools/preview/*.js',
+      'jest.setup.js',
+      'jest.globalSetup.js',
+      '*.config.js',
+    ],
     languageOptions: {
       sourceType: 'commonjs',
       globals: {
@@ -21,6 +27,28 @@ module.exports = defineConfig([
         URL: 'readonly',
         setTimeout: 'readonly',
         localStorage: 'readonly',
+        fetch: 'readonly',
+        AbortSignal: 'readonly',
+        Buffer: 'readonly',
+        clearTimeout: 'readonly',
+      },
+    },
+  },
+  {
+    // The frame and dev bar of the browser preview (tools/preview/shell): plain browser scripts.
+    files: ['tools/preview/shell/*.js'],
+    languageOptions: {
+      sourceType: 'script',
+      globals: {
+        window: 'readonly',
+        document: 'readonly',
+        location: 'readonly',
+        history: 'readonly',
+        localStorage: 'readonly',
+        HTMLElement: 'readonly',
+        setInterval: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
       },
     },
   },

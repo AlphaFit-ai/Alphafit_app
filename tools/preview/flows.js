@@ -243,6 +243,41 @@ const expectUrl = (page, part) =>
       }
     );
 
+    // ---- one-tap alternatives (CONTRACTS 3.7), on the same scan, now confirmed: in edit mode
+    await flow(
+      browser,
+      'scan result: an alternative the api cannot apply (409) offers a rename instead',
+      {},
+      async (page) => {
+        await page.goto(`${BASE}/diet/diet-statistics?scanId=scan-2`);
+        await page.getByText('Mixed berries').first().waitFor({ timeout: 20000 });
+        await page.getByRole('button', { name: 'Edit portions' }).click();
+        await page.getByRole('button', { name: 'Change to Strawberries, 32 cal' }).click();
+        await page.getByText('No nutrition data for Strawberries').waitFor({ timeout: 10000 });
+        await shot(page, 'scan-edit-6-alternative-refused');
+        await page.getByRole('button', { name: 'Rename only' }).click();
+        await page.getByText('Saved', { exact: true }).waitFor({ timeout: 10000 });
+        await page.getByText('Strawberries', { exact: true }).first().waitFor({ timeout: 10000 });
+        await page.getByText('310', { exact: true }).waitFor({ timeout: 10000 }); // numbers unchanged
+      }
+    );
+
+    await flow(
+      browser,
+      'scan result: one tap on an alternative switches the item and its calories',
+      {},
+      async (page) => {
+        await page.goto(`${BASE}/diet/diet-statistics?scanId=scan-2`);
+        await page.getByText('Strawberries').first().waitFor({ timeout: 20000 });
+        await page.getByRole('button', { name: 'Edit portions' }).click();
+        await page.getByRole('button', { name: 'Change to Blueberries, 57 cal' }).click();
+        await page.getByText('Saved', { exact: true }).waitFor({ timeout: 10000 });
+        await page.getByText('Blueberries', { exact: true }).first().waitFor({ timeout: 10000 });
+        await page.getByText('307', { exact: true }).waitFor({ timeout: 10000 }); // 250 + 57
+        await shot(page, 'scan-edit-7-alternative-applied');
+      }
+    );
+
     await flow(
       browser,
       'history: a failed first page is an error with a retry, and retrying recovers',

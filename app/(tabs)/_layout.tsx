@@ -10,6 +10,7 @@ import { ProPlanModal } from '../../components';
 import { Colors, FEATURES } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
 import { useProfilePicture } from '../../hooks/queries';
+import { ScanTabButton } from '../../src/scan/ScanTabButton';
 import { AppImage, BrandLogo } from '../../src/ui';
 
 export default function TabsLayout() {
@@ -96,23 +97,25 @@ export default function TabsLayout() {
           }}
         />
         <Tabs.Screen
+          name="scan"
+          options={{
+            // The app's main action in the centre: opens the food scan, never selected itself.
+            title: t('tabs.scan'),
+            tabBarButton: ({ style }) => <ScanTabButton style={style} />,
+          }}
+        />
+        <Tabs.Screen
           name="projections"
           options={{
             // D2: not offered until the physique analysis exists (see constants/Features.ts).
             href: FEATURES.projections ? undefined : null,
-            title: '',
-            tabBarAccessibilityLabel: t('tabs.scan'),
-            tabBarIcon: ({ focused }) => (
-              <View style={styles.scanIconWrapper}>
-                <View style={[styles.scanIconContainer, focused && styles.scanIconContainerActive]}>
-                  <Ionicons name="scan" size={32} color={tokens.color.onAccent} />
-                </View>
+            title: t('tabs.projections'),
+            tabBarAccessibilityLabel: t('tabs.projections'),
+            tabBarIcon: ({ color, focused }) => (
+              <View style={[styles.iconWrapper, focused && styles.iconWrapperActive]}>
+                <Ionicons name={focused ? 'body' : 'body-outline'} size={24} color={color} />
               </View>
             ),
-            tabBarLabel: () => null,
-            tabBarItemStyle: {
-              top: 0,
-            },
           }}
         />
         <Tabs.Screen
@@ -188,23 +191,6 @@ const styles = StyleSheet.create({
   },
   iconWrapperActive: {
     transform: [{ scale: 1.1 }],
-  },
-  scanIconWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'absolute',
-  },
-  scanIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 35,
-    backgroundColor: Colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  scanIconContainerActive: {
-    backgroundColor: Colors.primaryDark,
-    transform: [{ scale: 1.05 }],
   },
   profileIconContainer: {
     width: 32,

@@ -35,28 +35,41 @@ export const queryPersister = createAsyncStoragePersister({
   throttleTime: 1000,
 });
 
+/**
+ * True while `clearQueryCache` runs. Each reset during the wipe makes the persister take a copy of the
+ * cache, and the write of that copy lands after the copy on the device was removed (it is asynchronous
+ * and throttled). Taken mid-wipe, the copy still held the other answers of the user who signed out, and
+ * stayed on the device until the next write, a second later, or for good if the app was closed then.
+ */
+let wiping = false;
+
 export const persistOptions = {
   persister: queryPersister,
   maxAge: DAY_MS,
   buster: PERSIST_BUSTER,
   dehydrateOptions: {
-    // Only answers that succeeded; never an error or a half-finished request.
+    // Only answers that succeeded; never an error or a half-finished request, nor anything mid-wipe.
     shouldDehydrateQuery: (query: { state: { status: string } }) =>
-      query.state.status === 'success',
+      !wiping && query.state.status === 'success',
   },
 };
 
 /** Remove every cached answer, in memory and on the device. Used when the user signs out. */
 export async function clearQueryCache(): Promise<void> {
-  await queryClient.cancelQueries();
-  // Reset every query first: a screen that is still mounted is told its data is gone (clear() alone
-  // leaves observers showing their last value), and nothing is refetched.
-  queryClient
-    .getQueryCache()
-    .getAll()
-    .forEach((query) => query.reset());
-  queryClient.clear();
-  await queryPersister.removeClient();
+  wiping = true;
+  try {
+    await queryClient.cancelQueries();
+    // Reset every query first: a screen that is still mounted is told its data is gone (clear() alone
+    // leaves observers showing their last value), and nothing is refetched.
+    queryClient
+      .getQueryCache()
+      .getAll()
+      .forEach((query) => query.reset());
+    queryClient.clear();
+    await queryPersister.removeClient();
+  } finally {
+    wiping = false;
+  }
 }
 
 let environmentReady = false;

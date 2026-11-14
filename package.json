@@ -23,7 +23,9 @@
     "build:preview:ios": "eas build --profile preview --platform ios",
     "preview:build": "node tools/preview/build.js",
     "preview:shots": "node tools/preview/shots.js",
-    "preview:flows": "node tools/preview/flows.js"
+    "preview:flows": "node tools/preview/flows.js",
+    "preview:serve": "node tools/preview/serve.js",
+    "preview:marketing": "node tools/preview/marketing.js"
   },
   "dependencies": {
     "@expo-google-fonts/urbanist": "^0.2.3",
@@ -88,6 +90,7 @@
   "private": true,
   "jest": {
     "preset": "jest-expo",
+    "globalSetup": "<rootDir>/jest.globalSetup.js",
     "testMatch": [
       "<rootDir>/__tests__/**/*.test.{ts,tsx}"
     ],
