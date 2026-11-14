@@ -1,5 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { getApp, getApps, initializeApp } from 'firebase/app';
 import {
@@ -19,14 +18,10 @@ import {
 } from 'firebase/auth';
 import { Platform } from 'react-native';
 import { config } from '../config';
+import { getGoogleSignin } from './nativeModules';
 
-// Configure Google Sign-In
-GoogleSignin.configure({
-  webClientId: config.googleAuth.webClientId,
-  offlineAccess: true,
-  // Force account selection on first sign-in, then remember the account
-  forceCodeForRefreshToken: true,
-});
+// Configure Google Sign-In now, as before, where the binary has it (not in Expo Go: see nativeModules).
+getGoogleSignin();
 
 // Initialize Firebase (only once)
 const app = getApps().length === 0 ? initializeApp(config.firebase) : getApp();
@@ -93,10 +88,22 @@ class FirebaseAuthService {
     }
   }
 
+  /** Google sign-in needs its native module, which Expo Go does not have; the button is hidden then. */
+  isGoogleSignInAvailable(): boolean {
+    return getGoogleSignin() !== null;
+  }
+
   /**
    * @returns AuthResult if successful, null if user cancelled
    */
   async signInWithGoogle(): Promise<AuthResult | null> {
+    const GoogleSignin = getGoogleSignin();
+    if (!GoogleSignin) {
+      throw new AuthError(
+        'Google sign-in is not available in this app build',
+        'google/unavailable'
+      );
+    }
     try {
       // Check if device supports Google Play Services
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
@@ -288,7 +295,8 @@ class FirebaseAuthService {
     }
 
     try {
-      if (await GoogleSignin.hasPreviousSignIn()) {
+      const GoogleSignin = getGoogleSignin();
+      if (GoogleSignin && (await GoogleSignin.hasPreviousSignIn())) {
         await GoogleSignin.signOut();
       }
     } catch (error) {

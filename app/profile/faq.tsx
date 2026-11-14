@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, FEATURES, Fonts, Spacing } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
+import { PageHeader, Screen } from '../../src/ui';
 
 /** Question ids; the text is in the translation files under `faq.items.<id>`. */
 const FAQ_IDS = [
@@ -35,9 +36,10 @@ export default function FAQScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <Screen padded={false}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
+          <PageHeader title={t('profile.faq')} />
           <Text style={[styles.headerText, { color: colors.textSecondary }]}>{t('faq.intro')}</Text>
 
           {VISIBLE_FAQ_IDS.map((id, index) => (
@@ -95,20 +97,16 @@ export default function FAQScreen() {
           <View style={{ height: 40 }} />
         </View>
       </ScrollView>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   scrollView: {
     flex: 1,
   },
   content: {
     paddingHorizontal: Spacing.screenPaddingHorizontal,
-    paddingTop: 20,
   },
   headerText: {
     fontSize: Fonts.sizes.base,

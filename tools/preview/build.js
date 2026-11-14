@@ -1,11 +1,9 @@
 #!/usr/bin/env node
 /**
- * Web export of the app for the dev preview. The flag makes metro.config.js stub native modules.
+ * Web export of the app for the dev-only screenshot and flow harness, against the mock api. The flag
+ * makes metro.config.js stub native modules (web only).
  *
- *   node tools/preview/build.js                          mock build -> .preview/dist (screenshots, flows)
- *   node tools/preview/build.js --api=<url> --out=<dir> --auth=token
- *                                                        what `npm run preview:serve` runs: the real
- *                                                        local api and the /dev-sign-in route
+ *   node tools/preview/build.js          -> .preview/dist (then preview:shots, preview:flows, preview:marketing)
  */
 const { spawnSync } = require('child_process');
 const path = require('path');
@@ -13,20 +11,9 @@ const path = require('path');
 const root = path.resolve(__dirname, '..', '..');
 const MOCK_API = 'http://localhost:4010';
 
-function arg(name, fallback) {
-  const hit = process.argv.find((a) => a.startsWith(`--${name}=`));
-  return hit ? hit.slice(hit.indexOf('=') + 1) : fallback;
-}
-
-/** Builds the web preview. Returns the exit status of `expo export`. */
-function build({ api = MOCK_API, out = path.join(root, '.preview', 'dist'), auth = '' } = {}) {
-  const env = {
-    ...process.env,
-    EXPO_PUBLIC_PREVIEW: '1',
-    EXPO_PUBLIC_API_URL: api,
-    EXPO_PUBLIC_PREVIEW_AUTH: auth,
-    CI: '1',
-  };
+/** Builds the web export. Returns the exit status of `expo export`. */
+function build({ out = path.join(root, '.preview', 'dist') } = {}) {
+  const env = { ...process.env, EXPO_PUBLIC_PREVIEW: '1', EXPO_PUBLIC_API_URL: MOCK_API, CI: '1' };
   // One command string (not an argument list) with shell: true, so nothing is concatenated unquoted.
   const r = spawnSync(`npx expo export --platform web --output-dir "${out}" --clear`, {
     cwd: root,
@@ -37,14 +24,6 @@ function build({ api = MOCK_API, out = path.join(root, '.preview', 'dist'), auth
   return r.status ?? 1;
 }
 
-if (require.main === module) {
-  process.exit(
-    build({
-      api: arg('api', MOCK_API),
-      out: path.resolve(root, arg('out', path.join('.preview', 'dist'))),
-      auth: arg('auth', ''),
-    })
-  );
-}
+if (require.main === module) process.exit(build());
 
 module.exports = { build, MOCK_API };

@@ -9,6 +9,7 @@ export default function DietLayout() {
   return (
     <Stack
       screenOptions={{
+        // No navigator bar anywhere: a screen's title and back button are part of its content.
         headerShown: false,
         animation: 'fade',
         animationDuration: 200,

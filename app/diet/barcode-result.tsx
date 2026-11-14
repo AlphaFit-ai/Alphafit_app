@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
@@ -7,7 +6,7 @@ import { useDiet } from '../../context/DietContext';
 import { useTheme } from '../../context/ThemeContext';
 import { logError } from '../../services/apiError';
 import type { BarcodeProductDto } from '../../services/barcodeService';
-import { AppImage, Button, Screen, Skeleton, SkeletonGroup, Text } from '../../src/ui';
+import { AppImage, Button, PageHeader, Screen, Skeleton, SkeletonGroup, Text } from '../../src/ui';
 
 /** Nutrition of a scanned product, per 100 g, as the barcode lookup returns it. */
 export default function BarcodeResultScreen() {
@@ -29,6 +28,7 @@ export default function BarcodeResultScreen() {
         setCurrentStep(4);
         return;
       }
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- written before this React Compiler check (eslint-config-expo 58); it loads or syncs state on purpose. Refactor separately.
       setProduct(productData);
     } catch (error) {
       logError('barcodeResult.parse', error);
@@ -36,21 +36,14 @@ export default function BarcodeResultScreen() {
     }
   }, [dietData.barcodeData, setCurrentStep]);
 
+  // Shown in the Diet tab (step 6): back returns to the scan.
   const header = (
-    <Stack.Screen
-      options={{
-        title: t('diet.foodScan.barcodeResult'),
-        headerShown: true,
-        headerStyle: { backgroundColor: c.bg },
-        headerTintColor: c.text,
-        headerShadowVisible: false,
-      }}
-    />
+    <PageHeader title={t('diet.foodScan.barcodeResult')} back onBack={() => setCurrentStep(4)} />
   );
 
   if (!product) {
     return (
-      <Screen noTopInset>
+      <Screen scroll>
         {header}
         <SkeletonGroup label={t('common.loading')} style={styles.skeleton}>
           <Skeleton height={180} radius={20} />
@@ -71,7 +64,6 @@ export default function BarcodeResultScreen() {
   return (
     <Screen
       scroll
-      noTopInset
       contentStyle={styles.content}
       footer={
         <Button
@@ -150,8 +142,8 @@ export default function BarcodeResultScreen() {
 }
 
 const styles = StyleSheet.create({
-  skeleton: { paddingTop: 16, gap: 16 },
-  content: { paddingTop: 16, paddingBottom: 24, gap: 16 },
+  skeleton: { gap: 16 },
+  content: { paddingBottom: 24, gap: 16 },
   image: { width: '100%', height: 200, borderRadius: 20 },
   card: { borderRadius: 20, borderWidth: 1, padding: 16, gap: 8 },
   source: { flexDirection: 'row', alignItems: 'center', gap: 4 },

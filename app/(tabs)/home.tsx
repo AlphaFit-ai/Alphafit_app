@@ -4,6 +4,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { RefreshControl, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
+import { ProPlanModal } from '../../components';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useProjection } from '../../context/ProjectionContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -19,6 +20,7 @@ import { estimateDailyCalories } from '../../services/calorieTarget';
 import { calculateAge } from '../../services/dateOfBirth';
 import {
   AppImage,
+  BrandLogo,
   ErrorState,
   PressableScale,
   Screen,
@@ -90,6 +92,7 @@ export default function HomeScreen() {
   const loadError = failed.length > 0 ? normalizeApiError(failed[0].error) : null;
   const offlineWithoutData = !hasData && queries.every((q) => q.isPaused);
   const [refreshing, setRefreshing] = React.useState<boolean>(false);
+  const [showPro, setShowPro] = React.useState(false);
 
   // Refresh when Home regains focus and its data is older than a minute.
   const [focused, setFocused] = React.useState(true);
@@ -196,11 +199,31 @@ export default function HomeScreen() {
   const userAge = calculateAge(onboardingData.dateOfBirth);
   const c = tokens.color;
 
+  // No navigator bar: the logo and the Pro plan entry are the first row of the page and scroll with it.
+  const topRow = (
+    <View style={styles.topRow}>
+      <BrandLogo height={28} />
+      <PressableScale
+        onPress={() => setShowPro(true)}
+        feedback
+        accessibilityRole="button"
+        accessibilityLabel={t('tabs.proPlan')}
+        style={[styles.proChip, { backgroundColor: c.surfaceMuted }]}
+      >
+        <Ionicons name="trophy" size={18} color={c.premium} />
+        <Text variant="label">{t('tabs.proPlan')}</Text>
+      </PressableScale>
+    </View>
+  );
+  const proPlan = <ProPlanModal visible={showPro} onClose={() => setShowPro(false)} />;
+
   // First load: nothing to show yet. Placeholders with the shape of the page, not a spinner.
   if (!hasData && !loadError && !offlineWithoutData) {
     return (
-      <Screen scroll noTopInset>
+      <Screen scroll contentStyle={styles.content}>
+        {topRow}
         <HomeSkeleton label={t('common.loading')} />
+        {proPlan}
       </Screen>
     );
   }
@@ -208,8 +231,10 @@ export default function HomeScreen() {
   // The first load failed: there is no data to show, so offer a retry.
   if (!hasData && (loadError || offlineWithoutData)) {
     return (
-      <Screen noTopInset>
+      <Screen contentStyle={styles.content}>
+        {topRow}
         <ErrorState kind={loadError ? loadError.kind : 'offline'} onRetry={retry} />
+        {proPlan}
       </Screen>
     );
   }
@@ -227,12 +252,12 @@ export default function HomeScreen() {
     <View style={[styles.fill, { backgroundColor: c.bg }]}>
       <Screen
         scroll
-        noTopInset
         contentStyle={styles.content}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.accent} />
         }
       >
+        {topRow}
         {/* Part of the data could not be refreshed: say so, keep what is on screen */}
         {loadError && (
           <PressableScale
@@ -430,7 +455,7 @@ export default function HomeScreen() {
               <PressableScale
                 style={[styles.scanRow, { backgroundColor: c.surface, borderColor: c.border }]}
                 onPress={() =>
-                  router.push({ pathname: '/diet/diet-statistics', params: { scanId: scan.id } })
+                  router.push({ pathname: '/scan-result', params: { scanId: scan.id } })
                 }
                 accessibilityRole="button"
                 accessibilityLabel={`${foodLabel(scan.predictions?.[0]?.foodName) || t('common.unknownFood')}, ${
@@ -529,6 +554,7 @@ export default function HomeScreen() {
       >
         <Ionicons name="chatbubble-ellipses" size={26} color={c.onAccent} />
       </PressableScale>
+      {proPlan}
     </View>
   );
 }
@@ -562,8 +588,22 @@ function HomeSkeleton({ label }: { label: string }) {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  content: { paddingTop: 16, paddingBottom: 104, gap: 16 },
-  skeleton: { paddingTop: 16, gap: 16 },
+  content: { paddingBottom: 104, gap: 16 },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 44,
+  },
+  proChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minHeight: 44,
+    paddingHorizontal: 14,
+    borderRadius: 22,
+  },
+  skeleton: { gap: 16 },
   banner: {
     flexDirection: 'row',
     alignItems: 'center',

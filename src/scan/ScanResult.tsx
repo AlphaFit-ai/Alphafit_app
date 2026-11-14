@@ -2,12 +2,14 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import type { FoodScanDto, ScanEditBody } from '../../services/foodScanService';
 import { AppImage } from '../ui/AppImage';
 import { Button } from '../ui/Button';
 import { haptic } from '../ui/haptics';
 import { PressableScale } from '../ui/Pressable';
+import { TOP_GAP } from '../ui/Screen';
 import { Sheet } from '../ui/Sheet';
 import { Skeleton, SkeletonGroup } from '../ui/Skeleton';
 import { Text } from '../ui/Text';
@@ -71,6 +73,7 @@ export function ScanResult({
   const { t } = useTranslation();
   const { tokens } = useTheme();
   const c = tokens.color;
+  const insets = useSafeAreaInsets();
 
   const items = useMemo(() => itemsFromScan(scanResult), [scanResult]);
   const [factors, setFactors] = useState<Factors>({});
@@ -249,9 +252,12 @@ export function ScanResult({
         isModal && [styles.sheet, { borderTopLeftRadius: 24, borderTopRightRadius: 24 }],
       ]}
     >
+      {/* Inline in the Diet tab there is no bar above: clear of the status bar plus the same small gap
+          as every screen (TOP_GAP); the photo is the first row. */}
+      {isModal ? null : <View style={{ height: insets.top + TOP_GAP }} />}
       <ScrollView
         style={styles.fill}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, !isModal && styles.contentInline]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.photoWrap}>
@@ -621,6 +627,7 @@ const styles = StyleSheet.create({
   sheet: { maxHeight: '94%', overflow: 'hidden' },
   loadingGroup: { width: '100%', padding: 20, gap: 16 },
   content: { padding: 20, paddingBottom: 40, gap: 14 },
+  contentInline: { paddingTop: 0 },
   photoWrap: { position: 'relative' },
   photo: { width: '100%', aspectRatio: 4 / 3 },
   close: {

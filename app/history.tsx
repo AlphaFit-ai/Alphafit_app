@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
@@ -15,6 +15,7 @@ import {
   Button,
   EmptyState,
   ErrorState,
+  PageHeader,
   PressableScale,
   Screen,
   Sheet,
@@ -187,8 +188,7 @@ export default function HistoryScreen() {
     loadNext,
   ]);
   const handlePressItem = useCallback(
-    (scan: FoodScanDto) =>
-      router.push({ pathname: '/diet/diet-statistics', params: { scanId: scan.id } }),
+    (scan: FoodScanDto) => router.push({ pathname: '/scan-result', params: { scanId: scan.id } }),
     [router]
   );
   const renderItem = useCallback(
@@ -197,30 +197,7 @@ export default function HistoryScreen() {
   );
 
   return (
-    <Screen padded={false} noTopInset>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          title: t('history.title'),
-          headerStyle: { backgroundColor: tokens.color.bg },
-          headerTintColor: tokens.color.text,
-          headerShadowVisible: false,
-          headerTitleStyle: { fontFamily: Fonts.bold, fontSize: 18 },
-          headerTitleAlign: 'center',
-          headerRight: () => (
-            <PressableScale
-              onPress={() => setShowFilter(true)}
-              accessibilityRole="button"
-              accessibilityLabel={t('history.filterBy')}
-              accessibilityState={{ selected: filter !== 'all' }}
-              style={styles.headerButton}
-            >
-              <Ionicons name="filter" size={24} color={tokens.color.text} />
-            </PressableScale>
-          ),
-        }}
-      />
-
+    <Screen padded={false}>
       <Sheet
         visible={showFilter}
         onClose={() => setShowFilter(false)}
@@ -264,6 +241,28 @@ export default function HistoryScreen() {
         onEndReachedThreshold={0.5}
         ListHeaderComponent={
           <View style={styles.headerStack}>
+            {/* No navigator bar: back, the filter and the title scroll with the list. */}
+            <PageHeader
+              title={t('history.title')}
+              right={
+                <PressableScale
+                  onPress={() => setShowFilter(true)}
+                  feedback
+                  accessibilityRole="button"
+                  accessibilityLabel={t('history.filterBy')}
+                  accessibilityState={{ selected: filter !== 'all' }}
+                  style={[
+                    styles.headerButton,
+                    {
+                      backgroundColor:
+                        filter !== 'all' ? tokens.color.accentSoft : tokens.color.surfaceMuted,
+                    },
+                  ]}
+                >
+                  <Ionicons name="filter" size={20} color={tokens.color.text} />
+                </PressableScale>
+              }
+            />
             {refreshFailed ? (
               <PressableScale
                 onPress={handleRefresh}
@@ -325,7 +324,7 @@ export default function HistoryScreen() {
               title={t('history.loadOlder')}
               onPress={() => void loadNext()}
             />
-          ) : null
+          ) : undefined
         }
       />
     </Screen>
@@ -333,7 +332,7 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: { padding: 20, paddingBottom: 40, gap: 12 },
+  list: { paddingHorizontal: 20, paddingBottom: 40, gap: 12 },
   headerStack: { gap: 8 },
   banner: {
     flexDirection: 'row',
@@ -358,6 +357,12 @@ const styles = StyleSheet.create({
   cal: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   status: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
   statusText: { fontFamily: Fonts.semiBold },
-  headerButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  headerButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   filters: { gap: 8, paddingBottom: 8 },
 });

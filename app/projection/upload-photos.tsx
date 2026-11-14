@@ -1,24 +1,17 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ImageSourcePropType,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Fonts, Spacing } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
 import { Dialog } from '../../src/ui/Dialog';
-import { AppImage } from '../../src/ui';
+import { AppImage, type AppImageSource } from '../../src/ui';
 
 interface PhotoSlot {
   id: string;
   translationKey: string;
-  image: ImageSourcePropType;
+  image: AppImageSource;
 }
 
 const PHOTO_SLOTS: PhotoSlot[] = [

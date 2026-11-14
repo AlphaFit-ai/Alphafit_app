@@ -25,13 +25,17 @@ import {
   Text,
   useDialog,
 } from '../../src/ui';
+import { originOf, useThemeTransition } from '../../src/ui/ThemeTransition';
+import { useSwitchTo } from '../../src/wizard/useSwitchTo';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const switchTo = useSwitchTo();
   const { t, i18n } = useTranslation();
   const { updateOnboardingData } = useOnboarding();
   const applyServerPreferences = useApplyServerPreferences();
-  const { toggleTheme, tokens } = useTheme();
+  const { tokens } = useTheme();
+  const { toggleTheme } = useThemeTransition();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -44,6 +48,8 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showAppleButton, setShowAppleButton] = useState(false);
+  // Expo Go has no Google sign-in module: the button is hidden there and e-mail sign-in stays.
+  const [showGoogleButton] = useState(() => firebaseAuthService.isGoogleSignInAvailable());
 
   // Sign in with Apple exists on iOS only; on Android the button is not shown.
   useEffect(() => {
@@ -256,11 +262,13 @@ export default function LoginScreen() {
     <Screen
       scroll
       keyboard
+      // The sign-in block in the middle of the space under the theme and language buttons.
+      centered
       contentStyle={styles.content}
       header={
         <View style={styles.topControls}>
           <PressableScale
-            onPress={toggleTheme}
+            onPress={(event) => toggleTheme(originOf(event))}
             accessibilityRole="button"
             accessibilityLabel={t('profile.darkMode')}
             style={[styles.iconButton, { backgroundColor: c.surfaceMuted }]}
@@ -281,28 +289,32 @@ export default function LoginScreen() {
     >
       <View style={styles.header}>
         <BrandLogo height={36} style={styles.logo} />
-        <Text variant="title" accessibilityRole="header">
+        <Text variant="title" accessibilityRole="header" style={styles.centerText}>
           {t('welcome.title')}
         </Text>
 
-        <Text tone="muted">{t('welcome.subtitle')}</Text>
+        <Text tone="muted" style={styles.centerText}>
+          {t('welcome.subtitle')}
+        </Text>
       </View>
 
-      <SocialButton
-        onPress={handleContinueWithGoogle}
-        disabled={busy}
-        loading={googleLoading}
-        label={t('welcome.continueWithGoogle')}
-        icon={
-          <AppImage
-            source={require('../../assets/images/logo/google.png')}
-            noPlaceholder
-            contentFit="contain"
-            accessible={false}
-            style={styles.socialIcon}
-          />
-        }
-      />
+      {showGoogleButton && (
+        <SocialButton
+          onPress={handleContinueWithGoogle}
+          disabled={busy}
+          loading={googleLoading}
+          label={t('welcome.continueWithGoogle')}
+          icon={
+            <AppImage
+              source={require('../../assets/images/logo/google.png')}
+              noPlaceholder
+              contentFit="contain"
+              accessible={false}
+              style={styles.socialIcon}
+            />
+          }
+        />
+      )}
       {showAppleButton && (
         <SocialButton
           onPress={handleContinueWithApple}
@@ -313,13 +325,15 @@ export default function LoginScreen() {
         />
       )}
 
-      <View style={styles.divider}>
-        <View style={[styles.line, { backgroundColor: c.border }]} />
-        <Text variant="caption" tone="muted">
-          {t('welcome.or')}
-        </Text>
-        <View style={[styles.line, { backgroundColor: c.border }]} />
-      </View>
+      {showGoogleButton || showAppleButton ? (
+        <View style={styles.divider}>
+          <View style={[styles.line, { backgroundColor: c.border }]} />
+          <Text variant="caption" tone="muted">
+            {t('welcome.or')}
+          </Text>
+          <View style={[styles.line, { backgroundColor: c.border }]} />
+        </View>
+      ) : null}
 
       <Input
         label={t('welcome.email')}
@@ -347,7 +361,8 @@ export default function LoginScreen() {
       <View style={styles.registerRow}>
         <Text tone="muted">{t('welcome.noAccount')} </Text>
         <PressableScale
-          onPress={() => router.push('/onboarding/register')}
+          // Back to Register when it is right below (opened from it), instead of stacking another.
+          onPress={() => switchTo('register', '/onboarding/register', 'push')}
           minTarget
           accessibilityRole="link"
           style={styles.link}
@@ -361,6 +376,7 @@ export default function LoginScreen() {
       <LanguageSelector
         visible={showLanguages}
         onClose={() => setShowLanguages(false)}
+        // Applied once the sheet is gone, in one render; saving and the server wait for nothing.
         onSelect={(language) => void setLanguage(language.code)}
         selectedLanguage={i18n.language}
       />
@@ -461,7 +477,8 @@ function SocialButton({
 }
 
 const styles = StyleSheet.create({
-  content: { paddingBottom: 32, gap: 12 },
+  content: { paddingVertical: 24, gap: 12 },
+  centerText: { textAlign: 'center' },
   topControls: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   iconButton: {
     width: 44,
@@ -478,8 +495,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
   },
-  logo: { alignSelf: 'flex-start', marginBottom: 8 },
-  header: { gap: 6, marginBottom: 12 },
+  logo: { alignSelf: 'center', marginBottom: 8 },
+  header: { gap: 6, marginBottom: 12, alignItems: 'center' },
   social: {
     minHeight: 56,
     borderRadius: 28,

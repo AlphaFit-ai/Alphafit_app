@@ -72,6 +72,39 @@ jest.mock('@react-native-google-signin/google-signin', () => ({
   },
 }));
 
+// The tests run as a development build: not Expo Go (jest-expo's mocks would report Expo Go, because
+// they provide an `ExpoGo` native module), and with the Google sign-in native module present
+// (services/nativeModules.ts asks for it before loading the package). __tests__/expoGo.test.tsx and
+// nativeModules.test.ts set up Expo Go and a binary without the module themselves.
+jest.mock('expo', () => ({
+  __esModule: true,
+  ...jest.requireActual('expo'),
+  isRunningInExpoGo: jest.fn(() => false),
+}));
+{
+  const { TurboModuleRegistry } = require('react-native');
+  const realGet = TurboModuleRegistry.get;
+  jest
+    .spyOn(TurboModuleRegistry, 'get')
+    .mockImplementation((name) => (name === 'RNGoogleSignin' ? {} : realGet(name)));
+}
+
+// Skia (the theme switch's circular reveal) has no native canvas in Jest: plain views stand in, and the
+// snapshot resolves to a disposable image. src/ui/ThemeTransition's own tests pass their own snapshot.
+jest.mock('@shopify/react-native-skia', () => {
+  const { createElement } = jest.requireActual('react');
+  const { View } = jest.requireActual('react-native');
+  const box = (props) =>
+    createElement(View, { testID: props.testID, style: props.style }, props.children);
+  return {
+    Canvas: box,
+    Group: box,
+    Circle: () => null,
+    Image: () => null,
+    makeImageFromView: jest.fn(async () => ({ dispose: jest.fn() })),
+  };
+});
+
 jest.mock('expo-apple-authentication', () => ({
   isAvailableAsync: jest.fn(() => Promise.resolve(true)),
   signInAsync: jest.fn(),

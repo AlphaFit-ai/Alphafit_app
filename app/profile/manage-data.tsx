@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams, useNavigation } from 'expo-router';
-import { useEffect } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
+import { PageHeader, Screen } from '../../src/ui';
 
 interface DataItem {
   icon: keyof typeof Ionicons.glyphMap;
@@ -18,7 +18,6 @@ export default function ManageDataScreen() {
   const { type } = useLocalSearchParams<{ type: string }>();
   const { t } = useTranslation();
   const { colors, tokens } = useTheme();
-  const navigation = useNavigation();
 
   const onboardingData: DataItem[] = [
     {
@@ -142,13 +141,6 @@ export default function ManageDataScreen() {
 
   const { title, data } = getDataByType();
 
-  // Set dynamic screen title
-  useEffect(() => {
-    navigation.setOptions({
-      title: title,
-    });
-  }, [navigation, title]);
-
   const handleItemPress = (route: string) => {
     // Navigate to the screen and ensure it returns here after update
     router.push({
@@ -206,25 +198,26 @@ export default function ManageDataScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <Screen padded={false}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.title}>
+          <PageHeader title={title} />
+        </View>
         <View style={[styles.dataList, { backgroundColor: tokens.color.bgSubtle }]}>
           {data.map(renderDataItem)}
         </View>
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   content: {
     flex: 1,
   },
+  title: { paddingHorizontal: Spacing.screenPaddingHorizontal },
   dataList: {
     marginHorizontal: Spacing.md,
     borderRadius: Spacing.radius.md,

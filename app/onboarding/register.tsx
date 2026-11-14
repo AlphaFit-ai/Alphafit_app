@@ -23,9 +23,11 @@ import {
   Text,
   useDialog,
 } from '../../src/ui';
+import { useSwitchTo } from '../../src/wizard/useSwitchTo';
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const switchTo = useSwitchTo();
   const { t } = useTranslation();
   const { updateOnboardingData } = useOnboarding();
   const applyServerPreferences = useApplyServerPreferences();
@@ -292,9 +294,8 @@ export default function RegisterScreen() {
     setVerificationError('');
   };
 
-  const handleBackToLogin = () => {
-    router.replace('/onboarding/login');
-  };
+  // Back to the Login screen below when there is one, instead of stacking another Login on top.
+  const handleBackToLogin = () => switchTo('login', '/onboarding/login', 'replace');
 
   const c = tokens.color;
   const eye = (shown: boolean, toggle: () => void) => (
@@ -315,25 +316,20 @@ export default function RegisterScreen() {
     <Screen
       scroll
       keyboard
+      // Like Login: the form in the middle of the screen, no top bar (back is the system back or the
+      // "Sign in" link, which returns to the Login below).
+      centered
       contentStyle={styles.content}
-      header={
-        <PressableScale
-          onPress={handleBackToLogin}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.back')}
-          style={[styles.backButton, { backgroundColor: c.surfaceMuted }]}
-        >
-          <Ionicons name="arrow-back" size={22} color={c.text} />
-        </PressableScale>
-      }
     >
       <View style={styles.header}>
         <BrandLogo height={36} style={styles.logo} />
-        <Text variant="title" accessibilityRole="header">
+        <Text variant="title" accessibilityRole="header" style={styles.centerText}>
           {t('register.title')}
         </Text>
 
-        <Text tone="muted">{t('register.subtitle')}</Text>
+        <Text tone="muted" style={styles.centerText}>
+          {t('register.subtitle')}
+        </Text>
       </View>
 
       <Input
@@ -460,16 +456,10 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { paddingBottom: 32, gap: 8 },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logo: { alignSelf: 'flex-start', marginBottom: 8 },
-  header: { gap: 6, marginBottom: 12 },
+  content: { paddingVertical: 24, gap: 8 },
+  centerText: { textAlign: 'center' },
+  logo: { alignSelf: 'center', marginBottom: 8 },
+  header: { gap: 6, marginBottom: 12, alignItems: 'center' },
   eye: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   bold: { fontFamily: Fonts.semiBold },
   loginRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },

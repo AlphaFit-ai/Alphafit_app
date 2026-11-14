@@ -218,7 +218,7 @@ export default function ProfileScreen() {
 
   if (isLoading) {
     return (
-      <Screen scroll noTopInset>
+      <Screen scroll>
         <SkeletonGroup label={t('common.loading')} style={styles.skeleton}>
           <Skeleton width={120} height={120} radius={60} style={styles.center} />
           <Skeleton width="50%" height={24} style={styles.center} />
@@ -233,7 +233,7 @@ export default function ProfileScreen() {
   // The profile could not be loaded and there is nothing to show: say so and offer a retry.
   if (loadError && !userProfile) {
     return (
-      <Screen noTopInset>
+      <Screen>
         <ErrorState kind={loadError.kind} onRetry={() => void profileQuery.refetch()} />
       </Screen>
     );
@@ -242,7 +242,6 @@ export default function ProfileScreen() {
   return (
     <Screen
       scroll
-      noTopInset
       contentStyle={styles.content}
       refreshControl={
         <RefreshControl
@@ -363,8 +362,8 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { paddingTop: 16, paddingBottom: 40 },
-  skeleton: { paddingTop: 24, gap: 16 },
+  content: { paddingBottom: 40 },
+  skeleton: { paddingTop: 8, gap: 16 },
   center: { alignSelf: 'center', textAlign: 'center' },
   profileSection: { alignItems: 'center', gap: 8, paddingVertical: 8 },
   sectionTitle: { marginTop: 24, marginBottom: 4 },

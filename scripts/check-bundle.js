@@ -1,24 +1,28 @@
 #!/usr/bin/env node
 /**
- * Proves an exported bundle does not contain the dev-only preview code (docs/CONTRACTS.md section 8:
- * the dev sign-in "must be absent from every build without EXPO_PUBLIC_PREVIEW=1").
+ * Proves an exported bundle does not contain the dev-only web harness code: the stand-ins for native
+ * modules in tools/preview/stubs (a fake signed-in Firebase user, a localStorage token store), which
+ * metro.config.js swaps in only for a web export with EXPO_PUBLIC_PREVIEW=1.
  *
  *   npx expo export --platform android --output-dir <dir>
- *   node scripts/check-bundle.js <dir>                    fails if a preview marker is in the bundle
- *   node scripts/check-bundle.js <dir> --expect-present   the opposite, for a preview build (shows the
- *                                                          check can see the markers at all)
+ *   node scripts/check-bundle.js <dir>                    fails if a harness marker is in the bundle
+ *   node scripts/check-bundle.js <dir> --expect-present   the opposite, for the harness build
+ *                                                          (.preview/dist): the check can see them at all
  *
- * The markers are text that only exists in src/preview and tools/preview/stubs. Hermes bytecode keeps
- * string literals readable, so a plain byte search works for Android, iOS and web bundles.
+ * The markers are text that only exists in tools/preview/stubs. Hermes bytecode keeps string literals
+ * readable, so a plain byte search works for Android, iOS and web bundles.
  */
 const fs = require('fs');
 const path = require('path');
 
+// Development-only code that no export may contain, whatever the mode: the navigation trace that
+// app/_layout.tsx loads only when __DEV__ is true (src/dev/NavigationTrace.tsx).
+const DEV_ONLY = ['[alphafit-trace]'];
+
 const MARKERS = [
-  'This sign-in link did not work', // src/preview/copy.ts
-  'dev sign-in: ', // src/preview/devSignIn.ts (DevSignInError message)
-  'alphafit-preview', // src/preview/PreviewBridge.tsx (message to the dev bar)
-  'Enter a barcode', // src/preview/copy.ts (manual barcode entry)
+  'preview-firebase-signed-out', // tools/preview/stubs/firebase-auth.js
+  'preview-firebase-id-token', // tools/preview/stubs/firebase-auth.js (the fake user's token)
+  'preview-secure:', // tools/preview/stubs/secure-store.js
 ];
 
 function bundles(dir) {
@@ -51,8 +55,13 @@ function main() {
   const found = new Set();
   for (const file of files) {
     const bytes = fs.readFileSync(file);
-    for (const marker of MARKERS)
+    for (const marker of [...MARKERS, ...DEV_ONLY])
       if (bytes.includes(Buffer.from(marker, 'utf8'))) found.add(marker);
+  }
+  const devOnly = DEV_ONLY.filter((m) => found.has(m));
+  if (devOnly.length) {
+    console.error(`Development-only code found in an export: ${devOnly.join(' | ')}`);
+    process.exit(1);
   }
   if (expectPresent) {
     const missing = MARKERS.filter((m) => !found.has(m));

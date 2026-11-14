@@ -1,4 +1,5 @@
 export { AppImage } from './AppImage';
+export type { AppImageSource } from './AppImage';
 export { Button } from './Button';
 export type { ButtonProps, ButtonVariant } from './Button';
 export { Dialog } from './Dialog';
@@ -26,3 +27,5 @@ export { useDialog } from './useDialog';
 export type { DialogConfig } from './useDialog';
 export { FullScreen } from './FullScreen';
 export { BrandLogo } from './BrandLogo';
+export { BackButton, PageHeader } from './PageHeader';
+export type { PageHeaderProps } from './PageHeader';

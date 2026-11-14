@@ -15,6 +15,7 @@ import {
   Dialog,
   ErrorState,
   Input,
+  PageHeader,
   Screen,
   Skeleton,
   SkeletonGroup,
@@ -133,6 +134,7 @@ export default function AccountDetailsScreen() {
   }, [client]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- written before this React Compiler check (eslint-config-expo 58); it loads or syncs state on purpose. Refactor separately.
     void loadUserData();
   }, [loadUserData]);
 
@@ -230,7 +232,8 @@ export default function AccountDetailsScreen() {
 
   if (isLoading) {
     return (
-      <Screen scroll noTopInset>
+      <Screen scroll>
+        <PageHeader title={t('profile.accountDetails')} />
         <SkeletonGroup label={t('common.loading')} style={styles.skeleton}>
           <Skeleton height={56} radius={12} />
           <Skeleton height={56} radius={12} />
@@ -243,7 +246,8 @@ export default function AccountDetailsScreen() {
 
   if (loadError) {
     return (
-      <Screen noTopInset>
+      <Screen>
+        <PageHeader title={t('profile.accountDetails')} />
         <ErrorState kind={loadError.kind} onRetry={() => void loadUserData()} />
       </Screen>
     );
@@ -253,7 +257,6 @@ export default function AccountDetailsScreen() {
     <Screen
       scroll
       keyboard
-      noTopInset
       contentStyle={styles.content}
       footer={
         <Button
@@ -382,8 +385,8 @@ export default function AccountDetailsScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { paddingTop: 16, paddingBottom: 24 },
-  skeleton: { paddingTop: 16, gap: 16 },
+  content: { paddingBottom: 24 },
+  skeleton: { gap: 16 },
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',

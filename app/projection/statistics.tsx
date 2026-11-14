@@ -5,7 +5,7 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useProjection } from '../../context/ProjectionContext';
 import { useTheme } from '../../context/ThemeContext';
-import { AppImage } from '../../src/ui';
+import { AppImage, Screen } from '../../src/ui';
 
 interface BodyPartScore {
   label: string;
@@ -102,7 +102,7 @@ export default function StatisticsScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <Screen padded={false} style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -267,7 +267,7 @@ export default function StatisticsScreen() {
           <Text style={styles.rescanButtonText}>{t('statistics.rescan')}</Text>
         </TouchableOpacity>
       </ScrollView>
-    </View>
+    </Screen>
   );
 }
 

@@ -8,7 +8,7 @@ import { Skeleton, SkeletonGroup } from './Skeleton';
 export const WizardSkeleton: React.FC = () => {
   const { t } = useTranslation();
   return (
-    <Screen noTopInset>
+    <Screen>
       <SkeletonGroup label={t('common.loading')} style={styles.group}>
         <Skeleton width="70%" height={32} />
         <Skeleton height={56} radius={12} />

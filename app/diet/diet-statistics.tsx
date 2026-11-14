@@ -180,6 +180,7 @@ CRITICAL INSTRUCTIONS:
     if (params.barcodeData && typeof params.barcodeData === 'string') {
       try {
         const barcodeResult = JSON.parse(params.barcodeData);
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- written before this React Compiler check (eslint-config-expo 58); it loads or syncs state on purpose. Refactor separately.
         setScanResult(barcodeResult);
         if (barcodeResult.predictions.length > 0) {
           void generateRecommendations(barcodeResult);
@@ -287,7 +288,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   errorSheet: {

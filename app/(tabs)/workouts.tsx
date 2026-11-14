@@ -1,18 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ImageSourcePropType,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
-import { AppImage } from '../../src/ui';
+import { AppImage, Screen, type AppImageSource } from '../../src/ui';
 
 type WorkoutDay = 'push' | 'pull' | 'leg';
 type Muscle =
@@ -44,7 +37,7 @@ interface WorkoutProgram {
   muscles: Muscle[];
   minutes: number;
   exercises: Exercise[];
-  icon: ImageSourcePropType;
+  icon: AppImageSource;
 }
 
 const workoutPrograms: WorkoutProgram[] = [
@@ -96,144 +89,151 @@ export default function WorkoutsScreen() {
 
   const selectedProgram = selectedDay ? workoutPrograms.find((p) => p.day === selectedDay) : null;
 
+  // No bar above the tabs: the screen keeps the status-bar inset itself (Screen).
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.header}>
-        <View style={styles.titleSection}>
-          <View style={[styles.titleIconContainer, { backgroundColor: tokens.color.surfaceMuted }]}>
-            <Ionicons name="fitness" size={32} color={colors.text} />
-          </View>
-          <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
-            {t('workoutScreen.title')}
-          </Text>
-        </View>
-        <Text style={[styles.description, { color: colors.textSecondary }]}>
-          {t('workoutScreen.description')}
-        </Text>
-      </View>
-
-      <View style={styles.workoutCards}>
-        {workoutPrograms.map((program) => (
-          <TouchableOpacity
-            key={program.day}
-            style={[
-              styles.workoutCard,
-              {
-                backgroundColor: tokens.color.surface,
-                borderColor:
-                  selectedDay === program.day ? tokens.color.action : tokens.color.border,
-              },
-              selectedDay === program.day && [
-                styles.workoutCardActive,
-                { backgroundColor: tokens.color.action },
-              ],
-            ]}
-            onPress={() => setSelectedDay(program.day)}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel={t(program.titleKey)}
-            accessibilityState={{ selected: selectedDay === program.day }}
-          >
-            <AppImage
-              source={program.icon}
-              noPlaceholder
-              contentFit="contain"
-              accessible={false}
-              style={[styles.workoutIcon, { backgroundColor: 'transparent' }]}
-            />
-            <Text
-              style={[
-                styles.workoutTitle,
-                { color: selectedDay === program.day ? tokens.color.onAction : colors.text },
-                selectedDay === program.day && styles.workoutTitleActive,
-              ]}
+    <Screen padded={false}>
+      <ScrollView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <View style={styles.titleSection}>
+            <View
+              style={[styles.titleIconContainer, { backgroundColor: tokens.color.surfaceMuted }]}
             >
-              {t(program.titleKey)}
+              <Ionicons name="fitness" size={32} color={colors.text} />
+            </View>
+            <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
+              {t('workoutScreen.title')}
             </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {selectedProgram && (
-        <View style={[styles.programDetails, { backgroundColor: colors.background }]}>
-          <Text style={[styles.programTitle, { color: colors.text }]}>
-            {t(selectedProgram.titleKey)} -{' '}
-            {selectedProgram.muscles.map((muscle) => t(`workoutScreen.${muscle}`)).join(', ')}
+          </View>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>
+            {t('workoutScreen.description')}
           </Text>
-
-          <View style={styles.durationContainer}>
-            <Ionicons name="time-outline" size={18} color={tokens.color.textSubtle} />
-            <Text style={[styles.durationText, { color: colors.textSecondary }]}>
-              {selectedProgram.minutes} {t('workoutScreen.mins')}
-            </Text>
-          </View>
-
-          <View style={styles.exercisesList}>
-            {selectedProgram.exercises.map((exercise) => {
-              const name = t(`workoutScreen.exercises.${exercise.id}.name`);
-              return (
-                <View
-                  key={exercise.id}
-                  style={[
-                    styles.exerciseCard,
-                    {
-                      backgroundColor: tokens.color.surface,
-                      borderColor: tokens.color.border,
-                    },
-                  ]}
-                >
-                  <View style={styles.exerciseHeader}>
-                    <Text style={[styles.exerciseName, { color: colors.text }]}>{name}</Text>
-                    {exercise.tag && (
-                      <View style={[styles.exerciseTag, { backgroundColor: tokens.color.action }]}>
-                        <Text style={[styles.exerciseTagText, { color: tokens.color.onAction }]}>
-                          {t(`workoutScreen.${exercise.tag}`)}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-
-                  <View style={styles.exerciseInfo}>
-                    <Text style={[styles.exerciseStats, { color: colors.textSecondary }]}>
-                      {t('workoutScreen.sets')}:{' '}
-                      <Text style={[styles.exerciseStatsValue, { color: colors.text }]}>
-                        {exercise.sets}
-                      </Text>
-                      {'  '}
-                      {t('workoutScreen.reps')}:{' '}
-                      <Text style={[styles.exerciseStatsValue, { color: colors.text }]}>
-                        {exercise.holdSeconds !== undefined
-                          ? t('workoutScreen.holdSeconds', { seconds: exercise.holdSeconds })
-                          : exercise.reps}
-                      </Text>
-                    </Text>
-                  </View>
-
-                  <Text style={[styles.exerciseDescription, { color: colors.textSecondary }]}>
-                    {t(`workoutScreen.exercises.${exercise.id}.description`)}
-                  </Text>
-
-                  <TouchableOpacity
-                    style={[styles.demoButton, { backgroundColor: tokens.color.action }]}
-                    disabled
-                    accessibilityRole="button"
-                    accessibilityState={{ disabled: true }}
-                  >
-                    <Ionicons name="play-circle" size={16} color={tokens.color.onAction} />
-                    <Text style={[styles.demoButtonText, { color: tokens.color.onAction }]}>
-                      {t('workoutScreen.demo', { name })}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              );
-            })}
-          </View>
         </View>
-      )}
-    </ScrollView>
+
+        <View style={styles.workoutCards}>
+          {workoutPrograms.map((program) => (
+            <TouchableOpacity
+              key={program.day}
+              style={[
+                styles.workoutCard,
+                {
+                  backgroundColor: tokens.color.surface,
+                  borderColor:
+                    selectedDay === program.day ? tokens.color.action : tokens.color.border,
+                },
+                selectedDay === program.day && [
+                  styles.workoutCardActive,
+                  { backgroundColor: tokens.color.action },
+                ],
+              ]}
+              onPress={() => setSelectedDay(program.day)}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={t(program.titleKey)}
+              accessibilityState={{ selected: selectedDay === program.day }}
+            >
+              <AppImage
+                source={program.icon}
+                noPlaceholder
+                contentFit="contain"
+                accessible={false}
+                style={[styles.workoutIcon, { backgroundColor: 'transparent' }]}
+              />
+              <Text
+                style={[
+                  styles.workoutTitle,
+                  { color: selectedDay === program.day ? tokens.color.onAction : colors.text },
+                  selectedDay === program.day && styles.workoutTitleActive,
+                ]}
+              >
+                {t(program.titleKey)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {selectedProgram && (
+          <View style={[styles.programDetails, { backgroundColor: colors.background }]}>
+            <Text style={[styles.programTitle, { color: colors.text }]}>
+              {t(selectedProgram.titleKey)} -{' '}
+              {selectedProgram.muscles.map((muscle) => t(`workoutScreen.${muscle}`)).join(', ')}
+            </Text>
+
+            <View style={styles.durationContainer}>
+              <Ionicons name="time-outline" size={18} color={tokens.color.textSubtle} />
+              <Text style={[styles.durationText, { color: colors.textSecondary }]}>
+                {selectedProgram.minutes} {t('workoutScreen.mins')}
+              </Text>
+            </View>
+
+            <View style={styles.exercisesList}>
+              {selectedProgram.exercises.map((exercise) => {
+                const name = t(`workoutScreen.exercises.${exercise.id}.name`);
+                return (
+                  <View
+                    key={exercise.id}
+                    style={[
+                      styles.exerciseCard,
+                      {
+                        backgroundColor: tokens.color.surface,
+                        borderColor: tokens.color.border,
+                      },
+                    ]}
+                  >
+                    <View style={styles.exerciseHeader}>
+                      <Text style={[styles.exerciseName, { color: colors.text }]}>{name}</Text>
+                      {exercise.tag && (
+                        <View
+                          style={[styles.exerciseTag, { backgroundColor: tokens.color.action }]}
+                        >
+                          <Text style={[styles.exerciseTagText, { color: tokens.color.onAction }]}>
+                            {t(`workoutScreen.${exercise.tag}`)}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+
+                    <View style={styles.exerciseInfo}>
+                      <Text style={[styles.exerciseStats, { color: colors.textSecondary }]}>
+                        {t('workoutScreen.sets')}:{' '}
+                        <Text style={[styles.exerciseStatsValue, { color: colors.text }]}>
+                          {exercise.sets}
+                        </Text>
+                        {'  '}
+                        {t('workoutScreen.reps')}:{' '}
+                        <Text style={[styles.exerciseStatsValue, { color: colors.text }]}>
+                          {exercise.holdSeconds !== undefined
+                            ? t('workoutScreen.holdSeconds', { seconds: exercise.holdSeconds })
+                            : exercise.reps}
+                        </Text>
+                      </Text>
+                    </View>
+
+                    <Text style={[styles.exerciseDescription, { color: colors.textSecondary }]}>
+                      {t(`workoutScreen.exercises.${exercise.id}.description`)}
+                    </Text>
+
+                    <TouchableOpacity
+                      style={[styles.demoButton, { backgroundColor: tokens.color.action }]}
+                      disabled
+                      accessibilityRole="button"
+                      accessibilityState={{ disabled: true }}
+                    >
+                      <Ionicons name="play-circle" size={16} color={tokens.color.onAction} />
+                      <Text style={[styles.demoButtonText, { color: tokens.color.onAction }]}>
+                        {t('workoutScreen.demo', { name })}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        )}
+      </ScrollView>
+    </Screen>
   );
 }
 
@@ -244,7 +244,6 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: Spacing.screenPaddingHorizontal,
-    paddingTop: 24,
   },
   titleSection: {
     flexDirection: 'row',

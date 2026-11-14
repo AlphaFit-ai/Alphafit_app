@@ -14,6 +14,7 @@ module.exports = defineConfig([
       'tools/preview/*.js',
       'jest.setup.js',
       'jest.globalSetup.js',
+      'jest.resolver.js',
       '*.config.js',
     ],
     languageOptions: {
@@ -35,26 +36,10 @@ module.exports = defineConfig([
     },
   },
   {
-    // The frame and dev bar of the browser preview (tools/preview/shell): plain browser scripts.
-    files: ['tools/preview/shell/*.js'],
-    languageOptions: {
-      sourceType: 'script',
-      globals: {
-        window: 'readonly',
-        document: 'readonly',
-        location: 'readonly',
-        history: 'readonly',
-        localStorage: 'readonly',
-        HTMLElement: 'readonly',
-        setInterval: 'readonly',
-        setTimeout: 'readonly',
-        clearTimeout: 'readonly',
-      },
-    },
-  },
-  {
-    // Jest globals in the tests.
+    // Jest globals in the tests. Test probes write what a hook returned into a variable outside the
+    // component on purpose, which the React Compiler check (react-hooks/globals) forbids in app code.
     files: ['__tests__/**/*.{ts,tsx}', 'jest.setup.js'],
+    rules: { 'react-hooks/globals': 'off' },
     languageOptions: {
       globals: {
         jest: 'readonly',

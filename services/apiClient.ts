@@ -24,6 +24,7 @@ export function configureApiAuth(next: AuthHandlers): void {
 
 type RetryableConfig = InternalAxiosRequestConfig & { _renewed?: boolean };
 
+// eslint-disable-next-line import/no-named-as-default-member -- axios.create is the documented API
 const apiClient = axios.create({
   baseURL: config.API_BASE_URL,
   timeout: config.API_TIMEOUT,

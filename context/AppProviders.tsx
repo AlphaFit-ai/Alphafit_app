@@ -3,6 +3,7 @@ import React, { ReactNode } from 'react';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { persistOptions, queryClient } from '../services/queryClient';
 import { ThemePreference } from '../services/preferences';
+import { ThemeTransitionProvider } from '../src/ui/ThemeTransition';
 import { ToastProvider } from '../src/ui/Toast';
 import { DietProvider } from './DietContext';
 import { OnboardingProvider } from './OnboardingContext';
@@ -26,15 +27,18 @@ export function AppProviders({ children, initialTheme = null }: AppProvidersProp
   return (
     <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
       <ThemeProvider initialTheme={initialTheme}>
-        <KeyboardProvider>
-          <ToastProvider>
-            <OnboardingProvider>
-              <DietProvider>
-                <ProjectionProvider>{children}</ProjectionProvider>
-              </DietProvider>
-            </OnboardingProvider>
-          </ToastProvider>
-        </KeyboardProvider>
+        {/* The light/dark switch the user makes is revealed from the button (a circle over the app). */}
+        <ThemeTransitionProvider>
+          <KeyboardProvider>
+            <ToastProvider>
+              <OnboardingProvider>
+                <DietProvider>
+                  <ProjectionProvider>{children}</ProjectionProvider>
+                </DietProvider>
+              </OnboardingProvider>
+            </ToastProvider>
+          </KeyboardProvider>
+        </ThemeTransitionProvider>
       </ThemeProvider>
     </PersistQueryClientProvider>
   );

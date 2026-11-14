@@ -11,6 +11,8 @@ const mockRouter = { replace: jest.fn(), push: jest.fn(), back: jest.fn() };
 jest.mock('expo-router', () => ({
   useRouter: () => mockRouter,
   useFocusEffect: () => undefined,
+  // Login and Register are opened on their own here: nothing below them in the stack.
+  useNavigation: () => ({ getState: () => undefined }),
 }));
 
 jest.mock('../services/apiClient', () => ({
@@ -35,6 +37,7 @@ jest.mock('../services/firebaseAuthService', () => ({
   __esModule: true,
   default: {
     isAppleSignInAvailable: jest.fn(),
+    isGoogleSignInAvailable: jest.fn(() => true),
     signInWithGoogle: jest.fn(),
     signInWithApple: jest.fn(),
     signInWithEmailPassword: jest.fn(),

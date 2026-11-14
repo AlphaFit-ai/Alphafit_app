@@ -13,11 +13,13 @@ export const StepTransition: React.FC<{ step: number; children: React.ReactNode 
   children,
 }) => {
   const reduce = useReduceMotion();
-  const previous = React.useRef<number | null>(null);
-  const direction = previous.current === null ? 0 : step >= previous.current ? 1 : -1;
-  React.useEffect(() => {
-    previous.current = step;
-  }, [step]);
+  // The step shown before, and the direction of the last change (0 for the first step).
+  const [shown, setShown] = React.useState<{ step: number; direction: 0 | 1 | -1 }>({
+    step,
+    direction: 0,
+  });
+  if (shown.step !== step) setShown({ step, direction: stepDirection(shown.step, step) });
+  const direction = shown.step === step ? shown.direction : stepDirection(shown.step, step);
 
   const entering = reduce
     ? undefined

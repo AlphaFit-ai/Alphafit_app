@@ -87,6 +87,18 @@ export function getDietResumeStep(data: DietOnboardingData | null | undefined): 
 }
 
 /**
+ * Where Android back goes inside the Diet tab, which shows its questions, the scan and the results in
+ * place (steps, not routes): a question goes to the previous question, a result (5 the scan's numbers,
+ * 6 a barcode product) goes back to the scan (4). null leaves it to the navigation: the first question
+ * and the scan itself go back through the tab bar's history. The scan used to go to the last question.
+ */
+export function dietBackStep(step: number): number | null {
+  if (step >= 1 && step <= 3) return step - 1;
+  if (step === 5 || step === 6) return 4;
+  return null;
+}
+
+/**
  * Projection steps shown in the Projections tab: 1 sleep, 2 steps, 3 stress, 4 photos,
  * 0 statistics (everything answered).
  */

@@ -190,7 +190,7 @@ const expectUrl = (page, part) =>
       'scan result: a saved edit shows the new calories and Saved',
       {},
       async (page) => {
-        await page.goto(`${BASE}/diet/diet-statistics?scanId=scan-3`);
+        await page.goto(`${BASE}/scan-result?scanId=scan-3`);
         await page.getByText('Grilled salmon').first().waitFor({ timeout: 20000 });
         await shot(page, 'scan-edit-1-before');
         await editOnce(page, 'Grilled salmon');
@@ -207,7 +207,7 @@ const expectUrl = (page, part) =>
       'scan result: a 409 rolls the edit back and says so',
       { patch: '409' },
       async (page) => {
-        await page.goto(`${BASE}/diet/diet-statistics?scanId=scan-4`);
+        await page.goto(`${BASE}/scan-result?scanId=scan-4`);
         await page.getByText('Pasta carbonara').first().waitFor({ timeout: 20000 });
         await editOnce(page, 'Pasta carbonara');
         await page.getByText(/changed or cannot be adjusted/).waitFor({ timeout: 10000 });
@@ -221,7 +221,7 @@ const expectUrl = (page, part) =>
       'scan result: a 404 keeps the edit on screen and says the server cannot save it',
       { patch: '404' },
       async (page) => {
-        await page.goto(`${BASE}/diet/diet-statistics?scanId=scan-1`);
+        await page.goto(`${BASE}/scan-result?scanId=scan-1`);
         await page.getByText('Chicken salad').first().waitFor({ timeout: 20000 });
         await editOnce(page, 'Chicken salad');
         await page.getByText(/this server cannot save them yet/).waitFor({ timeout: 10000 });
@@ -235,7 +235,7 @@ const expectUrl = (page, part) =>
       'scan result: "Looks right" confirms a low-confidence scan',
       {},
       async (page) => {
-        await page.goto(`${BASE}/diet/diet-statistics?scanId=scan-2`);
+        await page.goto(`${BASE}/scan-result?scanId=scan-2`);
         await page.getByText('Is this right?').waitFor({ timeout: 20000 });
         await page.getByRole('button', { name: 'Looks right' }).click();
         await page.getByText('Is this right?').waitFor({ state: 'detached', timeout: 10000 });
@@ -249,7 +249,7 @@ const expectUrl = (page, part) =>
       'scan result: an alternative the api cannot apply (409) offers a rename instead',
       {},
       async (page) => {
-        await page.goto(`${BASE}/diet/diet-statistics?scanId=scan-2`);
+        await page.goto(`${BASE}/scan-result?scanId=scan-2`);
         await page.getByText('Mixed berries').first().waitFor({ timeout: 20000 });
         await page.getByRole('button', { name: 'Edit portions' }).click();
         await page.getByRole('button', { name: 'Change to Strawberries, 32 cal' }).click();
@@ -267,7 +267,7 @@ const expectUrl = (page, part) =>
       'scan result: one tap on an alternative switches the item and its calories',
       {},
       async (page) => {
-        await page.goto(`${BASE}/diet/diet-statistics?scanId=scan-2`);
+        await page.goto(`${BASE}/scan-result?scanId=scan-2`);
         await page.getByText('Strawberries').first().waitFor({ timeout: 20000 });
         await page.getByRole('button', { name: 'Edit portions' }).click();
         await page.getByRole('button', { name: 'Change to Blueberries, 57 cal' }).click();

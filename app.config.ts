@@ -68,7 +68,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     icon: './assets/images/icon.png',
     scheme: 'alphafitai',
     userInterfaceStyle: 'automatic',
-    newArchEnabled: true,
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.app.alphafit',
@@ -84,11 +83,16 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         backgroundImage: './assets/images/brand/adaptive-background.png',
         monochromeImage: './assets/images/brand/adaptive-monochrome.png',
       },
-      edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
     },
     plugins: [
       'expo-router',
+      // Added by `expo install` (SDK 55+): these packages ship config plugins, used here with their defaults.
+      'expo-font',
+      'expo-image',
+      'expo-localization',
+      'expo-secure-store',
+      'expo-status-bar',
       [
         'expo-splash-screen',
         {

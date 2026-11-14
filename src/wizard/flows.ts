@@ -1,5 +1,5 @@
 import type { Ionicons } from '@expo/vector-icons';
-import type { ImageSourcePropType } from 'react-native';
+import type { AppImageSource } from '../ui/AppImage';
 
 /**
  * The questions of the Diet and Projection wizards as data. A screen under `app/` is one line that
@@ -16,7 +16,7 @@ export interface Choice {
   label?: string;
   /** Interpolation values for `labelKey`. */
   labelParams?: Record<string, string | number>;
-  image?: ImageSourcePropType;
+  image?: AppImageSource;
   icon?: keyof typeof Ionicons.glyphMap;
 }
 
@@ -26,7 +26,7 @@ interface BaseStep {
   /** Position in the flow: the wizard's `currentStep` value for this question. */
   index: number;
   titleKey: string;
-  image?: ImageSourcePropType;
+  image?: AppImageSource;
 }
 
 export interface ChoiceStepConfig extends BaseStep {

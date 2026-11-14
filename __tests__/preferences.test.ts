@@ -96,6 +96,29 @@ describe('changing the language', () => {
     expect(await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe('es');
     consoleError.mockRestore();
   });
+
+  it('is on screen at once and never waits for the server: a push that hangs does not hold it', async () => {
+    await AsyncStorage.setItem(AUTH_TOKEN_KEY, 'token');
+    mockApi.put.mockReturnValue(new Promise(() => {}));
+    void setLanguage('fr');
+    expect(i18n.language).toBe('fr'); // synchronously, before any await
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe('fr');
+  });
+
+  it('keeps the new language when it cannot be saved on the phone, and logs it (no rejection)', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    // The async-storage Jest mock is a jest.fn already: fail its next write only.
+    (AsyncStorage.setItem as jest.Mock).mockRejectedValueOnce(new Error('disk full'));
+
+    await expect(setLanguage('es')).resolves.toBeUndefined();
+
+    expect(i18n.language).toBe('es');
+    expect(consoleError.mock.calls.map((call) => String(call[0]))).toContainEqual(
+      expect.stringMatching(/language\.store/)
+    );
+    consoleError.mockRestore();
+  });
 });
 
 describe('pushPreferencesToServer', () => {

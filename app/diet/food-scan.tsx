@@ -25,14 +25,6 @@ import {
   useDialog,
 } from '../../src/ui';
 
-// Dev-only (browser preview): the camera cannot read a barcode there, so the digits are typed. In an
-// app build this is `null` and the code is not in the bundle.
-const preview: typeof import('../../src/preview') | null =
-  process.env.EXPO_PUBLIC_PREVIEW === '1'
-    ? // eslint-disable-next-line @typescript-eslint/no-require-imports -- must be a require so a build without the flag drops it
-      require('../../src/preview')
-    : null;
-
 export default function FoodScanScreen() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -47,13 +39,13 @@ export default function FoodScanScreen() {
   const [isPremium, setIsPremium] = useState<boolean>(false);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState<boolean>(false);
   const [hasBarcodeCameraPermission, setHasBarcodeCameraPermission] = useState<boolean>(false);
-  const [showManualBarcode, setShowManualBarcode] = useState<boolean>(false);
   // What the scan is doing, for the progress card: the stage, which kind, and the seconds so far.
   const [stage, setStage] = useState<ScanStage>('uploading');
   const [scanKind, setScanKind] = useState<'photo' | 'barcode'>('photo');
   const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
     if (!isProcessing) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- written before this React Compiler check (eslint-config-expo 58); it loads or syncs state on purpose. Refactor separately.
       setElapsed(0);
       return;
     }
@@ -124,13 +116,6 @@ export default function FoodScanScreen() {
   const openBarcodeScanner = async () => {
     if (!isPremium) {
       setShowProModal(true);
-      return;
-    }
-
-    if (preview) {
-      // Browser preview: no camera, the barcode is typed and looked up for real.
-      scanLock.reset();
-      setShowManualBarcode(true);
       return;
     }
 
@@ -328,16 +313,9 @@ export default function FoodScanScreen() {
   const c = tokens.color;
 
   return (
-    <Screen scroll noTopInset contentStyle={styles.content} style={styles.root}>
+    <Screen scroll contentStyle={styles.content} style={styles.root}>
       <ProPlanModal visible={showProModal} onClose={() => setShowProModal(false)} />
       {dialog}
-      {preview ? (
-        <preview.ManualBarcodeDialog
-          visible={showManualBarcode}
-          onClose={() => setShowManualBarcode(false)}
-          onSubmit={(barcode) => void handleBarcodeScanned({ type: 'manual', data: barcode })}
-        />
-      ) : null}
 
       {/* The barcode camera: one full-screen layer, closed by the button or the back key */}
       <FullScreen visible={showBarcodeScanner} onRequestClose={() => setShowBarcodeScanner(false)}>
@@ -468,7 +446,7 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   fill: { flex: 1 },
   flex: { flex: 1 },
-  content: { paddingTop: 16, paddingBottom: 32, gap: 16 },
+  content: { paddingBottom: 32, gap: 16 },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   historyButton: {
     width: 48,

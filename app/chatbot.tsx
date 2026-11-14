@@ -12,6 +12,7 @@ import { logError, normalizeApiError } from '../services/apiError';
 import { parseApiDate } from '../services/apiTime';
 import {
   AppImage,
+  BackButton,
   Button,
   haptic,
   PressableScale,
@@ -192,6 +193,7 @@ export default function ChatbotScreen() {
 
   useEffect(() => {
     let active = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- written before this React Compiler check (eslint-config-expo 58); it loads or syncs state on purpose. Refactor separately.
     void checkHealth();
     void loadHistory(() => active);
     return () => {
@@ -271,14 +273,10 @@ export default function ChatbotScreen() {
 
   const header = (
     <View style={styles.header}>
-      <PressableScale
-        onPress={() => router.back()}
-        accessibilityRole="button"
-        accessibilityLabel={t('common.back')}
-        style={styles.back}
-      >
-        <Ionicons name="arrow-back" size={24} color={c.text} />
-      </PressableScale>
+      {/* The same round back button as the other screens (no navigator bar in the app). */}
+      <View style={styles.back}>
+        <BackButton onPress={() => router.back()} />
+      </View>
       <Text variant="subheading" accessibilityRole="header" style={styles.title}>
         {t('chat.title')}
       </Text>
@@ -361,14 +359,14 @@ export default function ChatbotScreen() {
                   title={t('chat.earlier')}
                   onPress={showOlder}
                 />
-              ) : null
+              ) : undefined
             }
             ListHeaderComponent={
               sending ? (
                 <View style={styles.typing} accessibilityLabel={t('common.loading')}>
                   <ActivityIndicator size="small" color={c.accent} />
                 </View>
-              ) : null
+              ) : undefined
             }
           />
         )}

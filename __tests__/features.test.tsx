@@ -21,7 +21,15 @@ jest.mock('expo-router', () => {
     return null;
   }
   Tabs.Screen = Screen;
-  return { Tabs, useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn() }) };
+  return {
+    Tabs,
+    useRouter: () => ({
+      push: jest.fn(),
+      replace: jest.fn(),
+      back: jest.fn(),
+      canGoBack: () => true,
+    }),
+  };
 });
 jest.mock('../services/apiClient', () => ({
   __esModule: true,

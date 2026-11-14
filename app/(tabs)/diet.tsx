@@ -7,7 +7,7 @@ import { useDiet } from '../../context/DietContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useDietData } from '../../hooks/queries';
 import { normalizeApiError } from '../../services/apiError';
-import { getDietResumeStep } from '../../services/onboardingResume';
+import { dietBackStep, getDietResumeStep } from '../../services/onboardingResume';
 import AllergiesScreen from '../diet/allergies';
 import BarcodeResultScreen from '../diet/barcode-result';
 import DietPreferenceScreen from '../diet/diet-preference';
@@ -40,17 +40,15 @@ export default function DietScreen() {
           ? { kind: 'offline' as const }
           : null;
 
-  // Handle back button during onboarding
+  // Android back inside the tab: the previous question, or from a result back to the scan. The first
+  // question and the scan leave the tab through the tab bar's history (dietBackStep).
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        // If not at statistics screen and not at first step, go to previous step
-        if (currentStep > 0 && currentStep < 5) {
-          setCurrentStep(currentStep - 1);
-          return true; // Prevent default back behavior
-        }
-        // Otherwise, allow default back behavior (exit tab)
-        return false;
+        const previous = dietBackStep(currentStep);
+        if (previous === null) return false;
+        setCurrentStep(previous);
+        return true;
       };
 
       const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);

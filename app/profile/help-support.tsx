@@ -4,6 +4,7 @@ import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'r
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
 import { logError } from '../../services/apiError';
+import { PageHeader, Screen } from '../../src/ui';
 
 interface SupportSection {
   icon: keyof typeof Ionicons.glyphMap;
@@ -66,9 +67,10 @@ export default function HelpSupportScreen() {
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <Screen padded={false}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
+          <PageHeader title={t('profile.helpAndSupport')} />
           {sections.map((section) => (
             <View
               key={section.title}
@@ -124,20 +126,16 @@ export default function HelpSupportScreen() {
           <View style={{ height: 40 }} />
         </View>
       </ScrollView>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   scrollView: {
     flex: 1,
   },
   content: {
     paddingHorizontal: Spacing.screenPaddingHorizontal,
-    paddingTop: 20,
   },
   sectionCard: {
     borderRadius: Spacing.radius.lg,

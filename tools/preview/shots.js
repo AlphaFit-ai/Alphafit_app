@@ -58,8 +58,8 @@ const SIGNED_IN = [
   '/projection/sleep',
   '/projection/steps',
   '/projection/stress',
-  '/diet/diet-statistics?scanId=scan-1',
-  '/diet/diet-statistics?scanId=scan-2',
+  '/scan-result?scanId=scan-1',
+  '/scan-result?scanId=scan-2',
 ];
 const ERROR_STATE_ROUTES = ['/home', '/diet', '/profile', '/history'];
 

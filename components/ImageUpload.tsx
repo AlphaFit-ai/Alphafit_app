@@ -41,6 +41,7 @@ export default function ImageUpload({
 
   // Sync local state with prop changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- written before this React Compiler check (eslint-config-expo 58); it loads or syncs state on purpose. Refactor separately.
     setImageUri(currentImageUrl || null);
   }, [currentImageUrl]);
 

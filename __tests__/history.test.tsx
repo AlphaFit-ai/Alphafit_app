@@ -6,14 +6,15 @@ import HistoryScreen from '../app/history';
 import { AppProviders } from '../context/AppProviders';
 import '../i18n/config';
 
-jest.mock('expo-router', () => {
-  const Stack = {
-    // The filter button is a header option; render it inline so the test can press it.
-    Screen: ({ options }: { options?: { headerRight?: () => React.ReactNode } }) =>
-      options?.headerRight ? options.headerRight() : null,
-  };
-  return { Stack, useRouter: () => ({ push: jest.fn(), back: jest.fn(), replace: jest.fn() }) };
-});
+// The filter button is in the page's own header (no navigator bar), so it renders with the list.
+jest.mock('expo-router', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    back: jest.fn(),
+    replace: jest.fn(),
+    canGoBack: () => true,
+  }),
+}));
 jest.mock('../services/apiClient', () => ({
   __esModule: true,
   default: { get: jest.fn(), post: jest.fn(), put: jest.fn(), delete: jest.fn() },

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
@@ -15,6 +15,7 @@ interface LanguageOption {
 interface LanguageSelectorProps {
   visible: boolean;
   onClose: () => void;
+  /** Called with the choice once the sheet has left the screen (see `Sheet.onClosed`). */
   onSelect: (language: LanguageOption) => void;
   selectedLanguage: string;
 }
@@ -25,7 +26,11 @@ const languages: LanguageOption[] = [
   { code: 'fr', name: 'Français', flag: '🇫🇷' },
 ];
 
-/** Language picker as a bottom sheet. */
+/**
+ * Language picker as a bottom sheet. A tap marks the language at once, closes the sheet, and hands the
+ * choice to `onSelect` only when the sheet is gone, so the screen behind does not change (and re-render)
+ * under a sheet that is still on top.
+ */
 export const LanguageSelector = ({
   visible,
   onClose,
@@ -34,22 +39,37 @@ export const LanguageSelector = ({
 }: LanguageSelectorProps) => {
   const { t } = useTranslation();
   const { tokens } = useTheme();
+  // The tapped language, marked before it is applied; cleared when the sheet opens again.
+  const [picked, setPicked] = useState<LanguageCode | null>(null);
+  const [wasVisible, setWasVisible] = useState(visible);
+  if (visible !== wasVisible) {
+    setWasVisible(visible);
+    if (visible) setPicked(null);
+  }
+  const pending = useRef<LanguageOption | null>(null);
+  const current = picked ?? selectedLanguage;
 
   return (
     <Sheet
       visible={visible}
       onClose={onClose}
+      onClosed={() => {
+        const choice = pending.current;
+        pending.current = null;
+        if (choice && !selectedLanguage.startsWith(choice.code)) onSelect(choice);
+      }}
       title={t('profile.selectLanguage')}
       closeLabel={t('common.close')}
     >
       <View accessibilityRole="radiogroup" style={styles.list}>
         {languages.map((language) => {
-          const active = selectedLanguage.startsWith(language.code);
+          const active = current.startsWith(language.code);
           return (
             <PressableScale
               key={language.code}
               onPress={() => {
-                onSelect(language);
+                setPicked(language.code);
+                pending.current = language;
                 onClose();
               }}
               feedback

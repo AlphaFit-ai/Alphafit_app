@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, StyleSheet, View } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
@@ -19,8 +19,8 @@ interface LaunchScreenProps {
 export function LaunchScreen({ error, onRetry }: LaunchScreenProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const fade = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.8)).current;
+  const [fade] = useState(() => new Animated.Value(0));
+  const [scale] = useState(() => new Animated.Value(0.8));
 
   useEffect(() => {
     Animated.parallel([

@@ -78,7 +78,20 @@ describe('console', () => {
 
   it('is only used by the logger, so an error object (with request headers) is never printed', () => {
     const users = allFiles.filter((file) => /console\.(log|warn|error|info)\(/.test(read(file)));
-    expect(users).toEqual(['services/apiError.ts']);
+    // The navigation trace logs routes and session status only, and only in development.
+    expect(users.sort()).toEqual(['services/apiError.ts', 'src/dev/NavigationTrace.tsx']);
+  });
+
+  it('loads the development-only trace behind __DEV__ only, so a release build drops it', () => {
+    const users = allFiles.filter(
+      (file) => !file.startsWith('src/dev/') && /src\/dev\//.test(read(file))
+    );
+    expect(users).toEqual(['app/_layout.tsx']);
+    const root = read('app/_layout.tsx');
+    expect(root).toMatch(
+      /= __DEV__\s*\?\s*(?:\/\/[^\n]*\n\s*)?require\('\.\.\/src\/dev\/NavigationTrace'\)\s*:\s*null/
+    );
+    expect(root).not.toMatch(/import[^;]*from '\.\.\/src\/dev/);
   });
 });
 
@@ -134,9 +147,18 @@ describe('route guards', () => {
       'history',
       'chatbot',
       'profile',
-      'diet/diet-statistics',
+      'scan-result',
     ]) {
       expect(protectedBlock).toContain(`name="${name}"`);
+    }
+    // A screen inside a folder that has its own _layout belongs to that layout: the root Stack ignores
+    // it (expo-router: "Too many screens defined ... is extraneous") and its options with it. The scan
+    // result's modal presentation was lost that way.
+    for (const [, name] of root.matchAll(/<Stack\.Screen\s+name="([^"]+\/[^"]+)"/g)) {
+      const folder = name.split('/')[0];
+      expect(`${name}: ${fs.existsSync(path.join(ROOT, 'app', folder, '_layout.tsx'))}`).toBe(
+        `${name}: false`
+      );
     }
     // Only these two are open to everybody (the second guards its own children).
     const openScreens =
@@ -256,6 +278,30 @@ describe('design system', () => {
   });
 });
 
+describe('no navigator header (the owner wants none)', () => {
+  const routeFiles = allFiles.filter((file) => file.startsWith('app/'));
+
+  it('every navigator layout hides its header', () => {
+    const layouts = routeFiles.filter(
+      (file) => file.endsWith('_layout.tsx') && /<(Stack|Tabs)[\s>]/.test(read(file))
+    );
+    expect(layouts.length).toBeGreaterThanOrEqual(6);
+    for (const file of layouts)
+      expect([file, read(file)]).toEqual([file, expect.stringMatching(/headerShown: false/)]);
+  });
+
+  it('no screen turns a header back on, draws one through the navigator, or sets a navigator title', () => {
+    for (const file of routeFiles) {
+      const source = read(file);
+      expect([
+        file,
+        /headerShown: true|\bheader: \(|headerRight|navigation\.setOptions/.test(source),
+      ]).toEqual([file, false]);
+    }
+    expect(fs.existsSync(path.join(ROOT, 'src/ui/TopBar.tsx'))).toBe(false);
+  });
+});
+
 describe('accessibility', () => {
   it('every touchable in app/ and components/ declares an accessibilityRole', () => {
     const opening =
@@ -312,34 +358,26 @@ describe('design system, every screen', () => {
   });
 });
 
-describe('dev-only browser preview (docs/CONTRACTS.md section 8)', () => {
-  const GUARD =
-    /process\.env\.EXPO_PUBLIC_PREVIEW === '1'\s*\?\s*(?:\/\/[^\n]*\n\s*)?require\('(?:\.\.\/)+src\/preview'\)\s*:\s*null/;
-
-  it('loads src/preview only behind the build flag, so an app build drops it', () => {
-    const users = allFiles.filter(
-      (file) => !file.startsWith('src/preview/') && /src\/preview/.test(read(file))
-    );
-    expect(users.sort()).toEqual([
-      'app/_layout.tsx',
-      'app/dev-sign-in.tsx',
-      'app/diet/food-scan.tsx',
-    ]);
-    for (const file of users) {
-      const text = read(file);
-      expect(`${file}: ${GUARD.test(text)}`).toBe(`${file}: true`);
-      // no static import of the folder anywhere
-      expect(`${file}: ${/import[^;]*from '(?:\.\.\/)+src\/preview/.test(text)}`).toBe(
-        `${file}: false`
-      );
+describe('dev-only web harness and Expo Go', () => {
+  it('has no browser-preview code in the app: no dev sign-in route, no src/preview', () => {
+    expect(fs.existsSync(path.join(ROOT, 'src', 'preview'))).toBe(false);
+    expect(fs.existsSync(path.join(ROOT, 'app', 'dev-sign-in.tsx'))).toBe(false);
+    for (const file of allFiles) {
+      const preview = /EXPO_PUBLIC_PREVIEW|src\/preview/.test(read(file));
+      expect(`${file}: ${preview}`).toBe(`${file}: false`);
     }
   });
 
-  it('opens the /dev-sign-in screen only in a preview build', () => {
-    const root = read('app/_layout.tsx');
-    expect(root).toMatch(
-      /<Stack\.Protected guard=\{process\.env\.EXPO_PUBLIC_PREVIEW === '1'\}>\s*<Stack\.Screen name="dev-sign-in"/
-    );
+  it('imports Google sign-in only through services/nativeModules (Expo Go has no such module)', () => {
+    for (const file of allFiles) {
+      const text = read(file);
+      const imported =
+        /from '@react-native-google-signin\/google-signin'/.test(text) &&
+        !/import type [^;]*from '@react-native-google-signin\/google-signin'/.test(text);
+      const required = /require\('@react-native-google-signin\/google-signin'\)/.test(text);
+      const ok = file === 'services/nativeModules.ts' ? !imported : !imported && !required;
+      expect(`${file}: ${ok}`).toBe(`${file}: true`);
+    }
   });
 
   it('never imports the preview stubs from app code', () => {

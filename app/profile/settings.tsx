@@ -5,7 +5,8 @@ import { LanguageSelector } from '../../components';
 import { useTheme } from '../../context/ThemeContext';
 import { setLanguage } from '../../i18n/config';
 import { LanguageCode, ThemePreference } from '../../services/preferences';
-import { ListItem, PressableScale, Screen, Text } from '../../src/ui';
+import { ListItem, PageHeader, PressableScale, Screen, Text } from '../../src/ui';
+import { originOf, useThemeTransition } from '../../src/ui/ThemeTransition';
 
 const LANGUAGE_NAMES: Record<string, string> = { en: 'English', es: 'Español', fr: 'Français' };
 
@@ -17,19 +18,23 @@ const THEME_OPTIONS: { value: ThemePreference; labelKey: string }[] = [
 
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
-  const { preference, setTheme, tokens } = useTheme();
+  const { preference, tokens } = useTheme();
+  // The change is revealed from the pressed option (a circle), unless motion is reduced.
+  const { setThemeFrom } = useThemeTransition();
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
   const currentLanguage = i18n.language || 'en';
 
   const handleLanguageSelect = (language: { code: LanguageCode; name: string; flag: string }) => {
-    // Saved on this phone and, because the user chose it, sent to the account.
+    // Applied once the sheet is gone; saved on this phone and, because the user chose it, sent to the
+    // account (neither is waited for).
     void setLanguage(language.code);
   };
 
   const c = tokens.color;
 
   return (
-    <Screen scroll noTopInset contentStyle={styles.content}>
+    <Screen scroll contentStyle={styles.content}>
+      <PageHeader title={t('profile.appSettings')} />
       <ListItem
         icon="language-outline"
         title={t('profile.language')}
@@ -50,7 +55,7 @@ export default function SettingsScreen() {
           return (
             <PressableScale
               key={option.value}
-              onPress={() => setTheme(option.value)}
+              onPress={(event) => setThemeFrom(option.value, originOf(event))}
               feedback
               accessibilityRole="radio"
               accessibilityLabel={t(option.labelKey)}
@@ -76,7 +81,7 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { paddingTop: 16, gap: 8 },
+  content: { paddingBottom: 24, gap: 8 },
   heading: { marginTop: 24, marginBottom: 8 },
   segments: { flexDirection: 'row', borderRadius: 999, padding: 4, gap: 4 },
   segment: {

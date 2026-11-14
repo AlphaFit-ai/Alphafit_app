@@ -37,11 +37,11 @@ export const PressableScale: React.FC<PressableScaleProps> = ({
       {...rest}
       hitSlop={hitSlop ?? (minTarget ? 8 : undefined)}
       onPressIn={(e) => {
-        if (!reduce) scale.value = withTiming(pressedScale, { duration: DURATION.fast });
+        if (!reduce) scale.set(withTiming(pressedScale, { duration: DURATION.fast }));
         onPressIn?.(e);
       }}
       onPressOut={(e) => {
-        if (!reduce) scale.value = withTiming(1, { duration: DURATION.fast });
+        if (!reduce) scale.set(withTiming(1, { duration: DURATION.fast }));
         onPressOut?.(e);
       }}
       onPress={(e) => {

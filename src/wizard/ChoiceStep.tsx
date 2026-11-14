@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   tile: { width: '48%', height: 168, borderRadius: 20, overflow: 'hidden', borderWidth: 3 },
   tileImage: { width: '100%', height: '100%' },
   scrim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'flex-end',
     padding: 14,
   },

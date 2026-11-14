@@ -46,6 +46,7 @@ export default function HeightScreen() {
     if (seeded.current || (!savedHeight && !savedWeight)) return;
     seeded.current = true;
     if (savedHeight?.unit === 'imperial' && savedHeight.feet !== undefined) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- written before this React Compiler check (eslint-config-expo 58); it loads or syncs state on purpose. Refactor separately.
       setIsMetric(false);
       setSelectedFeet(Math.min(8, Math.max(2, savedHeight.feet)));
       setSelectedInches(Math.min(11, Math.max(0, savedHeight.inches ?? 0)));
