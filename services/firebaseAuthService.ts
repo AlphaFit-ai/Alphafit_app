@@ -1,22 +1,23 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import {
-  getAuth,
-  initializeAuth,
-  // @ts-ignore
-  getReactNativePersistence,
-  signInWithCredential,
-  GoogleAuthProvider,
-  OAuthProvider,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  sendPasswordResetEmail,
-  updateProfile,
-  User
-} from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as AppleAuthentication from 'expo-apple-authentication';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import { getApp, getApps, initializeApp } from 'firebase/app';
+import {
+  createUserWithEmailAndPassword,
+  getAuth,
+  // @ts-ignore: only the React Native build of firebase/auth exports this
+  getReactNativePersistence,
+  GoogleAuthProvider,
+  initializeAuth,
+  OAuthProvider,
+  sendPasswordResetEmail,
+  signInWithCredential,
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  updateProfile,
+  User,
+} from 'firebase/auth';
+import { Platform } from 'react-native';
 import { config } from '../config';
 
 // Configure Google Sign-In
@@ -34,36 +35,76 @@ const app = getApps().length === 0 ? initializeApp(config.firebase) : getApp();
 let auth;
 try {
   auth = initializeAuth(app, {
-    persistence: getReactNativePersistence(AsyncStorage)
+    persistence: getReactNativePersistence(AsyncStorage),
   });
-} catch (e: any) {
+} catch {
   // If auth is already initialized, use the existing instance
   auth = getAuth(app);
 }
 
-const getAuthInstance = () => {
-  return auth;
-};
+const getAuthInstance = () => auth;
 
 export interface AuthResult {
   user: User;
   idToken: string;
 }
 
+export type AuthProviderName = 'google' | 'apple' | 'email';
+
+/**
+ * An error with a user-facing message that still carries the original Firebase code
+ * (`auth/email-already-in-use`, `auth/weak-password`, ...), so a screen can branch on `error.code`.
+ */
+export class AuthError extends Error {
+  code?: string;
+
+  constructor(message: string, code?: string) {
+    super(message);
+    this.name = 'AuthError';
+    this.code = code;
+  }
+}
+
+function toAuthError(error: unknown, fallback: string, message?: string): AuthError {
+  const source = (error ?? {}) as { code?: unknown; message?: unknown };
+  const code = typeof source.code === 'string' ? source.code : undefined;
+  const original = typeof source.message === 'string' && source.message ? source.message : fallback;
+  return new AuthError(message ?? original, code);
+}
+
 class FirebaseAuthService {
+  /**
+   * Resolves once Firebase has restored the persisted session from storage. Reading `currentUser`
+   * before this point returns null for a user who is in fact signed in.
+   */
+  async waitForAuthReady(): Promise<User | null> {
+    const instance = getAuthInstance();
+    await instance.authStateReady();
+    return instance.currentUser;
+  }
+
+  /** Sign in with Apple is offered on iOS only. */
+  async isAppleSignInAvailable(): Promise<boolean> {
+    if (Platform.OS !== 'ios') return false;
+    try {
+      return await AppleAuthentication.isAvailableAsync();
+    } catch {
+      return false;
+    }
+  }
+
   /**
    * @returns AuthResult if successful, null if user cancelled
    */
   async signInWithGoogle(): Promise<AuthResult | null> {
     try {
-      // Native: Use react-native-google-signin
       // Check if device supports Google Play Services
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
       // Sign out first to clear any cached account and force account picker
       try {
         await GoogleSignin.signOut();
-      } catch (error) {
+      } catch {
         // Ignore errors if no account to clear
       }
 
@@ -81,58 +122,36 @@ class FirebaseAuthService {
         throw new Error('No ID token received from Google Sign-In');
       }
 
-      // Create Firebase credential
       const credential = GoogleAuthProvider.credential(idToken);
-
-      // Sign in to Firebase
       const userCredential = await signInWithCredential(getAuthInstance(), credential);
       const token = await userCredential.user.getIdToken();
 
-      return {
-        user: userCredential.user,
-        idToken: token
-      };
-    } catch (error: any) {
+      return { user: userCredential.user, idToken: token };
+    } catch (error: unknown) {
+      const source = (error ?? {}) as { code?: unknown; message?: unknown };
+      const message = typeof source.message === 'string' ? source.message : '';
       // Handle user cancellation gracefully
-      if (error.code === '-5' ||
-        error.code === 'SIGN_IN_CANCELLED' ||
-        error.message?.includes('Sign in action cancelled') ||
-        error.message?.includes('User cancelled')) {
+      if (
+        source.code === '-5' ||
+        source.code === 'SIGN_IN_CANCELLED' ||
+        message.includes('Sign in action cancelled') ||
+        message.includes('User cancelled')
+      ) {
         // Clear any cached state so next attempt shows account picker
         try {
-          if (typeof window === 'undefined') {
-            await GoogleSignin.signOut();
-          }
-        } catch (signOutError) {
+          await GoogleSignin.signOut();
+        } catch {
           // Ignore sign out errors
         }
         return null;
       }
 
-      throw new Error(error.message || 'Failed to sign in with Google');
+      throw toAuthError(error, 'Failed to sign in with Google');
     }
   }
 
   /**
-   * Sign in with Google using ID token
-   */
-  async signInWithGoogleCredential(idToken: string): Promise<AuthResult> {
-    try {
-      const credential = GoogleAuthProvider.credential(idToken);
-      const userCredential = await signInWithCredential(getAuthInstance(), credential);
-      const token = await userCredential.user.getIdToken();
-
-      return {
-        user: userCredential.user,
-        idToken: token
-      };
-    } catch (error: any) {
-      throw new Error(error.message || 'Failed to sign in with Google');
-    }
-  }
-
-  /**
-   * Sign in with Apple
+   * Sign in with Apple (iOS only)
    */
   async signInWithApple(): Promise<AuthResult> {
     try {
@@ -160,19 +179,15 @@ class FirebaseAuthService {
       // Update profile with Apple name if available
       if (appleCredential.fullName?.givenName) {
         await updateProfile(userCredential.user, {
-          displayName: `${appleCredential.fullName.givenName} ${appleCredential.fullName.familyName || ''}`.trim()
+          displayName:
+            `${appleCredential.fullName.givenName} ${appleCredential.fullName.familyName || ''}`.trim(),
         });
       }
 
-      return {
-        user: userCredential.user,
-        idToken: token
-      };
-    } catch (error: any) {
-      if (error.code === 'ERR_CANCELED') {
-        throw error;
-      }
-      throw new Error(error.message || 'Failed to sign in with Apple');
+      return { user: userCredential.user, idToken: token };
+    } catch (error: unknown) {
+      // The code (`ERR_CANCELED`) is preserved so the caller can stay quiet when the user backs out.
+      throw toAuthError(error, 'Failed to sign in with Apple');
     }
   }
 
@@ -184,38 +199,30 @@ class FirebaseAuthService {
       const userCredential = await signInWithEmailAndPassword(getAuthInstance(), email, password);
       const token = await userCredential.user.getIdToken();
 
-      return {
-        user: userCredential.user,
-        idToken: token
-      };
-    } catch (error: any) {
-      // Preserve the original error code from Firebase
-      let errorMessage = 'Failed to sign in';
+      return { user: userCredential.user, idToken: token };
+    } catch (error: unknown) {
+      const code = (error as { code?: string } | null)?.code;
+      let message: string | undefined;
 
-      switch (error.code) {
+      switch (code) {
         case 'auth/invalid-email':
-          errorMessage = 'Invalid email address';
+          message = 'Invalid email address';
           break;
         case 'auth/user-disabled':
-          errorMessage = 'This account has been disabled';
+          message = 'This account has been disabled';
           break;
         case 'auth/user-not-found':
-          errorMessage = 'No account found with this email';
+          message = 'No account found with this email';
           break;
         case 'auth/wrong-password':
-          errorMessage = 'Incorrect password';
+          message = 'Incorrect password';
           break;
         case 'auth/invalid-credential':
-          errorMessage = 'Invalid email or password';
+          message = 'Invalid email or password';
           break;
-        default:
-          errorMessage = error.message || 'Failed to sign in';
       }
 
-      // Create new error but preserve the Firebase error code
-      const newError: any = new Error(errorMessage);
-      newError.code = error.code;
-      throw newError;
+      throw toAuthError(error, 'Failed to sign in', message);
     }
   }
 
@@ -228,7 +235,11 @@ class FirebaseAuthService {
     displayName?: string
   ): Promise<AuthResult> {
     try {
-      const userCredential = await createUserWithEmailAndPassword(getAuthInstance(), email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        getAuthInstance(),
+        email,
+        password
+      );
 
       // Update display name if provided
       if (displayName) {
@@ -237,49 +248,55 @@ class FirebaseAuthService {
 
       const token = await userCredential.user.getIdToken();
 
-      return {
-        user: userCredential.user,
-        idToken: token
-      };
-    } catch (error: any) {
-      let errorMessage = 'Failed to create account';
+      return { user: userCredential.user, idToken: token };
+    } catch (error: unknown) {
+      const code = (error as { code?: string } | null)?.code;
+      let message: string | undefined;
 
-      switch (error.code) {
+      switch (code) {
         case 'auth/email-already-in-use':
-          errorMessage = 'An account with this email already exists';
+          message = 'An account with this email already exists';
           break;
         case 'auth/invalid-email':
-          errorMessage = 'Invalid email address';
+          message = 'Invalid email address';
           break;
         case 'auth/operation-not-allowed':
-          errorMessage = 'Email/password accounts are not enabled';
+          message = 'Email/password accounts are not enabled';
           break;
         case 'auth/weak-password':
-          errorMessage = 'Password is too weak. Please use a stronger password';
+          message = 'Password is too weak. Please use a stronger password';
           break;
-        default:
-          errorMessage = error.message || 'Failed to create account';
       }
 
-      throw new Error(errorMessage);
+      // The code survives, so the registration screen can tell "email already in use" apart.
+      throw toAuthError(error, 'Failed to create account', message);
     }
   }
 
   /**
-   * Sign out current user from both Firebase and Google
+   * Sign the Firebase user and the Google session out. Both are always attempted, even if the first
+   * fails. Do not call this from screens: use `signOut()` from `services/session`, which also clears
+   * the stored token and every in-memory store.
    */
-  async signOut(): Promise<void> {
-    try {
-      // Sign out from Firebase
-      await firebaseSignOut(getAuthInstance());
+  async signOutProviders(): Promise<void> {
+    const failures: unknown[] = [];
 
-      // Sign out from Google Sign-In if user was signed in
-      const isGoogleSignedIn = await GoogleSignin.hasPreviousSignIn();
-      if (isGoogleSignedIn) {
+    try {
+      await firebaseSignOut(getAuthInstance());
+    } catch (error) {
+      failures.push(error);
+    }
+
+    try {
+      if (await GoogleSignin.hasPreviousSignIn()) {
         await GoogleSignin.signOut();
       }
-    } catch (error: any) {
-      throw new Error(error.message || 'Failed to sign out');
+    } catch (error) {
+      failures.push(error);
+    }
+
+    if (failures.length > 0) {
+      throw toAuthError(failures[0], 'Failed to sign out');
     }
   }
 
@@ -289,45 +306,20 @@ class FirebaseAuthService {
   async sendPasswordResetEmail(email: string): Promise<void> {
     try {
       await sendPasswordResetEmail(getAuthInstance(), email);
-    } catch (error: any) {
-      let errorMessage = 'Failed to send password reset email';
+    } catch (error: unknown) {
+      const code = (error as { code?: string } | null)?.code;
+      let message: string | undefined;
 
-      switch (error.code) {
+      switch (code) {
         case 'auth/invalid-email':
-          errorMessage = 'Invalid email address';
+          message = 'Invalid email address';
           break;
         case 'auth/user-not-found':
-          errorMessage = 'No account found with this email';
+          message = 'No account found with this email';
           break;
-        default:
-          errorMessage = error.message || errorMessage;
       }
 
-      throw new Error(errorMessage);
-    }
-  }
-
-  /**
-   * Check if email exists in the backend database
-   * Returns true if user exists, false if not
-   */
-  async checkEmailExists(email: string): Promise<boolean> {
-    try {
-      // Use backend API to check email existence
-      const response = await fetch(
-        `${config.API_BASE_URL}/auth/check-email?email=${encodeURIComponent(email)}`
-      );
-
-      if (!response.ok) {
-        return false;
-      }
-
-      const exists = await response.json();
-
-      return exists;
-    } catch (error: any) {
-      // On error, return false (assume email doesn't exist)
-      return false;
+      throw toAuthError(error, 'Failed to send password reset email', message);
     }
   }
 
@@ -339,31 +331,20 @@ class FirebaseAuthService {
   }
 
   /**
-   * Get current user ID token
+   * The Firebase ID token of the signed-in user. `forceRefresh` asks Firebase for a fresh one.
    */
-  async getCurrentUserToken(): Promise<string | null> {
+  async getIdToken(forceRefresh = false): Promise<string | null> {
     const user = getAuthInstance().currentUser;
     if (!user) return null;
-
-    try {
-      return await user.getIdToken();
-    } catch (error) {
-      return null;
-    }
+    return user.getIdToken(forceRefresh);
   }
 
-  /**
-   * Refresh current user ID token
-   */
-  async refreshToken(): Promise<string | null> {
-    const user = getAuthInstance().currentUser;
-    if (!user) return null;
-
-    try {
-      return await user.getIdToken(true);
-    } catch (error) {
-      return null;
-    }
+  /** Which sign-in method the current Firebase user used, in the names the api expects. */
+  getSignInProvider(user: User | null = getAuthInstance().currentUser): AuthProviderName {
+    const id = user?.providerData?.[0]?.providerId;
+    if (id === 'google.com') return 'google';
+    if (id === 'apple.com') return 'apple';
+    return 'email';
   }
 }
 

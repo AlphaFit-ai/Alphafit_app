@@ -1,96 +1,93 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Image, Modal, RefreshControl, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Alert, ImageUpload, LanguageSelector, ProPlanModal } from '../../components';
-import { Colors, Fonts, Spacing } from '../../constants';
+import { RefreshControl, StyleSheet, View } from 'react-native';
+import { ImageUpload, ProPlanModal } from '../../components';
+import { Colors, Fonts } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
-import { firebaseAuthService, imageService, userService } from '../../services';
-import type { UserProfile } from '../../services/userService';
+import { useProfile, useProfilePicture, useRefetchWhenStale } from '../../hooks/queries';
+import { userService } from '../../services';
+import { logError, normalizeApiError } from '../../services/apiError';
+import { signOut } from '../../services/session';
+import {
+  Button,
+  Dialog,
+  ErrorState,
+  Input,
+  ListItem,
+  Screen,
+  Skeleton,
+  SkeletonGroup,
+  Text,
+} from '../../src/ui';
+
+/** The api requires exactly this text to deactivate an account (CONTRACTS section 2). */
+const DELETE_CONFIRMATION_PHRASE = 'Delete my account';
 
 interface SettingItem {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   subtitle?: string;
-  type: 'navigation' | 'toggle' | 'action';
-  value?: boolean;
   onPress?: () => void;
-  onToggle?: (value: boolean) => void;
   showBadge?: boolean;
 }
 
+interface AlertConfig {
+  visible: boolean;
+  title: string;
+  message?: string;
+  buttons?: { text: string; style?: 'default' | 'cancel' | 'destructive'; onPress?: () => void }[];
+}
+
 export default function ProfileScreen() {
-  const { t, i18n } = useTranslation();
-  const { colors, isDarkMode, toggleTheme } = useTheme();
+  const { t } = useTranslation();
+  const { tokens } = useTheme();
   const [showProModal, setShowProModal] = useState(false);
-  const [showLanguageSelector, setShowLanguageSelector] = useState(false);
-  const [alertConfig, setAlertConfig] = useState<{ visible: boolean; title: string; message?: string; buttons?: any[] }>({ visible: false, title: '' });
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [userProfilePicture, setUserProfilePicture] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [alertConfig, setAlertConfig] = useState<AlertConfig>({ visible: false, title: '' });
+  // The profile and the picture come from the query cache: shown at once from the last known copy,
+  // refreshed in the background. A session that cannot be renewed signs out inside the api client.
+  const profileQuery = useProfile();
+  const userProfile = profileQuery.data ?? null;
+  // Nothing to show yet: a failed load, or no connection, is an error state with a retry.
+  const loadError = userProfile
+    ? null
+    : profileQuery.isError
+      ? normalizeApiError(profileQuery.error)
+      : profileQuery.isPaused
+        ? { kind: 'offline' as const }
+        : null;
+  const isLoading = profileQuery.isPending && !profileQuery.isPaused;
+  const {
+    uri: userProfilePicture,
+    pending: avatarPending,
+    refresh: refreshProfilePicture,
+    setUri: setProfilePicture,
+  } = useProfilePicture();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const currentLanguage = i18n.language || 'en';
-  const languageNames = { en: 'English', es: 'Español', fr: 'Français' };
-
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
-  // Reload profile data when screen comes into focus
+  // Refresh a profile that is more than a minute old when the tab comes back into focus.
+  const [focused, setFocused] = useState(true);
   useFocusEffect(
     useCallback(() => {
-      loadUserData();
+      setFocused(true);
+      return () => setFocused(false);
     }, [])
   );
+  useRefetchWhenStale(profileQuery, focused);
 
-  const loadUserData = async (isRefresh = false) => {
-    try {
-      if (isRefresh) {
-        setIsRefreshing(true);
-      } else {
-        setIsLoading(true);
-      }
-      const [profile, profilePic] = await Promise.all([
-        userService.getUserProfile(),
-        imageService.getProfilePicture()
-      ]);
-      setUserProfile(profile);
-      setUserProfilePicture(profilePic);
-    } catch (error: any) {
-      const is404 = error?.response?.status === 404;
-      const is401 = error?.response?.status === 401;
+  const onRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await Promise.allSettled([profileQuery.refetch(), refreshProfilePicture()]);
+    setIsRefreshing(false);
+  }, [profileQuery, refreshProfilePicture]);
 
-      if (is404 || is401) {
-        // User doesn't exist or token expired - sign out and redirect to login
-        await firebaseAuthService.signOut();
-        router.replace('/onboarding/login');
-      } else {
-        console.error('Failed to load user data:', error);
-      }
-    } finally {
-      if (isRefresh) {
-        setIsRefreshing(false);
-      } else {
-        setIsLoading(false);
-      }
-    }
-  };
-
-  const onRefresh = useCallback(() => {
-    loadUserData(true);
-  }, []);
-
-  const handleProfilePictureUpdate = async (imageUrl: string) => {
-    // Update local state immediately for instant feedback
-    setUserProfilePicture(imageUrl);
-
-    // Force immediate refresh to sync with backend
-    await loadUserData(true);
+  const handleProfilePictureUpdate = (imageUrl: string) => {
+    // Update the shared cache so the tab bar and the chat pick the new picture up immediately.
+    setProfilePicture(imageUrl);
   };
 
   const myDataSettings: SettingItem[] = [
@@ -98,21 +95,18 @@ export default function ProfileScreen() {
       icon: 'people-outline',
       title: t('profile.onboardingData'),
       subtitle: t('profile.onboardingDataSubtitle'),
-      type: 'navigation',
       onPress: () => router.push('/profile/manage-data?type=onboarding'),
     },
     {
       icon: 'restaurant-outline',
       title: t('profile.dietData'),
       subtitle: t('profile.dietDataSubtitle'),
-      type: 'navigation',
       onPress: () => router.push('/profile/manage-data?type=diet'),
     },
     {
       icon: 'analytics-outline',
       title: t('profile.projectionData'),
       subtitle: t('profile.projectionDataSubtitle'),
-      type: 'navigation',
       onPress: () => router.push('/profile/manage-data?type=projection'),
     },
   ];
@@ -121,23 +115,22 @@ export default function ProfileScreen() {
     {
       icon: 'person-outline',
       title: t('profile.accountDetails'),
-      subtitle: userProfile ? `${userProfile.fullName || 'User'} • ${userProfile.email || ''}` : 'Loading...',
-      type: 'navigation',
+      subtitle: userProfile
+        ? `${userProfile.fullName || t('profile.defaultName')} • ${userProfile.email || ''}`
+        : t('common.loading'),
       onPress: () => router.push('/profile/account-details'),
     },
     {
       icon: 'trophy-outline',
       title: t('profile.subscription'),
       subtitle: t('profile.subscriptionSubtitle'),
-      type: 'navigation',
       onPress: () => setShowProModal(true),
       showBadge: true,
     },
     {
       icon: 'settings-outline',
-      title: 'Settings',
-      subtitle: 'Language, Theme',
-      type: 'navigation',
+      title: t('profile.settings'),
+      subtitle: t('profile.settingsSubtitle'),
       onPress: () => router.push('/profile/settings'),
     },
   ];
@@ -145,66 +138,54 @@ export default function ProfileScreen() {
   const supportSettings: SettingItem[] = [
     {
       icon: 'help-circle-outline',
-      title: t('profile.faq', 'FAQs'),
-      subtitle: t('profile.faqSubtitle', 'Common questions & answers'),
-      type: 'navigation',
+      title: t('profile.faq'),
+      subtitle: t('profile.faqSubtitle'),
       onPress: () => router.push('/profile/faq'),
     },
     {
       icon: 'information-circle-outline',
-      title: t('profile.helpAndSupport', 'Help & Support'),
-      subtitle: t('profile.helpAndSupportSubtitle', 'Privacy, Terms, Contact'),
-      type: 'navigation',
+      title: t('profile.helpAndSupport'),
+      subtitle: t('profile.helpAndSupportSubtitle'),
       onPress: () => router.push('/profile/help-support'),
     },
   ];
 
-  const handleLanguageSelect = (language: { code: string; name: string; flag: string }) => {
-    i18n.changeLanguage(language.code);
-  };
-
   const handleLogout = async () => {
-    try {
-      await firebaseAuthService.signOut();
-      // Navigate to login screen
-      router.replace('/onboarding/login');
-    } catch (error: any) {
-      console.error('Logout error:', error);
-      setAlertConfig({
-        visible: true,
-        title: 'Logout Failed',
-        message: error.message || 'Failed to logout. Please try again.',
-        buttons: [{ text: 'OK', style: 'cancel' }]
-      });
-    }
+    // One sign-out for every way out: token, stores, Firebase and Google are all cleared.
+    await signOut();
+    router.replace('/');
   };
 
   const handleDeleteAccount = async () => {
     const trimmedConfirmation = deleteConfirmation.trim();
-    if (trimmedConfirmation !== 'Delete my account') {
+    if (trimmedConfirmation !== DELETE_CONFIRMATION_PHRASE) {
       setAlertConfig({
         visible: true,
-        title: 'Invalid Confirmation',
-        message: 'Please type "Delete my account" exactly to confirm.',
-        buttons: [{ text: 'OK', style: 'cancel' }]
+        title: t('profile.deleteAccountInvalidTitle'),
+        message: t('profile.deleteAccountInvalidMessage', { phrase: DELETE_CONFIRMATION_PHRASE }),
+        buttons: [{ text: t('common.ok'), style: 'cancel' }],
       });
       return;
     }
 
     try {
       setIsDeleting(true);
-      console.log('Sending delete request with confirmation:', trimmedConfirmation);
       await userService.deactivateAccount(trimmedConfirmation);
-      await firebaseAuthService.signOut();
+      // The account is deactivated; clear this phone the same way a logout does.
+      await signOut();
       setShowDeleteModal(false);
-      router.replace('/onboarding/login');
-    } catch (error: any) {
-      console.error('Delete account error:', error);
+      router.replace('/');
+    } catch (error: unknown) {
+      logError('profile.delete', error);
+      const normalized = normalizeApiError(error);
       setAlertConfig({
         visible: true,
-        title: 'Delete Account Failed',
-        message: error.message || 'Failed to delete account. Please try again.',
-        buttons: [{ text: 'OK', style: 'cancel' }]
+        title: t('profile.deleteAccountFailedTitle'),
+        message:
+          normalized.kind === 'offline'
+            ? t('errors.offline')
+            : t('profile.deleteAccountFailedMessage'),
+        buttons: [{ text: t('common.ok'), style: 'cancel' }],
       });
     } finally {
       setIsDeleting(false);
@@ -212,442 +193,181 @@ export default function ProfileScreen() {
     }
   };
 
-  const appSettings: SettingItem[] = [
-    {
-      icon: 'language-outline',
-      title: t('profile.language'),
-      subtitle: languageNames[currentLanguage as keyof typeof languageNames],
-      type: 'navigation',
-      onPress: () => router.push('/profile/language'),
-    },
-    {
-      icon: 'moon-outline',
-      title: t('profile.darkMode'),
-      type: 'toggle',
-      value: isDarkMode,
-      onToggle: toggleTheme,
-    },
-  ];
-
-  const renderSettingItem = (item: SettingItem) => {
-    if (item.type === 'toggle') {
-      return (
-        <View key={item.title} style={[styles.settingItem, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-          <View style={styles.settingLeft}>
-            <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}>
-              <Ionicons name={item.icon} size={22} color={colors.icon} />
-            </View>
-            <View style={styles.settingText}>
-              <Text style={[styles.settingTitle, { color: colors.text }]}>{item.title}</Text>
-              {item.subtitle && (
-                <Text style={[styles.settingSubtitle, { color: colors.textSecondary }]}>{item.subtitle}</Text>
-              )}
-            </View>
-          </View>
-          <Switch
-            value={item.value}
-            onValueChange={item.onToggle}
-            trackColor={{ false: Colors.gray[300], true: Colors.primary }}
-            thumbColor={Colors.white}
-          />
-        </View>
-      );
-    }
-
-    return (
-      <TouchableOpacity
+  const renderItems = (items: SettingItem[]) =>
+    items.map((item) => (
+      <ListItem
         key={item.title}
-        style={[styles.settingItem, { backgroundColor: colors.card, borderBottomColor: colors.border }]}
+        icon={item.icon}
+        title={item.title}
+        subtitle={item.subtitle}
         onPress={item.onPress}
-        activeOpacity={0.7}
-      >
-        <View style={styles.settingLeft}>
-          <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}>
-            <Ionicons name={item.icon} size={22} color={colors.icon} />
-          </View>
-          <View style={styles.settingText}>
-            <Text style={[styles.settingTitle, { color: colors.text }]}>{item.title}</Text>
-            {item.subtitle && (
-              <Text style={[styles.settingSubtitle, { color: colors.textSecondary }]}>{item.subtitle}</Text>
-            )}
-          </View>
-        </View>
-        <View style={styles.settingRight}>
-          {item.showBadge && (
-            <View style={styles.proBadge}>
-              <Text style={styles.proBadgeText}>PRO</Text>
+        trailing={
+          item.showBadge ? (
+            <View style={[styles.proBadge, { backgroundColor: tokens.color.premium }]}>
+              <Text
+                variant="caption"
+                style={{ color: tokens.color.onPremium, fontFamily: Fonts.bold }}
+              >
+                PRO
+              </Text>
             </View>
-          )}
-          <Ionicons name="chevron-forward" size={20} color={Colors.gray[400]} />
-        </View>
-      </TouchableOpacity>
-    );
-  };
+          ) : undefined
+        }
+      />
+    ));
 
   if (isLoading) {
     return (
-      <View style={[styles.container, styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
+      <Screen scroll noTopInset>
+        <SkeletonGroup label={t('common.loading')} style={styles.skeleton}>
+          <Skeleton width={120} height={120} radius={60} style={styles.center} />
+          <Skeleton width="50%" height={24} style={styles.center} />
+          <Skeleton height={64} radius={16} />
+          <Skeleton height={64} radius={16} />
+          <Skeleton height={64} radius={16} />
+        </SkeletonGroup>
+      </Screen>
+    );
+  }
+
+  // The profile could not be loaded and there is nothing to show: say so and offer a retry.
+  if (loadError && !userProfile) {
+    return (
+      <Screen noTopInset>
+        <ErrorState kind={loadError.kind} onRetry={() => void profileQuery.refetch()} />
+      </Screen>
     );
   }
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      showsVerticalScrollIndicator={false}
+    <Screen
+      scroll
+      noTopInset
+      contentStyle={styles.content}
       refreshControl={
         <RefreshControl
           refreshing={isRefreshing}
           onRefresh={onRefresh}
           colors={[Colors.primary]}
-          tintColor={Colors.primary}
+          tintColor={tokens.color.accent}
         />
       }
     >
       <View style={styles.profileSection}>
-        <View style={styles.avatarWrapper}>
+        {avatarPending ? (
+          // The picture is still being looked up: a placeholder, so the "Add photo" slot does not flash.
+          <Skeleton width={120} height={120} radius={60} />
+        ) : (
           <ImageUpload
-            key={userProfilePicture || 'no-image'}
             currentImageUrl={userProfilePicture}
             onImageUploaded={handleProfilePictureUpdate}
             uploadType="profile"
             size={120}
             rounded={true}
           />
-        </View>
-        <Text style={[styles.userName, { color: colors.text }]}>
-          {userProfile?.fullName || 'User'}
+        )}
+        <Text variant="title" accessibilityRole="header" style={styles.center}>
+          {userProfile?.fullName || t('profile.defaultName')}
         </Text>
-        <Text style={[styles.userEmail, { color: colors.textSecondary }]}>
-          {userProfile?.email || 'user@example.com'}
-        </Text>
+        <Text tone="muted">{userProfile?.email || ''}</Text>
       </View>
 
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('profile.accountSection')}</Text>
-        <View style={[styles.settingsList, { backgroundColor: isDarkMode ? Colors.gray[900] : Colors.gray[50] }]}>
-          {accountSettings.map(renderSettingItem)}
-        </View>
+      <Text variant="heading" accessibilityRole="header" style={styles.sectionTitle}>
+        {t('profile.accountSection')}
+      </Text>
+      {renderItems(accountSettings)}
+
+      <Text variant="heading" accessibilityRole="header" style={styles.sectionTitle}>
+        {t('profile.myDataSection')}
+      </Text>
+      {renderItems(myDataSettings)}
+
+      <Text variant="heading" accessibilityRole="header" style={styles.sectionTitle}>
+        {t('profile.supportSection')}
+      </Text>
+      {renderItems(supportSettings)}
+
+      <View style={styles.dangerZone}>
+        <Button
+          variant="outline"
+          icon="log-out-outline"
+          iconPosition="left"
+          title={t('profile.logout')}
+          onPress={() =>
+            setAlertConfig({
+              visible: true,
+              title: t('profile.logout'),
+              message: t('profile.logoutConfirmMessage'),
+              buttons: [
+                { text: t('common.cancel'), style: 'cancel' },
+                { text: t('profile.logout'), style: 'destructive', onPress: handleLogout },
+              ],
+            })
+          }
+        />
+        <Button
+          variant="dangerOutline"
+          icon="trash-outline"
+          iconPosition="left"
+          title={t('profile.deleteAccount')}
+          onPress={() => setShowDeleteModal(true)}
+        />
       </View>
-
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('profile.myDataSection')}</Text>
-        <View style={[styles.settingsList, { backgroundColor: isDarkMode ? Colors.gray[900] : Colors.gray[50] }]}>
-          {myDataSettings.map(renderSettingItem)}
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('profile.supportSection')}</Text>
-        <View style={[styles.settingsList, { backgroundColor: isDarkMode ? Colors.gray[900] : Colors.gray[50] }]}>
-          {supportSettings.map(renderSettingItem)}
-        </View>
-      </View>
-
-      <TouchableOpacity
-        style={[styles.logoutButton, { borderColor: Colors.red }]}
-        activeOpacity={0.7}
-        onPress={() => setAlertConfig({
-          visible: true,
-          title: 'Logout',
-          message: 'Are you sure you want to logout?',
-          buttons: [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Logout', style: 'destructive', onPress: handleLogout }
-          ]
-        })}
-      >
-        <Ionicons name="log-out-outline" size={20} color={Colors.red} />
-        <Text style={styles.logoutText}>{t('profile.logout')}</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.deleteButton, { borderColor: Colors.red, backgroundColor: Colors.red + '10' }]}
-        activeOpacity={0.7}
-        onPress={() => setShowDeleteModal(true)}
-      >
-        <Ionicons name="trash-outline" size={20} color={Colors.red} />
-        <Text style={styles.deleteText}>Delete Account</Text>
-      </TouchableOpacity>
-
-      <View style={{ height: 40 }} />
 
       <ProPlanModal visible={showProModal} onClose={() => setShowProModal(false)} />
-      <Alert
+      <Dialog
         visible={alertConfig.visible}
         title={alertConfig.title}
         message={alertConfig.message}
-        buttons={alertConfig.buttons}
+        actions={alertConfig.buttons?.map((b) => ({
+          label: b.text,
+          tone: b.style,
+          onPress: b.onPress,
+        }))}
         onClose={() => setAlertConfig({ visible: false, title: '' })}
       />
-      <LanguageSelector
-        visible={showLanguageSelector}
-        onClose={() => setShowLanguageSelector(false)}
-        onSelect={handleLanguageSelect}
-        selectedLanguage={currentLanguage}
-      />
 
-      {/* Delete Account Modal */}
-      <Modal
+      {/* Deleting the account: the exact phrase is required (CONTRACTS section 2) */}
+      <Dialog
         visible={showDeleteModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowDeleteModal(false)}
+        title={t('profile.deleteAccount')}
+        message={t('profile.deleteAccountMessage')}
+        dismissable={!isDeleting}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeleteConfirmation('');
+        }}
+        actions={[
+          { label: t('common.cancel'), tone: 'cancel' },
+          {
+            label: t('common.delete'),
+            tone: 'destructive',
+            keepOpen: true,
+            loading: isDeleting,
+            onPress: handleDeleteAccount,
+          },
+        ]}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContainer, { backgroundColor: colors.card }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Delete Account</Text>
-            <Text style={[styles.modalMessage, { color: colors.textSecondary }]}>
-              This will permanently delete your account and all your data. This action cannot be undone.
-            </Text>
-
-            <Text style={[styles.modalLabel, { color: colors.text }]}>Type "Delete my account" to confirm:</Text>
-            <TextInput
-              style={[styles.confirmationInput, {
-                backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100],
-                color: colors.text,
-                borderColor: colors.border
-              }]}
-              value={deleteConfirmation}
-              onChangeText={setDeleteConfirmation}
-              placeholder="Delete my account"
-              placeholderTextColor={colors.textSecondary}
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isDeleting}
-            />
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalCancelButton, { borderColor: colors.border }]}
-                onPress={() => {
-                  setShowDeleteModal(false);
-                  setDeleteConfirmation('');
-                }}
-                disabled={isDeleting}
-              >
-                <Text style={[styles.modalButtonText, { color: colors.text }]}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalDeleteButton, { backgroundColor: Colors.red }]}
-                onPress={handleDeleteAccount}
-                disabled={isDeleting}
-              >
-                {isDeleting ? (
-                  <ActivityIndicator size="small" color={Colors.white} />
-                ) : (
-                  <Text style={[styles.modalButtonText, { color: Colors.white }]}>Delete</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-    </ScrollView>
+        <Input
+          label={t('profile.deleteAccountPrompt', { phrase: DELETE_CONFIRMATION_PHRASE })}
+          value={deleteConfirmation}
+          onChangeText={setDeleteConfirmation}
+          placeholder={DELETE_CONFIRMATION_PHRASE}
+          autoCapitalize="none"
+          autoCorrect={false}
+          editable={!isDeleting}
+        />
+      </Dialog>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.white,
-  },
-  loadingContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  profileSection: {
-    alignItems: 'center',
-    paddingVertical: 32,
-    paddingHorizontal: Spacing.screenPaddingHorizontal,
-  },
-  avatarWrapper: {
-    marginBottom: 20,
-  },
-  userName: {
-    fontSize: 24,
-    fontFamily: Fonts.bold,
-    fontWeight: '700',
-    color: Colors.black,
-    marginBottom: 4,
-    marginTop: 4,
-  },
-  userEmail: {
-    fontSize: 14,
-    fontFamily: Fonts.regular,
-    color: Colors.gray[400],
-  },
-  section: {
-    paddingHorizontal: Spacing.screenPaddingHorizontal,
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontFamily: Fonts.bold,
-    fontWeight: '700',
-    color: Colors.black,
-    marginBottom: 16,
-  },
-  settingsList: {
-    backgroundColor: Colors.gray[50],
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  settingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    backgroundColor: Colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.gray[100],
-  },
-  settingLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.gray[100],
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  settingText: {
-    flex: 1,
-  },
-  settingTitle: {
-    fontSize: 15,
-    fontFamily: Fonts.semiBold,
-    color: Colors.black,
-    marginBottom: 2,
-  },
-  settingSubtitle: {
-    fontSize: 13,
-    fontFamily: Fonts.regular,
-    color: Colors.gray[400],
-  },
-  settingRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  proBadge: {
-    backgroundColor: Colors.gold,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  proBadgeText: {
-    fontSize: 11,
-    fontFamily: Fonts.bold,
-    fontWeight: '700',
-    color: Colors.white,
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    marginHorizontal: Spacing.screenPaddingHorizontal,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: Colors.red,
-  },
-  logoutText: {
-    fontSize: 16,
-    fontFamily: Fonts.bold,
-    fontWeight: '700',
-    color: Colors.red,
-  },
-  deleteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    marginHorizontal: Spacing.screenPaddingHorizontal,
-    marginTop: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.red,
-  },
-  deleteText: {
-    fontSize: 16,
-    fontFamily: Fonts.semiBold,
-    color: Colors.red,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalContainer: {
-    width: '100%',
-    maxWidth: 400,
-    backgroundColor: Colors.white,
-    borderRadius: 20,
-    padding: 24,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontFamily: Fonts.bold,
-    color: Colors.black,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  modalMessage: {
-    fontSize: 15,
-    fontFamily: Fonts.regular,
-    color: Colors.gray[600],
-    marginBottom: 20,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  modalLabel: {
-    fontSize: 14,
-    fontFamily: Fonts.semiBold,
-    color: Colors.black,
-    marginBottom: 8,
-  },
-  confirmationInput: {
-    backgroundColor: Colors.gray[100],
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    fontFamily: Fonts.regular,
-    borderWidth: 1,
-    marginBottom: 20,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalCancelButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-  },
-  modalDeleteButton: {
-    backgroundColor: Colors.red,
-  },
-  modalButtonText: {
-    fontSize: 16,
-    fontFamily: Fonts.semiBold,
-  },
+  content: { paddingTop: 16, paddingBottom: 40 },
+  skeleton: { paddingTop: 24, gap: 16 },
+  center: { alignSelf: 'center', textAlign: 'center' },
+  profileSection: { alignItems: 'center', gap: 8, paddingVertical: 8 },
+  sectionTitle: { marginTop: 24, marginBottom: 4 },
+  proBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  dangerZone: { gap: 12, marginTop: 32 },
 });

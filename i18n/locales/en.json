@@ -3,13 +3,28 @@
     "continue": "Continue",
     "back": "Back",
     "uploading": "Uploading...",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "retry": "Try again",
+    "ok": "OK",
+    "error": "Error",
+    "loading": "Loading...",
+    "close": "Close",
+    "delete": "Delete",
+    "unknownFood": "Unknown Food",
+    "completed": "Completed",
+    "submit": "Submit",
+    "finish": "Finish",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "imageUpload": {
     "selectSource": "Select Image Source",
     "selectSourceMessage": "Choose where you want to get your photo from",
     "camera": "Camera",
-    "gallery": "Gallery"
+    "gallery": "Gallery",
+    "addPhoto": "Add Photo",
+    "pickFailed": "The photo could not be selected. Check that AlphaFit may use the camera or your photos.",
+    "uploadFailed": "The photo could not be uploaded. Please try again."
   },
   "welcome": {
     "title": "WELCOME TO",
@@ -23,7 +38,27 @@
     "terms": "By continuing, you agree to our Terms of Service and Privacy Policy",
     "invalidEmail": "Please enter a valid email address",
     "noAccount": "Don't have an account?",
-    "signUp": "Sign up"
+    "signUp": "Sign up",
+    "error": "Error",
+    "authError": "Authentication failed. Please try again.",
+    "googleError": "Google sign-in failed",
+    "appleError": "Apple sign-in failed. Please try another method.",
+    "emailRequired": "Email is required",
+    "noAccountFound": "No account found with this email. Please sign up first.",
+    "checkEmailError": "Failed to verify email. Please try again.",
+    "passwordRequired": "Password is required",
+    "passwordTooShort": "Password must be at least 6 characters",
+    "loginError": "Login failed. Please check your credentials.",
+    "enterValidEmail": "Please enter a valid email address first",
+    "success": "Success",
+    "resetEmailSent": "Password reset email has been sent. Please check your inbox.",
+    "resetError": "Failed to send reset email",
+    "loading": "Loading...",
+    "enterPassword": "Enter Password",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "login": "Log In",
+    "forgotPassword": "Forgot password?"
   },
   "register": {
     "title": "CREATE ACCOUNT",
@@ -50,15 +85,35 @@
       "emailRequired": "Email is required",
       "emailInvalid": "Please enter a valid email address",
       "passwordRequired": "Password is required",
-      "passwordWeak": "Password must be 8+ chars with uppercase, lowercase & number",
       "passwordMissing": "Missing: ",
       "passwordMinLength": "At least 8 characters",
       "passwordLowercase": "One lowercase letter",
       "passwordUppercase": "One uppercase letter",
       "passwordNumber": "One number",
       "confirmPasswordRequired": "Please confirm your password",
-      "passwordMismatch": "Passwords do not match"
-    }
+      "passwordMismatch": "Passwords do not match",
+      "emailInUse": "This email is already registered. Please log in instead.",
+      "sendCodeFailed": "Failed to send verification code. Please try again.",
+      "codeRequired": "Verification code is required",
+      "codeInvalid": "Code must be 6 digits",
+      "codeIncorrect": "Invalid verification code",
+      "registrationFailed": "Registration failed. Please try again.",
+      "weakPassword": "Password is too weak. Please use a stronger password.",
+      "invalidEmail": "Invalid email address.",
+      "resendFailed": "Failed to resend code. Please try again."
+    },
+    "termsMessage": "Please agree to the Terms of Service and Privacy Policy to continue",
+    "error": "Registration Error",
+    "sendingCode": "Sending Code...",
+    "verifyEmail": "Verify Your Email",
+    "verifyEmailMessage": "We sent a 6-digit code to",
+    "verificationCode": "Verification Code",
+    "verifying": "Verifying...",
+    "verify": "Verify & Create Account",
+    "sending": "Sending...",
+    "resendCode": "Resend Code",
+    "success": "Success",
+    "codeSent": "Verification code sent to your email"
   },
   "onboarding": {
     "age": {
@@ -123,21 +178,24 @@
     "intro": {
       "title": "AI Physique Projection",
       "subtitle": "Estimate how your body could transform using advanced AI models",
-      "analyzing": "Analyzing your profile...",
-      "generating": "Generating projection...",
-      "almost": "Almost there...",
       "current": "Current",
       "projected": "Projected (6m)",
-      "getStarted": "Get Started"
+      "getStarted": "Get Started",
+      "titleScan": "Eat smarter, train better",
+      "subtitleScan": "Scan your meals with AI, follow workouts for your level, and ask the coach."
     },
     "source": {
       "title": "Where did you hear about us?",
       "others": "Others"
     },
     "continue": "Continue",
-    "back": "Back",
     "saving": "Saving...",
-    "step": "{{current}} of {{total}}"
+    "error": {
+      "title": "Error",
+      "message": "Failed to save your preferences. Please try again.",
+      "retry": "Retry",
+      "continue": "Continue Anyway"
+    }
   },
   "workoutScreen": {
     "title": "Personalized Workouts",
@@ -162,7 +220,60 @@
     "customPlansSubtitle": "AI-tailored workouts",
     "progressTraining": "Progress Training",
     "progressTrainingSubtitle": "Smart Analytics",
-    "upgradeToPro": "upgrade to Pro"
+    "upgradeToPro": "upgrade to Pro",
+    "lowerBack": "Lower Back",
+    "holdSeconds": "{{seconds}}s hold",
+    "demo": "{{name}} demo",
+    "exercises": {
+      "pushUps": {
+        "name": "Push-ups",
+        "description": "Keep your body straight, lower until chest nearly touches ground"
+      },
+      "pikePushUps": {
+        "name": "Pike Push-ups",
+        "description": "Hands shoulder-width apart, walk feet closer to hands"
+      },
+      "tricepDips": {
+        "name": "Tricep Dips",
+        "description": "Use chair or bench, lower your body by bending elbows"
+      },
+      "inclinePushUps": {
+        "name": "Incline Push-ups",
+        "description": "Use elevated surface like bench or step"
+      },
+      "bodyweightRows": {
+        "name": "Bodyweight Rows",
+        "description": "Use table or bar, keep body straight and pull chest to bar"
+      },
+      "superman": {
+        "name": "Superman",
+        "description": "Lie face down, lift chest and legs simultaneously"
+      },
+      "wallHandstand": {
+        "name": "Wall Handstand",
+        "description": "Face wall, walk feet while in handstand position"
+      },
+      "reversePlank": {
+        "name": "Reverse Plank",
+        "description": "Sit with legs extended, lift hips off ground"
+      },
+      "bodyweightSquats": {
+        "name": "Bodyweight Squats",
+        "description": "Feet shoulder-width apart, lower until thighs parallel to ground"
+      },
+      "calfRaises": {
+        "name": "Calf Raises",
+        "description": "Rise up on toes, hold briefly, lower slowly"
+      },
+      "gluteBridges": {
+        "name": "Glute Bridges",
+        "description": "Lie on back, lift hips by squeezing glutes"
+      },
+      "wallSit": {
+        "name": "Wall Sit",
+        "description": "Back against wall, slide down until thighs parallel to ground"
+      }
+    }
   },
   "diet": {
     "preference": {
@@ -179,7 +290,13 @@
       "placeholder": "Please specify ..."
     },
     "meals": {
-      "title": "How many meals do you usually eat per day?"
+      "title": "How many meals do you usually eat per day?",
+      "options": {
+        "2": "2 meals",
+        "3": "3 meals",
+        "4": "4 meals",
+        "5": "5+ meals"
+      }
     },
     "supplements": {
       "title": "Do you currently take any supplements?",
@@ -193,8 +310,32 @@
       "barcode": "Barcode",
       "scanFood": "Scan Food",
       "library": "Library",
-      "generate": "Generate",
-      "barcodeResult": "Product Information"
+      "barcodeResult": "Product Information",
+      "barcodeHint": "Position barcode or QR code within frame",
+      "per100g": "Per 100g",
+      "progress": {
+        "uploading": "Uploading image...",
+        "analyzing": "Analyzing with AI...",
+        "complete": "Analysis complete!",
+        "lookingUp": "Looking up product...",
+        "productFound": "Product found in {{source}}!",
+        "done": "Complete!"
+      },
+      "alerts": {
+        "cameraTitle": "Camera Access Required",
+        "cameraMealMessage": "AlphaFit needs access to your camera to take photos of your meals. Please enable camera access in Settings.",
+        "cameraBarcodeMessage": "AlphaFit needs access to your camera to scan barcodes. Please enable camera access in Settings.",
+        "settings": "Settings",
+        "productNotFoundTitle": "Product Not Found",
+        "productNotFoundMessage": "Barcode: {{barcode}}\n\nThis product is not in our databases. Please try scanning the food with the camera for better results.",
+        "connectionTitle": "Connection Failed",
+        "connectionMessage": "Unable to connect to the server. Please check your internet connection and try again.",
+        "noFoodTitle": "No Food Detected",
+        "noFoodMessage": "Please upload a clear photo of food items. Make sure the food is well-lit and centered.",
+        "tryAgain": "Try Again",
+        "errorTitle": "Error",
+        "errorMessage": "An unexpected error occurred. Please try again."
+      }
     },
     "statistics": {
       "nutritionFacts": "Nutrition Facts",
@@ -209,11 +350,12 @@
       "caloriesUnit": "calories",
       "personalizedRecommendations": "Personalized Recommendations",
       "analyzingMeal": "Analyzing your meal...",
-      "loadingResults": "Loading results..."
+      "loadingResults": "Loading results...",
+      "fiber": "Fiber",
+      "sugar": "Sugar"
     }
   },
   "profile": {
-    "title": "Profile",
     "myDataSection": "My Data",
     "onboardingData": "Personal Information",
     "onboardingDataSubtitle": "Update your fitness goals & preferences",
@@ -227,8 +369,6 @@
     "accountDetails": "Account Details",
     "subscription": "Subscription",
     "subscriptionSubtitle": "Manage your Pro subscription",
-    "support": "Support",
-    "supportSubtitle": "Get help and contact us",
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
     "faq": "FAQs",
@@ -246,30 +386,54 @@
       "emailError": "Please enter a valid email address",
       "phoneNumber": "Phone Number",
       "phonePlaceholder": "612 345 678",
-      "age": "Age",
-      "agePlaceholder": "Enter your age",
       "saveChanges": "Save Changes",
       "successTitle": "Success",
       "successMessage": "Your account details have been updated successfully!",
-      "ok": "OK"
-    }
+      "ok": "OK",
+      "saving": "Saving...",
+      "saveError": "Your changes could not be saved. Please try again."
+    },
+    "defaultName": "User",
+    "settings": "Settings",
+    "settingsSubtitle": "Language, Theme",
+    "contact": "Contact Support",
+    "deleteAccount": "Delete Account",
+    "logoutConfirmMessage": "Are you sure you want to logout?",
+    "deleteAccountMessage": "This will permanently delete your account and all your data. This action cannot be undone.",
+    "deleteAccountPrompt": "Type \"{{phrase}}\" to confirm:",
+    "deleteAccountInvalidTitle": "Invalid Confirmation",
+    "deleteAccountInvalidMessage": "Please type \"{{phrase}}\" exactly to confirm.",
+    "deleteAccountFailedTitle": "Delete Account Failed",
+    "deleteAccountFailedMessage": "Failed to delete account. Please try again.",
+    "manageData": "Manage Data",
+    "selectLanguage": "Select Language",
+    "theme": "Theme",
+    "themeSystem": "Match phone",
+    "themeLight": "Light",
+    "themeDark": "Dark"
   },
   "tabs": {
     "home": "Home",
-    "homeSubtitle": "Your personalized fitness journey starts here",
     "scan": "Scan",
-    "scanSubtitle": "Scan your projections"
+    "workouts": "Workouts",
+    "diet": "Diet",
+    "profile": "Profile",
+    "proPlan": "Pro plan"
   },
   "projection": {
     "sleep": {
-      "title": "On average, how many hours of sleep do you get per night?"
+      "title": "On average, how many hours of sleep do you get per night?",
+      "option": "{{value}} hours"
     },
     "steps": {
       "title": "Approximately how many steps do you take daily?"
     },
     "stress": {
       "title": "How would you rate your daily stress level?"
-    }
+    },
+    "comingSoon": "Coming Soon",
+    "photoUploadSoon": "Photo upload feature is coming soon!",
+    "photoCaptureSoon": "Photo capture feature is coming soon!"
   },
   "bodyScan": {
     "sparkles": "AI-powered muscle analysis",
@@ -281,7 +445,6 @@
     "sideView": "Side view",
     "backView": "Back view",
     "tapToUpload": "Tap to upload",
-    "uploaded": "image.jpg",
     "uploadMore": "Upload more {{count}} photos",
     "startAnalysis": "Start AI Analysis"
   },
@@ -333,21 +496,241 @@
     "rescan": "Rescan Body"
   },
   "home": {
-    "nutritionToday": "Nutrition Today",
     "protein": "Protein",
     "carbs": "Carbs",
     "fats": "Fats",
-    "quickStats": "Quick Stats",
     "yourJourney": "Your Journey",
     "recentScans": "Recent Scans",
     "seeAll": "See All",
-    "todayWorkouts": "Today's Workouts",
-    "progressOverview": "Progress Overview",
-    "weeklyProgress": "Weekly Progress",
-    "workoutsCompleted": "Workouts Completed",
-    "quickActions": "Quick Actions",
-    "scanMeal": "Scan Meal",
-    "scanBody": "Scan Body",
-    "lastMeal": "Last Meal"
+    "lastScan": "Last Scan",
+    "caloriesToday": "Calories Today",
+    "scansToday": "Scans Today",
+    "sleep": "Sleep",
+    "yearsOld": "{{years}} years",
+    "perWeek": "{{value}}x per week",
+    "sleepHours": "{{hours}} hrs sleep",
+    "calUnit": "cal",
+    "noScansYet": "No scans yet. Scan a meal to see it here.",
+    "refreshFailed": "Could not refresh. Tap to try again.",
+    "quotes": {
+      "strength": {
+        "0": "Strength doesn't come from what you can do. It comes from overcoming the things you thought you couldn't.",
+        "1": "The pain you feel today will be the strength you feel tomorrow.",
+        "2": "Your body can stand almost anything. It's your mind you have to convince."
+      },
+      "fatLoss": {
+        "0": "Don't wish for it, work for it.",
+        "1": "The only bad workout is the one that didn't happen.",
+        "2": "Success is the sum of small efforts repeated day in and day out."
+      },
+      "fitness": {
+        "0": "Take care of your body. It's the only place you have to live.",
+        "1": "Fitness is not about being better than someone else. It's about being better than you used to be.",
+        "2": "The only way to define your limits is by going beyond them."
+      },
+      "health": {
+        "0": "Health is wealth. Invest in yourself.",
+        "1": "Every workout is progress. Keep moving forward.",
+        "2": "Your health is an investment, not an expense."
+      }
+    },
+    "caloriesLeft": "{{amount}} cal left",
+    "caloriesOver": "{{amount}} cal over",
+    "targetEstimate": "of about {{target}} cal (estimated target)",
+    "caloriesProgress": "{{eaten}} of {{target}} calories today",
+    "addTargetHint": "Add your height, weight and activity to see a daily target.",
+    "thisWeek": "This week",
+    "weekDayLabel": "{{day}}. Scans: {{count}}. {{calories}} cal."
+  },
+  "errors": {
+    "title": "Something went wrong",
+    "offline": "You seem to be offline. Check your connection and try again.",
+    "timeout": "The server took too long to answer. Please try again.",
+    "server": "The server ran into a problem. Please try again in a moment.",
+    "unknown": "Something unexpected happened. Please try again.",
+    "boundary": {
+      "title": "Something went wrong",
+      "message": "AlphaFit hit a problem and could not show this screen. Your data is safe. Reload to continue.",
+      "reload": "Reload"
+    }
+  },
+  "bootstrap": {
+    "retryTitle": "We can't reach AlphaFit"
+  },
+  "authErrors": {
+    "invalidEmail": "Invalid email address",
+    "userDisabled": "This account has been disabled",
+    "userNotFound": "No account found with this email",
+    "wrongPassword": "Incorrect password",
+    "invalidCredential": "Invalid email or password",
+    "emailInUse": "An account with this email already exists",
+    "weakPassword": "Password is too weak. Please use a stronger password",
+    "operationNotAllowed": "Email and password sign-in is not enabled",
+    "tooManyRequests": "Too many attempts. Please wait a moment and try again",
+    "network": "Network error. Check your connection and try again"
+  },
+  "history": {
+    "title": "History",
+    "filterBy": "Filter By",
+    "noHistory": "No History Yet",
+    "startScanning": "Start scanning food to see your history here.",
+    "filters": {
+      "all": "All",
+      "completed": "Completed",
+      "processing": "Processing",
+      "failed": "Failed"
+    },
+    "status": {
+      "pending": "Pending",
+      "processing": "Processing",
+      "failed": "Failed"
+    },
+    "refreshFailed": "Could not refresh. Tap to try again.",
+    "filterNote": "Showing matches among the {{count}} scans loaded so far.",
+    "noMatch": "No matching scans yet",
+    "noMatchMessage": "None of the {{count}} scans loaded so far match this filter.",
+    "loadOlder": "Load older scans"
+  },
+  "chat": {
+    "title": "AI Coach",
+    "welcome": "Hello! I'm your AlphaFit AI coach. I'm here to help you with fitness, nutrition, and wellness questions. How can I assist you today?",
+    "unavailableTitle": "Service Unavailable",
+    "unavailableMessage": "The AI chatbot service is currently unavailable. Please try again later.",
+    "timeout": "The AI is taking longer than expected to respond. Please try again later.",
+    "sendFailed": "Failed to send message. Please try again.",
+    "placeholder": "Ask me about fitness, nutrition...",
+    "send": "Send",
+    "notSent": "Not sent.",
+    "historyFailed": "Could not load your earlier messages.",
+    "earlier": "Earlier messages"
+  },
+  "faq": {
+    "intro": "Find answers to commonly asked questions about AlphaFit AI",
+    "stillHaveQuestions": "Still have questions?",
+    "contactUs": "Contact us at {{email}}",
+    "items": {
+      "trackWorkouts": {
+        "question": "How do I track my workouts?",
+        "answer": "You can track your workouts by going to the Workouts tab and selecting your desired workout plan. Follow the exercises and mark them as complete as you go."
+      },
+      "customizeMeals": {
+        "question": "Can I customize my meal plans?",
+        "answer": "Yes! Navigate to the Diet tab and use the Smart Diet Plan feature. You can scan foods, set your dietary preferences, and our AI will generate personalized meal plans for you."
+      },
+      "physiqueProjection": {
+        "question": "How does the AI Physique Projection work?",
+        "answer": "Our AI analyzes your current photos and profile data (age, fitness level, goals) to project how your physique could transform over time with consistent training and nutrition."
+      },
+      "proFeatures": {
+        "question": "What features are included in the Pro plan?",
+        "answer": "Pro plan includes: unlimited AI-generated workouts, advanced physique projections, personalized meal plans, progress analytics, priority support, and ad-free experience."
+      },
+      "cancelSubscription": {
+        "question": "How do I cancel my subscription?",
+        "answer": "You can manage your subscription in your device settings under Subscriptions, or contact our support team at {{email}} for assistance."
+      },
+      "dataSecurity": {
+        "question": "Is my data secure and private?",
+        "answer": "Absolutely! We use bank-level encryption to protect your data. Your photos, progress, and personal information are stored securely and never shared with third parties without your consent."
+      },
+      "syncDevices": {
+        "question": "Can I sync data across devices?",
+        "answer": "Yes, your data automatically syncs across all devices when you're logged in with the same account."
+      },
+      "bodyScanAccuracy": {
+        "question": "How accurate is the body scan feature?",
+        "answer": "Our AI body scan uses advanced computer vision models trained on thousands of physiques. While highly accurate, results are estimates and should be used as guidance alongside professional advice."
+      },
+      "reportBug": {
+        "question": "What should I do if I encounter a bug?",
+        "answer": "Please contact our support team at {{email}} with details about the issue. Include screenshots if possible, and we'll work quickly to resolve it."
+      },
+      "changeGoals": {
+        "question": "Can I change my fitness goals after setup?",
+        "answer": "Yes! You can update your goals, preferences, and profile information anytime from the Profile tab > Account Details."
+      }
+    }
+  },
+  "help": {
+    "faqContent": "Find answers to common questions about AlphaFit AI, features, and subscriptions.",
+    "faqAction": "View FAQ",
+    "contactContent": "Need assistance? Reach out to our support team for help with your account or technical issues.",
+    "contactAction": "Contact Us",
+    "privacyContent": "Read about how we protect your personal information and data security.",
+    "privacyAction": "Read Policy",
+    "termsContent": "Review the terms and conditions for using the AlphaFit AI platform.",
+    "termsAction": "Read Terms",
+    "deleteContent": "Learn about the process for permanently deleting your account and data.",
+    "deleteAction": "Delete Info",
+    "stillNeedHelp": "Still need help?"
+  },
+  "proPlan": {
+    "badge": "ALPHAFIT PRO",
+    "titleLead": "Unlock",
+    "titleRest": "Your Full\nPotential",
+    "subtitle": "Get AI-powered coaching and transform\nyour physique faster",
+    "limitedOffer": "Limited Time Offer",
+    "save": "Save {{percent}}%",
+    "perMonth": "per month",
+    "perYear": "per year",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "pricePerMonth": "{{price}}/month",
+    "pricePerYear": "{{price}}/year",
+    "priceMonthShort": "{{price}}/mo",
+    "priceYearShort": "{{price}}/yr",
+    "popular": "Popular",
+    "premiumFeatures": "Premium Features",
+    "startTrial": "Start Free Trial - 7 Days",
+    "getPremium": "Get Premium - {{price}}",
+    "features": {
+      "physiqueProjection": "AI physique projection",
+      "physiqueProjectionFull": "Full AI physique projection",
+      "customWorkouts": "Custom weekly workouts",
+      "dietPlans": "Personalized diet plans",
+      "progressReports": "Progress reports + charts",
+      "coachChat": "AI Coach chat (24/7)",
+      "badges": "Streak badges & milestones",
+      "prioritySupport": "Priority support"
+    }
+  },
+  "wizard": {
+    "stepOf": "Step {{current}} of {{total}}"
+  },
+  "scan": {
+    "edit": "Edit portions",
+    "editDone": "Done",
+    "fixIt": "Something look off? Fix it",
+    "fixTitle": "What looks off?",
+    "fixPortion": "The portion sizes",
+    "fixFood": "The food it found",
+    "fixRescan": "Scan again with a new photo",
+    "fixNoAlternatives": "There are no other suggestions for this photo. A new photo from above, in good light, usually helps.",
+    "portion": "Portion",
+    "smaller": "Smaller portion of {{name}}",
+    "larger": "Larger portion of {{name}}",
+    "editedNote": "Your changes are shown on this screen only: this server cannot save them yet.",
+    "notSure": "Not sure",
+    "confirmTitle": "Is this right?",
+    "confirmMessage": "We are not sure about this meal. Check the items before you rely on the numbers.",
+    "confirmYes": "Looks right",
+    "alternatives": "Could also be",
+    "itemsFound": "Items found: {{n}}",
+    "macros": "Macros",
+    "progressTitle": "Reading your meal",
+    "step": {
+      "upload": "Uploading the photo",
+      "analyze": "Finding the foods",
+      "done": "Adding up the nutrition"
+    },
+    "slow": "This is taking longer than usual. You can keep waiting or cancel and try again.",
+    "cancel": "Cancel scan",
+    "tip": "For the best result: shoot from above, in good light, with the whole plate in the frame.",
+    "retake": "Choose another photo",
+    "saved": "Saved",
+    "saveConflict": "This meal changed or cannot be adjusted. Reloaded, please try again.",
+    "saveRejected": "That portion is not allowed. Use 1 to 5000 g.",
+    "saveFailed": "Your change could not be saved. It was undone.",
+    "userEdited": "edited by you"
   }
 }

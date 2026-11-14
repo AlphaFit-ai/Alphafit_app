@@ -1,8 +1,9 @@
 import { Stack } from 'expo-router';
-import { DietProvider } from '../../context/DietContext';
 import { useTheme } from '../../context/ThemeContext';
 
-function DietStack() {
+// The diet data lives in the DietProvider mounted once in the root layout, so the Diet tab and these
+// routes (opened from the profile) share one copy.
+export default function DietLayout() {
   const { colors } = useTheme();
 
   return (
@@ -21,13 +22,5 @@ function DietStack() {
 
       <Stack.Screen name="barcode-result" options={{ presentation: 'modal' }} />
     </Stack>
-  );
-}
-
-export default function DietLayout() {
-  return (
-    <DietProvider>
-      <DietStack />
-    </DietProvider>
   );
 }

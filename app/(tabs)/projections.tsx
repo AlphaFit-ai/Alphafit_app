@@ -1,9 +1,13 @@
-import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, BackHandler, StyleSheet, View } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { BackHandler, StyleSheet, View } from 'react-native';
+import { ErrorState } from '../../components';
+import { StepTransition, WizardSkeleton } from '../../src/ui';
 import { useProjection } from '../../context/ProjectionContext';
 import { useTheme } from '../../context/ThemeContext';
-import { onboardingService } from '../../services';
+import { useProjectionData } from '../../hooks/queries';
+import { normalizeApiError } from '../../services/apiError';
+import { getProjectionResumeStep } from '../../services/onboardingResume';
 
 import SleepScreen from '../projection/sleep';
 import StatisticsScreen from '../projection/statistics';
@@ -12,48 +16,28 @@ import StressScreen from '../projection/stress';
 import UploadPhotosScreen from '../projection/upload-photos';
 
 export default function ProjectionsScreen() {
-  const router = useRouter();
   const { colors } = useTheme();
-  const { currentStep, goBack, setCurrentStep, loadProjectionData } = useProjection();
-  const [isLoading, setIsLoading] = useState(true);
+  const { currentStep, goBack, setCurrentStep } = useProjection();
+  const projection = useProjectionData();
 
-  // Check which projection screen is incomplete on mount
+  // Find the first unanswered step once, when the answers first arrive. A failed request shows a retry
+  // and leaves the wizard alone.
+  const positioned = useRef(false);
   useEffect(() => {
-    findFirstIncompleteStep();
-  }, []);
+    if (positioned.current || projection.data === undefined) return;
+    positioned.current = true;
+    setCurrentStep(getProjectionResumeStep(projection.data));
+  }, [projection.data, setCurrentStep]);
 
-  const findFirstIncompleteStep = async () => {
-    try {
-      const data = await onboardingService.getProjectionOnboardingData();
-
-      if (!data) {
-        // No data at all, start from sleep screen
-        setCurrentStep(1);
-      } else {
-        // Load saved data into context
-        loadProjectionData(data);
-
-        // Check each field and find first incomplete step
-        if (!data.sleepHours) {
-          setCurrentStep(1); // Sleep
-        } else if (!data.dailySteps) {
-          setCurrentStep(2); // Steps
-        } else if (!data.stressLevel) {
-          setCurrentStep(3); // Stress
-        } else if (!data.frontPhotoUrl || !data.sidePhotoUrl || !data.backPhotoUrl) {
-          setCurrentStep(4); // Upload photos (photos missing)
-        } else {
-          // All data complete, show statistics
-          setCurrentStep(0); // Statistics
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load projection onboarding data:', error);
-      setCurrentStep(1);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const isLoading = projection.data === undefined && !projection.isError && !projection.isPaused;
+  const loadError =
+    projection.data !== undefined
+      ? null
+      : projection.isError
+        ? normalizeApiError(projection.error)
+        : projection.isPaused
+          ? { kind: 'offline' as const }
+          : null;
 
   useFocusEffect(
     useCallback(() => {
@@ -73,9 +57,13 @@ export default function ProjectionsScreen() {
 
   // Show loading indicator while checking status
   if (isLoading) {
+    return <WizardSkeleton />;
+  }
+
+  if (loadError) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ErrorState kind={loadError.kind} onRetry={() => void projection.refetch()} />
       </View>
     );
   }
@@ -99,7 +87,7 @@ export default function ProjectionsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {renderStep()}
+      <StepTransition step={currentStep}>{renderStep()}</StepTransition>
     </View>
   );
 }

@@ -48,13 +48,13 @@ function ProfileStack() {
       <Stack.Screen
         name="faq"
         options={{
-          title: t('profile.faq', 'FAQs'),
+          title: t('profile.faq'),
         }}
       />
       <Stack.Screen
         name="help-support"
         options={{
-          title: t('profile.helpAndSupport', 'Help & Support'),
+          title: t('profile.helpAndSupport'),
         }}
       />
       <Stack.Screen

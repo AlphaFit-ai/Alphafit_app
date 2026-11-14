@@ -3,13 +3,28 @@
     "continue": "Continuar",
     "back": "Atrás",
     "uploading": "Subiendo...",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "retry": "Reintentar",
+    "ok": "OK",
+    "error": "Error",
+    "loading": "Cargando...",
+    "close": "Cerrar",
+    "delete": "Eliminar",
+    "unknownFood": "Alimento desconocido",
+    "completed": "Completado",
+    "submit": "Enviar",
+    "finish": "Finalizar",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña"
   },
   "imageUpload": {
     "selectSource": "Seleccionar fuente de imagen",
     "selectSourceMessage": "Elige de dónde quieres obtener tu foto",
     "camera": "Cámara",
-    "gallery": "Galería"
+    "gallery": "Galería",
+    "addPhoto": "Añadir foto",
+    "pickFailed": "No se pudo seleccionar la foto. Comprueba que AlphaFit tiene acceso a la cámara o a tus fotos.",
+    "uploadFailed": "No se pudo subir la foto. Inténtalo de nuevo."
   },
   "welcome": {
     "title": "BIENVENIDO A",
@@ -23,7 +38,27 @@
     "terms": "Al continuar, aceptas nuestros Términos de Servicio y Política de Privacidad",
     "invalidEmail": "Por favor ingresa un correo electrónico válido",
     "noAccount": "¿No tienes una cuenta?",
-    "signUp": "Registrarse"
+    "signUp": "Registrarse",
+    "error": "Error",
+    "authError": "Error de autenticación. Inténtalo de nuevo.",
+    "googleError": "Error al iniciar sesión con Google",
+    "appleError": "Error al iniciar sesión con Apple. Prueba otro método.",
+    "emailRequired": "El correo electrónico es obligatorio",
+    "noAccountFound": "No se encontró ninguna cuenta con este correo. Regístrate primero.",
+    "checkEmailError": "No se pudo verificar el correo. Inténtalo de nuevo.",
+    "passwordRequired": "La contraseña es obligatoria",
+    "passwordTooShort": "La contraseña debe tener al menos 6 caracteres",
+    "loginError": "Error al iniciar sesión. Revisa tus credenciales.",
+    "enterValidEmail": "Primero ingresa un correo electrónico válido",
+    "success": "Éxito",
+    "resetEmailSent": "Se envió el correo para restablecer la contraseña. Revisa tu bandeja de entrada.",
+    "resetError": "No se pudo enviar el correo de restablecimiento",
+    "loading": "Cargando...",
+    "enterPassword": "Ingresa tu contraseña",
+    "password": "Contraseña",
+    "passwordPlaceholder": "Ingresa tu contraseña",
+    "login": "Iniciar sesión",
+    "forgotPassword": "¿Olvidaste tu contraseña?"
   },
   "register": {
     "title": "CREAR CUENTA",
@@ -50,15 +85,35 @@
       "emailRequired": "El correo electrónico es obligatorio",
       "emailInvalid": "Por favor ingresa un correo electrónico válido",
       "passwordRequired": "La contraseña es obligatoria",
-      "passwordWeak": "La contraseña debe tener 8+ caracteres con mayúsculas, minúsculas y número",
       "passwordMissing": "Falta: ",
       "passwordMinLength": "Al menos 8 caracteres",
       "passwordLowercase": "Una letra minúscula",
       "passwordUppercase": "Una letra mayúscula",
       "passwordNumber": "Un número",
       "confirmPasswordRequired": "Por favor confirma tu contraseña",
-      "passwordMismatch": "Las contraseñas no coinciden"
-    }
+      "passwordMismatch": "Las contraseñas no coinciden",
+      "emailInUse": "Este correo ya está registrado. Inicia sesión en su lugar.",
+      "sendCodeFailed": "No se pudo enviar el código de verificación. Inténtalo de nuevo.",
+      "codeRequired": "El código de verificación es obligatorio",
+      "codeInvalid": "El código debe tener 6 dígitos",
+      "codeIncorrect": "Código de verificación no válido",
+      "registrationFailed": "Error en el registro. Inténtalo de nuevo.",
+      "weakPassword": "La contraseña es demasiado débil. Usa una más segura.",
+      "invalidEmail": "Correo electrónico no válido.",
+      "resendFailed": "No se pudo reenviar el código. Inténtalo de nuevo."
+    },
+    "termsMessage": "Acepta los Términos de Servicio y la Política de Privacidad para continuar",
+    "error": "Error de registro",
+    "sendingCode": "Enviando código...",
+    "verifyEmail": "Verifica tu correo",
+    "verifyEmailMessage": "Enviamos un código de 6 dígitos a",
+    "verificationCode": "Código de verificación",
+    "verifying": "Verificando...",
+    "verify": "Verificar y crear cuenta",
+    "sending": "Enviando...",
+    "resendCode": "Reenviar código",
+    "success": "Éxito",
+    "codeSent": "Código de verificación enviado a tu correo"
   },
   "onboarding": {
     "age": {
@@ -123,21 +178,24 @@
     "intro": {
       "title": "Proyección Física con IA",
       "subtitle": "Estima cómo podría transformarse tu cuerpo usando modelos de IA avanzados",
-      "analyzing": "Analizando tu perfil...",
-      "generating": "Generando proyección...",
-      "almost": "Casi listo...",
       "current": "Actual",
       "projected": "Proyectado (6m)",
-      "getStarted": "Comenzar"
+      "getStarted": "Comenzar",
+      "titleScan": "Come mejor, entrena mejor",
+      "subtitleScan": "Escanea tus comidas con IA, sigue entrenamientos para tu nivel y pregunta al entrenador."
     },
     "source": {
       "title": "¿Dónde nos conociste?",
       "others": "Otros"
     },
     "continue": "Continuar",
-    "back": "Atrás",
     "saving": "Guardando...",
-    "step": "{{current}} de {{total}}"
+    "error": {
+      "title": "Error",
+      "message": "No se pudieron guardar tus preferencias. Inténtalo de nuevo.",
+      "retry": "Reintentar",
+      "continue": "Continuar de todos modos"
+    }
   },
   "workoutScreen": {
     "title": "Entrenamientos Personalizados",
@@ -162,7 +220,60 @@
     "customPlansSubtitle": "Entrenamientos diseñados por IA",
     "progressTraining": "Entrenamiento de Progreso",
     "progressTrainingSubtitle": "Análisis Inteligente",
-    "upgradeToPro": "actualizar a Pro"
+    "upgradeToPro": "actualizar a Pro",
+    "lowerBack": "Zona lumbar",
+    "holdSeconds": "{{seconds}} s de isometría",
+    "demo": "Demo: {{name}}",
+    "exercises": {
+      "pushUps": {
+        "name": "Flexiones",
+        "description": "Mantén el cuerpo recto y baja hasta que el pecho casi toque el suelo"
+      },
+      "pikePushUps": {
+        "name": "Flexiones pike",
+        "description": "Manos a la anchura de los hombros, acerca los pies a las manos"
+      },
+      "tricepDips": {
+        "name": "Fondos de tríceps",
+        "description": "Usa una silla o un banco y baja el cuerpo flexionando los codos"
+      },
+      "inclinePushUps": {
+        "name": "Flexiones inclinadas",
+        "description": "Apóyate en una superficie elevada, como un banco o un escalón"
+      },
+      "bodyweightRows": {
+        "name": "Remo con el peso corporal",
+        "description": "Usa una mesa o una barra, mantén el cuerpo recto y lleva el pecho hacia la barra"
+      },
+      "superman": {
+        "name": "Superman",
+        "description": "Acostado boca abajo, levanta el pecho y las piernas a la vez"
+      },
+      "wallHandstand": {
+        "name": "Parada de manos en la pared",
+        "description": "De cara a la pared, camina con los pies hasta quedar en posición de parada de manos"
+      },
+      "reversePlank": {
+        "name": "Plancha inversa",
+        "description": "Siéntate con las piernas estiradas y levanta las caderas del suelo"
+      },
+      "bodyweightSquats": {
+        "name": "Sentadillas con el peso corporal",
+        "description": "Pies a la anchura de los hombros, baja hasta que los muslos queden paralelos al suelo"
+      },
+      "calfRaises": {
+        "name": "Elevaciones de talones",
+        "description": "Sube sobre las puntas de los pies, mantén un instante y baja despacio"
+      },
+      "gluteBridges": {
+        "name": "Puentes de glúteos",
+        "description": "Acostado boca arriba, levanta las caderas apretando los glúteos"
+      },
+      "wallSit": {
+        "name": "Sentadilla en la pared",
+        "description": "Con la espalda contra la pared, desliza hacia abajo hasta que los muslos queden paralelos al suelo"
+      }
+    }
   },
   "diet": {
     "preference": {
@@ -179,7 +290,13 @@
       "placeholder": "Por favor especifica ..."
     },
     "meals": {
-      "title": "¿Cuántas comidas sueles hacer al día?"
+      "title": "¿Cuántas comidas sueles hacer al día?",
+      "options": {
+        "2": "2 comidas",
+        "3": "3 comidas",
+        "4": "4 comidas",
+        "5": "5 comidas o más"
+      }
     },
     "supplements": {
       "title": "¿Actualmente tomas algún suplemento?",
@@ -193,8 +310,32 @@
       "barcode": "Código de Barras",
       "scanFood": "Escanear Comida",
       "library": "Biblioteca",
-      "generate": "Generar",
-      "barcodeResult": "Información del Producto"
+      "barcodeResult": "Información del Producto",
+      "barcodeHint": "Coloca el código de barras o el código QR dentro del recuadro",
+      "per100g": "Por 100 g",
+      "progress": {
+        "uploading": "Subiendo imagen...",
+        "analyzing": "Analizando con IA...",
+        "complete": "¡Análisis completado!",
+        "lookingUp": "Buscando el producto...",
+        "productFound": "¡Producto encontrado en {{source}}!",
+        "done": "¡Completado!"
+      },
+      "alerts": {
+        "cameraTitle": "Se necesita acceso a la cámara",
+        "cameraMealMessage": "AlphaFit necesita acceder a tu cámara para fotografiar tus comidas. Activa el acceso a la cámara en Ajustes.",
+        "cameraBarcodeMessage": "AlphaFit necesita acceder a tu cámara para escanear códigos de barras. Activa el acceso a la cámara en Ajustes.",
+        "settings": "Ajustes",
+        "productNotFoundTitle": "Producto no encontrado",
+        "productNotFoundMessage": "Código de barras: {{barcode}}\n\nEste producto no está en nuestras bases de datos. Prueba a escanear el alimento con la cámara para obtener mejores resultados.",
+        "connectionTitle": "Error de conexión",
+        "connectionMessage": "No se pudo conectar con el servidor. Revisa tu conexión a Internet e inténtalo de nuevo.",
+        "noFoodTitle": "No se detectaron alimentos",
+        "noFoodMessage": "Sube una foto nítida de los alimentos. Asegúrate de que estén bien iluminados y centrados.",
+        "tryAgain": "Intentar de nuevo",
+        "errorTitle": "Error",
+        "errorMessage": "Ocurrió un error inesperado. Inténtalo de nuevo."
+      }
     },
     "statistics": {
       "nutritionFacts": "Información Nutricional",
@@ -209,11 +350,12 @@
       "caloriesUnit": "calorías",
       "personalizedRecommendations": "Recomendaciones Personalizadas",
       "analyzingMeal": "Analizando tu comida...",
-      "loadingResults": "Cargando resultados..."
+      "loadingResults": "Cargando resultados...",
+      "fiber": "Fibra",
+      "sugar": "Azúcares"
     }
   },
   "profile": {
-    "title": "Perfil",
     "myDataSection": "Mis Datos",
     "onboardingData": "Información Personal",
     "onboardingDataSubtitle": "Actualiza tus objetivos y preferencias",
@@ -227,8 +369,6 @@
     "accountDetails": "Detalles de la Cuenta",
     "subscription": "Suscripción",
     "subscriptionSubtitle": "Gestiona tu suscripción Pro",
-    "support": "Soporte",
-    "supportSubtitle": "Obtén ayuda y contáctanos",
     "privacyPolicy": "Política de privacidad",
     "termsOfService": "Términos de servicio",
     "faq": "Preguntas frecuentes",
@@ -246,30 +386,54 @@
       "emailError": "Por favor ingresa un correo electrónico válido",
       "phoneNumber": "Número de teléfono",
       "phonePlaceholder": "612 345 678",
-      "age": "Edad",
-      "agePlaceholder": "Ingresa tu edad",
       "saveChanges": "Guardar cambios",
       "successTitle": "Éxito",
       "successMessage": "¡Los detalles de tu cuenta se han actualizado correctamente!",
-      "ok": "Aceptar"
-    }
+      "ok": "Aceptar",
+      "saving": "Guardando...",
+      "saveError": "No se pudieron guardar tus cambios. Inténtalo de nuevo."
+    },
+    "defaultName": "Usuario",
+    "settings": "Ajustes",
+    "settingsSubtitle": "Idioma, Tema",
+    "contact": "Contactar con soporte",
+    "deleteAccount": "Eliminar cuenta",
+    "logoutConfirmMessage": "¿Seguro que quieres cerrar sesión?",
+    "deleteAccountMessage": "Esto eliminará de forma permanente tu cuenta y todos tus datos. Esta acción no se puede deshacer.",
+    "deleteAccountPrompt": "Escribe «{{phrase}}» para confirmar:",
+    "deleteAccountInvalidTitle": "Confirmación no válida",
+    "deleteAccountInvalidMessage": "Escribe exactamente «{{phrase}}» para confirmar.",
+    "deleteAccountFailedTitle": "Error al eliminar la cuenta",
+    "deleteAccountFailedMessage": "No se pudo eliminar la cuenta. Inténtalo de nuevo.",
+    "manageData": "Gestionar datos",
+    "selectLanguage": "Seleccionar idioma",
+    "theme": "Tema",
+    "themeSystem": "Como el teléfono",
+    "themeLight": "Claro",
+    "themeDark": "Oscuro"
   },
   "tabs": {
     "home": "Inicio",
-    "homeSubtitle": "Tu viaje personalizado de fitness comienza aquí",
     "scan": "Escanear",
-    "scanSubtitle": "Escanea tus proyecciones"
+    "workouts": "Entrenamientos",
+    "diet": "Dieta",
+    "profile": "Perfil",
+    "proPlan": "Plan Pro"
   },
   "projection": {
     "sleep": {
-      "title": "En promedio, ¿cuántas horas de sueño tienes por noche?"
+      "title": "En promedio, ¿cuántas horas de sueño tienes por noche?",
+      "option": "{{value}} horas"
     },
     "steps": {
       "title": "¿Aproximadamente cuántos pasos das diariamente?"
     },
     "stress": {
       "title": "¿Cómo calificarías tu nivel de estrés diario?"
-    }
+    },
+    "comingSoon": "Próximamente",
+    "photoUploadSoon": "¡La subida de fotos estará disponible pronto!",
+    "photoCaptureSoon": "¡La captura de fotos estará disponible pronto!"
   },
   "bodyScan": {
     "sparkles": "Análisis muscular impulsado por IA",
@@ -281,7 +445,6 @@
     "sideView": "Vista lateral",
     "backView": "Vista trasera",
     "tapToUpload": "Toca para subir",
-    "uploaded": "imagen.jpg",
     "uploadMore": "Subir {{count}} fotos más",
     "startAnalysis": "Iniciar Análisis IA"
   },
@@ -333,21 +496,241 @@
     "rescan": "Reescanear Cuerpo"
   },
   "home": {
-    "nutritionToday": "Nutrición Hoy",
     "protein": "Proteínas",
     "carbs": "Carbohidratos",
     "fats": "Grasas",
-    "quickStats": "Estadísticas Rápidas",
     "yourJourney": "Tu Viaje",
     "recentScans": "Escaneos Recientes",
     "seeAll": "Ver Todo",
-    "todayWorkouts": "Entrenamientos de Hoy",
-    "progressOverview": "Resumen de Progreso",
-    "weeklyProgress": "Progreso Semanal",
-    "workoutsCompleted": "Entrenamientos Completados",
-    "quickActions": "Acciones Rápidas",
-    "scanMeal": "Escanear Comida",
-    "scanBody": "Escanear Cuerpo",
-    "lastMeal": "Última Comida"
+    "lastScan": "Último escaneo",
+    "caloriesToday": "Calorías de hoy",
+    "scansToday": "Escaneos de hoy",
+    "sleep": "Sueño",
+    "yearsOld": "{{years}} años",
+    "perWeek": "{{value}} veces por semana",
+    "sleepHours": "{{hours}} h de sueño",
+    "calUnit": "cal",
+    "noScansYet": "Aún no hay escaneos. Escanea una comida para verla aquí.",
+    "refreshFailed": "No se pudo actualizar. Toca para reintentar.",
+    "quotes": {
+      "strength": {
+        "0": "La fuerza no viene de lo que puedes hacer. Viene de superar lo que creías que no podías.",
+        "1": "El dolor que sientes hoy será la fuerza que sentirás mañana.",
+        "2": "Tu cuerpo puede soportar casi cualquier cosa. Es tu mente la que tienes que convencer."
+      },
+      "fatLoss": {
+        "0": "No lo desees, trabaja por ello.",
+        "1": "El único mal entrenamiento es el que no se hizo.",
+        "2": "El éxito es la suma de pequeños esfuerzos repetidos día tras día."
+      },
+      "fitness": {
+        "0": "Cuida tu cuerpo. Es el único lugar donde tienes que vivir.",
+        "1": "Estar en forma no se trata de ser mejor que otra persona. Se trata de ser mejor de lo que eras antes.",
+        "2": "La única forma de definir tus límites es superarlos."
+      },
+      "health": {
+        "0": "La salud es riqueza. Invierte en ti.",
+        "1": "Cada entrenamiento es progreso. Sigue avanzando.",
+        "2": "Tu salud es una inversión, no un gasto."
+      }
+    },
+    "caloriesLeft": "{{amount}} cal restantes",
+    "caloriesOver": "{{amount}} cal de más",
+    "targetEstimate": "de unas {{target}} cal (objetivo estimado)",
+    "caloriesProgress": "{{eaten}} de {{target}} calorías hoy",
+    "addTargetHint": "Añade tu altura, peso y actividad para ver un objetivo diario.",
+    "thisWeek": "Esta semana",
+    "weekDayLabel": "{{day}}. Escaneos: {{count}}. {{calories}} cal."
+  },
+  "errors": {
+    "title": "Algo salió mal",
+    "offline": "Parece que no tienes conexión. Revisa tu conexión e inténtalo de nuevo.",
+    "timeout": "El servidor tardó demasiado en responder. Inténtalo de nuevo.",
+    "server": "El servidor tuvo un problema. Inténtalo de nuevo en un momento.",
+    "unknown": "Ocurrió algo inesperado. Inténtalo de nuevo.",
+    "boundary": {
+      "title": "Algo salió mal",
+      "message": "AlphaFit tuvo un problema y no pudo mostrar esta pantalla. Tus datos están a salvo. Recarga para continuar.",
+      "reload": "Recargar"
+    }
+  },
+  "bootstrap": {
+    "retryTitle": "No podemos conectar con AlphaFit"
+  },
+  "authErrors": {
+    "invalidEmail": "Correo electrónico no válido",
+    "userDisabled": "Esta cuenta ha sido desactivada",
+    "userNotFound": "No se encontró ninguna cuenta con este correo",
+    "wrongPassword": "Contraseña incorrecta",
+    "invalidCredential": "Correo o contraseña no válidos",
+    "emailInUse": "Ya existe una cuenta con este correo",
+    "weakPassword": "La contraseña es demasiado débil. Usa una más segura",
+    "operationNotAllowed": "El inicio de sesión con correo y contraseña no está habilitado",
+    "tooManyRequests": "Demasiados intentos. Espera un momento e inténtalo de nuevo",
+    "network": "Error de red. Revisa tu conexión e inténtalo de nuevo"
+  },
+  "history": {
+    "title": "Historial",
+    "filterBy": "Filtrar por",
+    "noHistory": "Aún no hay historial",
+    "startScanning": "Escanea alimentos para ver tu historial aquí.",
+    "filters": {
+      "all": "Todos",
+      "completed": "Completados",
+      "processing": "En proceso",
+      "failed": "Fallidos"
+    },
+    "status": {
+      "pending": "Pendiente",
+      "processing": "En proceso",
+      "failed": "Fallido"
+    },
+    "refreshFailed": "No se pudo actualizar. Toca para reintentar.",
+    "filterNote": "Coincidencias entre los {{count}} escaneos cargados hasta ahora.",
+    "noMatch": "Aún no hay escaneos que coincidan",
+    "noMatchMessage": "Ninguno de los {{count}} escaneos cargados hasta ahora coincide con este filtro.",
+    "loadOlder": "Cargar escaneos más antiguos"
+  },
+  "chat": {
+    "title": "Entrenador IA",
+    "welcome": "¡Hola! Soy tu entrenador de IA de AlphaFit. Estoy aquí para ayudarte con tus preguntas sobre fitness, nutrición y bienestar. ¿En qué puedo ayudarte hoy?",
+    "unavailableTitle": "Servicio no disponible",
+    "unavailableMessage": "El servicio de chatbot de IA no está disponible en este momento. Inténtalo de nuevo más tarde.",
+    "timeout": "La IA está tardando más de lo esperado en responder. Inténtalo de nuevo más tarde.",
+    "sendFailed": "No se pudo enviar el mensaje. Inténtalo de nuevo.",
+    "placeholder": "Pregúntame sobre fitness, nutrición...",
+    "send": "Enviar",
+    "notSent": "No enviado.",
+    "historyFailed": "No se pudieron cargar tus mensajes anteriores.",
+    "earlier": "Mensajes anteriores"
+  },
+  "faq": {
+    "intro": "Encuentra respuestas a las preguntas más frecuentes sobre AlphaFit AI",
+    "stillHaveQuestions": "¿Aún tienes preguntas?",
+    "contactUs": "Escríbenos a {{email}}",
+    "items": {
+      "trackWorkouts": {
+        "question": "¿Cómo hago el seguimiento de mis entrenamientos?",
+        "answer": "Puedes hacer el seguimiento de tus entrenamientos desde la pestaña Entrenamientos, eligiendo el plan que prefieras. Sigue los ejercicios y márcalos como completados a medida que avanzas."
+      },
+      "customizeMeals": {
+        "question": "¿Puedo personalizar mis planes de comidas?",
+        "answer": "¡Sí! Ve a la pestaña Dieta y usa el Plan de Dieta Inteligente. Puedes escanear alimentos, definir tus preferencias dietéticas y nuestra IA generará planes de comidas personalizados para ti."
+      },
+      "physiqueProjection": {
+        "question": "¿Cómo funciona la Proyección Física con IA?",
+        "answer": "Nuestra IA analiza tus fotos actuales y los datos de tu perfil (edad, nivel de forma física, objetivos) para proyectar cómo podría transformarse tu físico con entrenamiento y alimentación constantes."
+      },
+      "proFeatures": {
+        "question": "¿Qué incluye el plan Pro?",
+        "answer": "El plan Pro incluye: entrenamientos generados por IA sin límite, proyecciones físicas avanzadas, planes de comidas personalizados, análisis de progreso, soporte prioritario y una experiencia sin anuncios."
+      },
+      "cancelSubscription": {
+        "question": "¿Cómo cancelo mi suscripción?",
+        "answer": "Puedes gestionar tu suscripción en los ajustes de tu dispositivo, en la sección Suscripciones, o contactar con nuestro equipo de soporte en {{email}} para recibir ayuda."
+      },
+      "dataSecurity": {
+        "question": "¿Mis datos son seguros y privados?",
+        "answer": "¡Por supuesto! Usamos cifrado de nivel bancario para proteger tus datos. Tus fotos, tu progreso y tu información personal se almacenan de forma segura y nunca se comparten con terceros sin tu consentimiento."
+      },
+      "syncDevices": {
+        "question": "¿Puedo sincronizar mis datos entre dispositivos?",
+        "answer": "Sí, tus datos se sincronizan automáticamente en todos tus dispositivos cuando inicias sesión con la misma cuenta."
+      },
+      "bodyScanAccuracy": {
+        "question": "¿Qué tan preciso es el escaneo corporal?",
+        "answer": "Nuestro escaneo corporal con IA usa modelos avanzados de visión por computadora entrenados con miles de físicos. Aunque es muy preciso, los resultados son estimaciones y deben usarse como orientación junto con el consejo de un profesional."
+      },
+      "reportBug": {
+        "question": "¿Qué hago si encuentro un error?",
+        "answer": "Contacta con nuestro equipo de soporte en {{email}} y cuéntanos los detalles del problema. Si puedes, adjunta capturas de pantalla y lo resolveremos lo antes posible."
+      },
+      "changeGoals": {
+        "question": "¿Puedo cambiar mis objetivos después de la configuración?",
+        "answer": "¡Sí! Puedes actualizar tus objetivos, preferencias e información de perfil en cualquier momento desde la pestaña Perfil > Detalles de la cuenta."
+      }
+    }
+  },
+  "help": {
+    "faqContent": "Encuentra respuestas a preguntas comunes sobre AlphaFit AI, sus funciones y las suscripciones.",
+    "faqAction": "Ver preguntas frecuentes",
+    "contactContent": "¿Necesitas ayuda? Contacta con nuestro equipo de soporte para resolver dudas sobre tu cuenta o problemas técnicos.",
+    "contactAction": "Contáctanos",
+    "privacyContent": "Descubre cómo protegemos tu información personal y la seguridad de tus datos.",
+    "privacyAction": "Leer política",
+    "termsContent": "Consulta los términos y condiciones de uso de la plataforma AlphaFit AI.",
+    "termsAction": "Leer términos",
+    "deleteContent": "Conoce el proceso para eliminar de forma permanente tu cuenta y tus datos.",
+    "deleteAction": "Info de eliminación",
+    "stillNeedHelp": "¿Necesitas más ayuda?"
+  },
+  "proPlan": {
+    "badge": "ALPHAFIT PRO",
+    "titleLead": "Libera",
+    "titleRest": "todo tu\npotencial",
+    "subtitle": "Obtén entrenamiento con IA y transforma\ntu físico más rápido",
+    "limitedOffer": "Oferta por tiempo limitado",
+    "save": "Ahorra un {{percent}} %",
+    "perMonth": "al mes",
+    "perYear": "al año",
+    "monthly": "Mensual",
+    "yearly": "Anual",
+    "pricePerMonth": "{{price}}/mes",
+    "pricePerYear": "{{price}}/año",
+    "priceMonthShort": "{{price}}/mes",
+    "priceYearShort": "{{price}}/año",
+    "popular": "Popular",
+    "premiumFeatures": "Funciones Premium",
+    "startTrial": "Prueba gratis - 7 días",
+    "getPremium": "Hazte Premium - {{price}}",
+    "features": {
+      "physiqueProjection": "Proyección física con IA",
+      "physiqueProjectionFull": "Proyección física completa con IA",
+      "customWorkouts": "Entrenamientos semanales a medida",
+      "dietPlans": "Planes de dieta personalizados",
+      "progressReports": "Informes de progreso + gráficos",
+      "coachChat": "Chat con el entrenador IA (24/7)",
+      "badges": "Insignias de rachas e hitos",
+      "prioritySupport": "Soporte prioritario"
+    }
+  },
+  "wizard": {
+    "stepOf": "Paso {{current}} de {{total}}"
+  },
+  "scan": {
+    "edit": "Editar porciones",
+    "editDone": "Listo",
+    "fixIt": "¿Algo no cuadra? Corrígelo",
+    "fixTitle": "¿Qué no cuadra?",
+    "fixPortion": "Las porciones",
+    "fixFood": "El alimento detectado",
+    "fixRescan": "Escanear de nuevo con otra foto",
+    "fixNoAlternatives": "No hay otras sugerencias para esta foto. Una foto nueva desde arriba y con buena luz suele ayudar.",
+    "portion": "Porción",
+    "smaller": "Porción más pequeña de {{name}}",
+    "larger": "Porción más grande de {{name}}",
+    "editedNote": "Tus cambios solo se ven en esta pantalla: este servidor aún no puede guardarlos.",
+    "notSure": "No estoy seguro",
+    "confirmTitle": "¿Es correcto?",
+    "confirmMessage": "No estamos seguros de esta comida. Revisa los elementos antes de fiarte de los números.",
+    "confirmYes": "Es correcto",
+    "alternatives": "También podría ser",
+    "itemsFound": "Elementos encontrados: {{n}}",
+    "macros": "Macronutrientes",
+    "progressTitle": "Leyendo tu comida",
+    "step": {
+      "upload": "Subiendo la foto",
+      "analyze": "Reconociendo los alimentos",
+      "done": "Calculando la nutrición"
+    },
+    "slow": "Está tardando más de lo habitual. Puedes esperar o cancelar e intentarlo de nuevo.",
+    "cancel": "Cancelar escaneo",
+    "tip": "Para un mejor resultado: fotografía desde arriba, con buena luz y todo el plato en el encuadre.",
+    "retake": "Elegir otra foto",
+    "saved": "Guardado",
+    "saveConflict": "Esta comida cambió o no se puede ajustar. Recargada, inténtalo de nuevo.",
+    "saveRejected": "Esa porción no es válida. Usa de 1 a 5000 g.",
+    "saveFailed": "No se pudo guardar tu cambio. Se deshizo.",
+    "userEdited": "editado por ti"
   }
 }

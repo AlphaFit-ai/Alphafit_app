@@ -1,42 +1,25 @@
 import { Ionicons } from '@expo/vector-icons';
 import Feather from '@expo/vector-icons/Feather';
-import { Tabs, usePathname, useRouter } from 'expo-router';
-import { useEffect, useState, useCallback } from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Tabs } from 'expo-router';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { GradientText, ProPlanModal } from '../../components';
+import { ProPlanModal } from '../../components';
 
-import { Colors, Fonts } from '../../constants';
+import { Colors, FEATURES } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
-import { imageService } from '../../services';
+import { useProfilePicture } from '../../hooks/queries';
+import { AppImage, BrandLogo } from '../../src/ui';
 
 export default function TabsLayout() {
-  const pathname = usePathname();
-  const { colors, isDarkMode } = useTheme();
+  const { t } = useTranslation();
+  const { colors, tokens } = useTheme();
   const insets = useSafeAreaInsets();
   const [showProModal, setShowProModal] = useState(false);
 
-  const [userProfilePicture, setUserProfilePicture] = useState<string | null>(null);
-
-  const loadUserProfilePicture = useCallback(async () => {
-    try {
-      const profilePicUrl = await imageService.getProfilePicture();
-      setUserProfilePicture(profilePicUrl);
-    } catch (error) {
-      console.log('No profile picture found');
-    }
-  }, []);
-
-  useEffect(() => {
-    loadUserProfilePicture();
-  }, [loadUserProfilePicture]);
-
-  // Refresh profile picture when navigating between tabs
-  useEffect(() => {
-    if (pathname) {
-      loadUserProfilePicture();
-    }
-  }, [pathname, loadUserProfilePicture]);
+  // Fetched once per session and shared, so moving between tabs does not request it again.
+  const { uri: userProfilePicture } = useProfilePicture();
 
   return (
     <>
@@ -48,33 +31,35 @@ export default function TabsLayout() {
             elevation: 0,
             shadowOpacity: 0,
             borderBottomWidth: 1,
-            borderBottomColor: isDarkMode ? Colors.gray[700] : Colors.gray[100],
+            borderBottomColor: tokens.color.border,
           },
           headerLeft: () => (
             <View style={styles.headerLeft}>
-              <Image
-                source={require('../../assets/images/logo.png')}
-                style={styles.faviconImage}
-              />
-              <GradientText text="ALPHAFIT AI" style={styles.logoText} />
+              <BrandLogo height={28} />
             </View>
           ),
           headerRight: () => (
             <View style={styles.headerRight}>
-              <TouchableOpacity style={styles.proIconButton} activeOpacity={0.7} onPress={() => setShowProModal(true)}>
+              <TouchableOpacity
+                style={styles.proIconButton}
+                activeOpacity={0.7}
+                onPress={() => setShowProModal(true)}
+                accessibilityRole="button"
+                accessibilityLabel={t('tabs.proPlan')}
+              >
                 <Ionicons name="trophy" size={24} color={Colors.gold} />
               </TouchableOpacity>
             </View>
           ),
           headerTitle: '',
           tabBarActiveTintColor: colors.text,
-          tabBarInactiveTintColor: Colors.gray[400],
+          tabBarInactiveTintColor: tokens.color.textSubtle,
           sceneStyle: {
             backgroundColor: colors.background,
           },
           tabBarStyle: {
             backgroundColor: colors.background,
-            borderTopColor: isDarkMode ? Colors.gray[700] : Colors.gray[100],
+            borderTopColor: tokens.color.border,
             borderTopWidth: 1,
             height: 60 + insets.bottom,
             paddingBottom: insets.bottom,
@@ -82,20 +67,18 @@ export default function TabsLayout() {
           },
           tabBarShowLabel: false,
           animation: 'shift',
-          lazy: false,
+          // Tabs are created the first time they are opened, not all at once at launch.
+          lazy: true,
         }}
       >
         <Tabs.Screen
           name="home"
           options={{
-            title: 'Home',
+            title: t('tabs.home'),
+            tabBarAccessibilityLabel: t('tabs.home'),
             tabBarIcon: ({ color, focused }) => (
               <View style={[styles.iconWrapper, focused && styles.iconWrapperActive]}>
-                <Feather
-                  name="home"
-                  size={24}
-                  color={color}
-                />
+                <Feather name="home" size={24} color={color} />
               </View>
             ),
           }}
@@ -103,14 +86,11 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="workouts"
           options={{
-            title: 'Workouts',
+            title: t('tabs.workouts'),
+            tabBarAccessibilityLabel: t('tabs.workouts'),
             tabBarIcon: ({ color, focused }) => (
               <View style={[styles.iconWrapper, focused && styles.iconWrapperActive]}>
-                <Ionicons
-                  name={focused ? "barbell" : "barbell-outline"}
-                  size={24}
-                  color={color}
-                />
+                <Ionicons name={focused ? 'barbell' : 'barbell-outline'} size={24} color={color} />
               </View>
             ),
           }}
@@ -118,14 +98,14 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="projections"
           options={{
+            // D2: not offered until the physique analysis exists (see constants/Features.ts).
+            href: FEATURES.projections ? undefined : null,
             title: '',
+            tabBarAccessibilityLabel: t('tabs.scan'),
             tabBarIcon: ({ focused }) => (
               <View style={styles.scanIconWrapper}>
                 <View style={[styles.scanIconContainer, focused && styles.scanIconContainerActive]}>
-                  <Ionicons
-                    name="scan"
-                    size={32}
-                    color={Colors.white} />
+                  <Ionicons name="scan" size={32} color={tokens.color.onAccent} />
                 </View>
               </View>
             ),
@@ -138,11 +118,12 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="diet"
           options={{
-            title: 'Diet',
+            title: t('tabs.diet'),
+            tabBarAccessibilityLabel: t('tabs.diet'),
             tabBarIcon: ({ color, focused }) => (
               <View style={[styles.iconWrapper, focused && styles.iconWrapperActive]}>
                 <Ionicons
-                  name={focused ? "restaurant" : "restaurant-outline"}
+                  name={focused ? 'restaurant' : 'restaurant-outline'}
                   size={24}
                   color={color}
                 />
@@ -153,27 +134,27 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="profile"
           options={{
-            title: 'Profile',
-            tabBarIcon: ({ color, focused }) => (
+            title: t('tabs.profile'),
+            tabBarAccessibilityLabel: t('tabs.profile'),
+            tabBarIcon: ({ color, focused }) =>
               userProfilePicture ? (
-                <View style={[styles.profileAvatarWrapper, focused && styles.profileAvatarWrapperActive]}>
-                  <Image
-                    key={userProfilePicture}
-                    source={{ uri: userProfilePicture, cache: 'reload' }}
+                <View
+                  style={[
+                    styles.profileAvatarWrapper,
+                    focused && styles.profileAvatarWrapperActive,
+                  ]}
+                >
+                  <AppImage
+                    source={{ uri: userProfilePicture }}
                     style={styles.profileAvatar}
-                    resizeMode="cover"
+                    accessible={false}
                   />
                 </View>
               ) : (
                 <View style={[styles.profileIconContainer, focused && styles.iconWrapperActive]}>
-                  <Ionicons
-                    name={focused ? "person" : "person-outline"}
-                    size={20}
-                    color={color}
-                  />
+                  <Ionicons name={focused ? 'person' : 'person-outline'} size={20} color={color} />
                 </View>
-              )
-            ),
+              ),
           }}
         />
       </Tabs>
@@ -189,11 +170,6 @@ const styles = StyleSheet.create({
     marginLeft: 16,
     gap: 10,
   },
-  logoText: {
-    fontSize: 18,
-    fontFamily: Fonts.bold,
-    fontWeight: '700' as any,
-  },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -201,7 +177,10 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   proIconButton: {
-    padding: 4,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   iconWrapper: {
     alignItems: 'center',
@@ -219,12 +198,12 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 35,
-    backgroundColor: Colors.black,
+    backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   scanIconContainerActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.primaryDark,
     transform: [{ scale: 1.05 }],
   },
   profileIconContainer: {
@@ -249,10 +228,5 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 16,
-  },
-  faviconImage: {
-    width: 28,
-    height: 28,
-    resizeMode: 'contain',
   },
 });

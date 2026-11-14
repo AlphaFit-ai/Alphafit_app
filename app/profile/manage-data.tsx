@@ -17,7 +17,7 @@ interface DataItem {
 export default function ManageDataScreen() {
   const { type } = useLocalSearchParams<{ type: string }>();
   const { t } = useTranslation();
-  const { colors, isDarkMode } = useTheme();
+  const { colors, tokens } = useTheme();
   const navigation = useNavigation();
 
   const onboardingData: DataItem[] = [
@@ -136,7 +136,7 @@ export default function ManageDataScreen() {
       case 'projection':
         return { title: t('manageData.projectionTitle'), data: projectionData };
       default:
-        return { title: 'Manage Data', data: [] };
+        return { title: t('profile.manageData'), data: [] };
     }
   };
 
@@ -153,13 +153,14 @@ export default function ManageDataScreen() {
     // Navigate to the screen and ensure it returns here after update
     router.push({
       pathname: route as any,
-      params: { returnTo: 'profile' }
+      params: { returnTo: 'profile' },
     });
   };
 
   const renderDataItem = (item: DataItem) => {
     return (
       <TouchableOpacity
+        accessibilityRole="button"
         key={item.title}
         style={[
           styles.dataItem,
@@ -174,15 +175,26 @@ export default function ManageDataScreen() {
         disabled={!item.enabled}
       >
         <View style={styles.dataLeft}>
-          <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}>
-            <Ionicons name={item.icon} size={22} color={item.enabled ? colors.icon : colors.textSecondary} />
+          <View style={[styles.iconContainer, { backgroundColor: tokens.color.surfaceMuted }]}>
+            <Ionicons
+              name={item.icon}
+              size={22}
+              color={item.enabled ? colors.icon : colors.textSecondary}
+            />
           </View>
           <View style={styles.dataText}>
-            <Text style={[styles.dataTitle, { color: item.enabled ? colors.text : colors.textSecondary }]}>
+            <Text
+              style={[
+                styles.dataTitle,
+                { color: item.enabled ? colors.text : colors.textSecondary },
+              ]}
+            >
               {item.title}
             </Text>
             {item.subtitle && (
-              <Text style={[styles.dataSubtitle, { color: colors.textSecondary }]}>{item.subtitle}</Text>
+              <Text style={[styles.dataSubtitle, { color: colors.textSecondary }]}>
+                {item.subtitle}
+              </Text>
             )}
           </View>
         </View>
@@ -196,8 +208,7 @@ export default function ManageDataScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-
-        <View style={[styles.dataList, { backgroundColor: isDarkMode ? Colors.gray[900] : Colors.gray[50] }]}>
+        <View style={[styles.dataList, { backgroundColor: tokens.color.bgSubtle }]}>
           {data.map(renderDataItem)}
         </View>
 

@@ -9,8 +9,7 @@ export { foodScanService } from './foodScanService';
 export type { AuthResponse, UserOnboardingData, UserProfile } from './userService';
 export type { AuthResult } from './firebaseAuthService';
 export type { OnboardingData } from './onboardingService';
-export type { ImageUploadResponse, ProgressPhoto, ProgressPhotosResponse } from './imageService';
+export type { ImageUploadResponse } from './imageService';
 export type { BarcodeProductDto } from './barcodeService';
 export type { FoodScanDto, FoodPrediction, ApiResponse, PageResponse } from './foodScanService';
 export type { ChatMessage, ChatResponse } from './chatbotService';
-

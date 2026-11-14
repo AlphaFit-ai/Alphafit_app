@@ -1,6 +1,28 @@
-import axios from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { config } from '../config';
-import { storage } from './storage';
+import { normalizeApiError, toApiError } from './apiError';
+import { renewSession } from './sessionRenewal';
+import { tokenStore } from './tokenStore';
+
+/**
+ * The api client. Every failure is rejected as an `ApiError` (kind `offline`, `timeout`, `http`,
+ * `cancelled` or `unknown`, plus status and code); see `services/apiError.ts`.
+ *
+ * A 401 means the token is missing, invalid or expired. The client renews it once from the Firebase
+ * session (single-flight, `sessionRenewal.ts`) and repeats the request. If the session cannot be
+ * renewed it calls the session-expired handler (the app signs the user out) and rejects.
+ */
+interface AuthHandlers {
+  /** The session is gone and cannot be renewed. Registered once by the app (`services/launch.ts`). */
+  onSessionExpired: () => void;
+}
+let handlers: AuthHandlers = { onSessionExpired: () => undefined };
+
+export function configureApiAuth(next: AuthHandlers): void {
+  handlers = next;
+}
+
+type RetryableConfig = InternalAxiosRequestConfig & { _renewed?: boolean };
 
 const apiClient = axios.create({
   baseURL: config.API_BASE_URL,
@@ -10,51 +32,44 @@ const apiClient = axios.create({
   },
 });
 
-// Request interceptor to add auth token
-apiClient.interceptors.request.use(
-  async (config) => {
-    const token = await storage.getItem('authToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
+// Attach the api token to every request (read again on a retry, so a renewed token is used).
+apiClient.interceptors.request.use(async (requestConfig) => {
+  const token = await tokenStore.getToken();
+  if (token) {
+    requestConfig.headers.Authorization = `Bearer ${token}`;
+  } else {
+    delete requestConfig.headers.Authorization;
   }
-);
+  return requestConfig;
+});
 
-// Response interceptor for error handling
+/** Sign-in routes answer 401 for wrong credentials; renewing a session there makes no sense. */
+const isAuthRoute = (url?: string) => !!url && url.startsWith('/auth/');
+
 apiClient.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    // Handle network errors
-    if (!error.response) {
-      // Network error - don't log, it's expected when offline
-      return Promise.reject({
-        ...error,
-        message: 'Network error. Please check your internet connection.',
-      });
-    }
+  async (error: AxiosError) => {
+    const original = error.config as RetryableConfig | undefined;
+    const normalized = normalizeApiError(error);
 
-    // Handle specific HTTP status codes
-    const status = error.response?.status;
-
-    if (status === 401) {
-      // Handle unauthorized access - clear auth token silently
-      await storage.removeItem('authToken');
-      await storage.removeItem('userId');
-    } else if (status === 404) {
-      // Resource not found - expected for some optional endpoints
-    } else if (status === 500) {
-      // Only log server errors if they're unexpected
-      const errorMessage = error.response?.data?.message || 'Internal server error';
-      if (!errorMessage.includes('already exists')) {
-        console.error('Server error:', errorMessage);
+    const unauthorized = normalized.kind === 'http' && normalized.status === 401;
+    if (unauthorized && original && !isAuthRoute(original.url)) {
+      if (original._renewed) {
+        // Even the renewed token is refused: the session is gone.
+        handlers.onSessionExpired();
+      } else {
+        original._renewed = true;
+        let result: Awaited<ReturnType<typeof renewSession>>;
+        try {
+          result = await renewSession();
+        } catch (renewError) {
+          throw toApiError(renewError);
+        }
+        if (result === 'renewed') return apiClient.request(original);
+        handlers.onSessionExpired();
       }
     }
-
-    return Promise.reject(error);
+    throw toApiError(error);
   }
 );
 

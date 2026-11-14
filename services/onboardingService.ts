@@ -85,15 +85,12 @@ class OnboardingService {
   }
 
   /**
-   * Get diet onboarding data
+   * Get diet onboarding data. Resolves to null when the user has not answered anything yet; a failed
+   * request rejects, so the caller can show a retry instead of restarting the wizard.
    */
   async getDietOnboardingData(): Promise<DietOnboardingData | null> {
-    try {
-      const response = await apiClient.get('/onboarding/diet');
-      return response.data.data;
-    } catch (error) {
-      return null;
-    }
+    const response = await apiClient.get<{ data: DietOnboardingData | null }>('/onboarding/diet');
+    return response.data.data ?? null;
   }
 
   // ==================== PROJECTION ONBOARDING ====================
@@ -107,23 +104,26 @@ class OnboardingService {
   }
 
   /**
-   * Get projection onboarding data
+   * Get projection onboarding data. Resolves to null when nothing is saved yet; a failed request
+   * rejects (see `getDietOnboardingData`).
    */
   async getProjectionOnboardingData(): Promise<ProjectionOnboardingData | null> {
-    try {
-      const response = await apiClient.get('/onboarding/projection');
-      return response.data.data;
-    } catch (error) {
-      return null;
-    }
+    const response = await apiClient.get<{ data: ProjectionOnboardingData | null }>(
+      '/onboarding/projection'
+    );
+    return response.data.data ?? null;
   }
 
   /**
-   * Get user's onboarding data
+   * Get user's onboarding data. Resolves to null when nothing is saved yet; a failed request rejects.
+   * `timeout` (ms) overrides the client default for the launch check, where a slow network should
+   * reach the retry screen quickly.
    */
-  async getOnboardingData(): Promise<OnboardingData> {
-    const response = await apiClient.get('/onboarding');
-    return response.data.data;
+  async getOnboardingData(options: { timeout?: number } = {}): Promise<OnboardingData | null> {
+    const response = await apiClient.get<{ data: OnboardingData | null }>('/onboarding', {
+      timeout: options.timeout,
+    });
+    return response.data.data ?? null;
   }
 }
 

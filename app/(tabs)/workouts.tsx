@@ -1,177 +1,114 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ImageSourcePropType,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
+import { AppImage } from '../../src/ui';
 
 type WorkoutDay = 'push' | 'pull' | 'leg';
+type Muscle =
+  | 'chest'
+  | 'shoulders'
+  | 'triceps'
+  | 'back'
+  | 'biceps'
+  | 'quads'
+  | 'glutes'
+  | 'calves'
+  | 'lowerBack';
 
+/**
+ * Exercise names and descriptions are translation keys under `workoutScreen.exercises.<id>`.
+ * `reps` is a range as typed; `holdSeconds` replaces it for timed holds.
+ */
 interface Exercise {
-  name: string;
+  id: string;
   sets: number;
-  reps: string;
-  description: string;
-  tag: string;
-  demo: string;
+  reps?: string;
+  holdSeconds?: number;
+  tag?: Muscle;
 }
 
 interface WorkoutProgram {
   day: WorkoutDay;
-  title: string;
-  subtitle: string;
-  duration: string;
+  titleKey: 'workoutScreen.pushDay' | 'workoutScreen.pullDay' | 'workoutScreen.legDay';
+  muscles: Muscle[];
+  minutes: number;
   exercises: Exercise[];
-  icon: any;
-  iconSet: string;
+  icon: ImageSourcePropType;
 }
 
 const workoutPrograms: WorkoutProgram[] = [
   {
     day: 'push',
-    title: 'Push Day',
-    subtitle: 'Chest\nShoulders\nTriceps',
-    duration: '45 mins',
+    titleKey: 'workoutScreen.pushDay',
+    muscles: ['chest', 'shoulders', 'triceps'],
+    minutes: 45,
     icon: require('../../assets/images/icon/push.png'),
-    iconSet: 'image',
     exercises: [
-      {
-        name: 'Push-ups',
-        sets: 3,
-        reps: '8-12',
-        description: 'Keep your body straight, lower until chest nearly touches ground',
-        tag: 'Chest',
-        demo: 'Push-up demo',
-      },
-      {
-        name: 'Pike Push-ups',
-        sets: 3,
-        reps: '6-10',
-        description: 'Hands shoulder-width apart, walk feet closer to hands',
-        tag: 'Shoulders',
-        demo: 'Pike Push-up demo',
-      },
-      {
-        name: 'Tricep Dips',
-        sets: 3,
-        reps: '8-15',
-        description: 'Use chair or bench, lower your body by bending elbows',
-        tag: 'Triceps',
-        demo: 'Tricep dip demo',
-      },
-      {
-        name: 'Incline Push-ups',
-        sets: 2,
-        reps: '10-15',
-        description: 'Use elevated surface like bench or step',
-        tag: 'Chest',
-        demo: 'Incline Push-up demo',
-      },
+      { id: 'pushUps', sets: 3, reps: '8-12', tag: 'chest' },
+      { id: 'pikePushUps', sets: 3, reps: '6-10', tag: 'shoulders' },
+      { id: 'tricepDips', sets: 3, reps: '8-15', tag: 'triceps' },
+      { id: 'inclinePushUps', sets: 2, reps: '10-15', tag: 'chest' },
     ],
   },
   {
     day: 'pull',
-    title: 'Pull Day',
-    subtitle: 'Back\nBiceps',
-    duration: '40 mins',
+    titleKey: 'workoutScreen.pullDay',
+    muscles: ['back', 'biceps'],
+    minutes: 40,
     icon: require('../../assets/images/icon/pull.png'),
-    iconSet: 'image',
     exercises: [
-      {
-        name: 'Bodyweight Rows',
-        sets: 3,
-        reps: '8-12',
-        description: 'Use table or bar, keep body straight and pull chest to bar',
-        tag: 'Back',
-        demo: 'Bodyweight row demo',
-      },
-      {
-        name: 'Superman',
-        sets: 3,
-        reps: '10-15',
-        description: 'Lie face down, lift chest and legs simultaneously',
-        tag: 'Lower Back',
-        demo: 'Superman demo',
-      },
-      {
-        name: 'Wall Handstand',
-        sets: 3,
-        reps: '30s hold',
-        description: 'Face wall, walk feet while in handstand position',
-        tag: '',
-        demo: 'Wall Handstand demo',
-      },
-      {
-        name: 'Reverse Plank',
-        sets: 2,
-        reps: '20-30s',
-        description: 'Sit with legs extended, lift hips off ground',
-        tag: 'Back',
-        demo: 'Reverse plank demo',
-      },
+      { id: 'bodyweightRows', sets: 3, reps: '8-12', tag: 'back' },
+      { id: 'superman', sets: 3, reps: '10-15', tag: 'lowerBack' },
+      { id: 'wallHandstand', sets: 3, holdSeconds: 30 },
+      { id: 'reversePlank', sets: 2, reps: '20-30s', tag: 'back' },
     ],
   },
   {
     day: 'leg',
-    title: 'Leg Day',
-    subtitle: 'Quads\nGlutes\nCalves',
-    duration: '50 mins',
+    titleKey: 'workoutScreen.legDay',
+    muscles: ['quads', 'glutes', 'calves'],
+    minutes: 50,
     icon: require('../../assets/images/icon/leg.png'),
-    iconSet: 'image',
     exercises: [
-      {
-        name: 'Bodyweight Squats',
-        sets: 3,
-        reps: '12-20',
-        description: 'Feet shoulder-width apart, lower until thighs parallel to ground',
-        tag: 'Quads',
-        demo: 'Lunge demo',
-      },
-      {
-        name: 'Calf Raises',
-        sets: 3,
-        reps: '15-25',
-        description: 'Rise up on toes, hold briefly, lower slowly',
-        tag: 'Calves',
-        demo: 'Calf raise demo',
-      },
-      {
-        name: 'Glute Bridges',
-        sets: 3,
-        reps: '15-20',
-        description: 'Lie on back, lift hips by squeezing glutes',
-        tag: 'Glutes',
-        demo: 'Glute bridge demo',
-      },
-      {
-        name: 'Wall Sit',
-        sets: 2,
-        reps: '30-60s',
-        description: 'Back against wall, slide down until thighs parallel to ground',
-        tag: 'Quads',
-        demo: 'wall sit demo',
-      },
+      { id: 'bodyweightSquats', sets: 3, reps: '12-20', tag: 'quads' },
+      { id: 'calfRaises', sets: 3, reps: '15-25', tag: 'calves' },
+      { id: 'gluteBridges', sets: 3, reps: '15-20', tag: 'glutes' },
+      { id: 'wallSit', sets: 2, reps: '30-60s', tag: 'quads' },
     ],
   },
 ];
 
 export default function WorkoutsScreen() {
   const { t } = useTranslation();
-  const { colors, isDarkMode } = useTheme();
+  const { colors, tokens } = useTheme();
   const [selectedDay, setSelectedDay] = useState<WorkoutDay | null>('push');
 
-
-  const selectedProgram = selectedDay ? workoutPrograms.find(p => p.day === selectedDay) : null;
+  const selectedProgram = selectedDay ? workoutPrograms.find((p) => p.day === selectedDay) : null;
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.header}>
         <View style={styles.titleSection}>
-          <View style={[styles.titleIconContainer, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}>
+          <View style={[styles.titleIconContainer, { backgroundColor: tokens.color.surfaceMuted }]}>
             <Ionicons name="fitness" size={32} color={colors.text} />
           </View>
-          <Text style={[styles.title, { color: colors.text }]}>{t('workoutScreen.title')}</Text>
+          <Text style={[styles.title, { color: colors.text }]} accessibilityRole="header">
+            {t('workoutScreen.title')}
+          </Text>
         </View>
         <Text style={[styles.description, { color: colors.textSecondary }]}>
           {t('workoutScreen.description')}
@@ -185,30 +122,36 @@ export default function WorkoutsScreen() {
             style={[
               styles.workoutCard,
               {
-                backgroundColor: isDarkMode ? Colors.gray[800] : Colors.white,
-                borderColor: selectedDay === program.day ? (isDarkMode ? Colors.primary : Colors.black) : (isDarkMode ? Colors.gray[700] : Colors.gray[100])
+                backgroundColor: tokens.color.surface,
+                borderColor:
+                  selectedDay === program.day ? tokens.color.action : tokens.color.border,
               },
               selectedDay === program.day && [
                 styles.workoutCardActive,
-                { backgroundColor: isDarkMode ? Colors.primary : Colors.black }
+                { backgroundColor: tokens.color.action },
               ],
             ]}
             onPress={() => setSelectedDay(program.day)}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={t(program.titleKey)}
+            accessibilityState={{ selected: selectedDay === program.day }}
           >
-            <Image
+            <AppImage
               source={program.icon}
-              style={[
-                styles.workoutIcon,
-              ]}
-              resizeMode="contain"
+              noPlaceholder
+              contentFit="contain"
+              accessible={false}
+              style={[styles.workoutIcon, { backgroundColor: 'transparent' }]}
             />
-            <Text style={[
-              styles.workoutTitle,
-              { color: selectedDay === program.day ? Colors.white : colors.text },
-              selectedDay === program.day && styles.workoutTitleActive,
-            ]}>
-              {program.title}
+            <Text
+              style={[
+                styles.workoutTitle,
+                { color: selectedDay === program.day ? tokens.color.onAction : colors.text },
+                selectedDay === program.day && styles.workoutTitleActive,
+              ]}
+            >
+              {t(program.titleKey)}
             </Text>
           </TouchableOpacity>
         ))}
@@ -216,64 +159,85 @@ export default function WorkoutsScreen() {
 
       {selectedProgram && (
         <View style={[styles.programDetails, { backgroundColor: colors.background }]}>
-          <Text style={[styles.programTitle, { color: colors.text }]}>{selectedProgram.title} - {selectedProgram.subtitle.replace(/\n/g, ', ')}</Text>
+          <Text style={[styles.programTitle, { color: colors.text }]}>
+            {t(selectedProgram.titleKey)} -{' '}
+            {selectedProgram.muscles.map((muscle) => t(`workoutScreen.${muscle}`)).join(', ')}
+          </Text>
 
           <View style={styles.durationContainer}>
-            <Ionicons name="time-outline" size={18} color={isDarkMode ? Colors.gray[500] : Colors.gray[400]} />
-            <Text style={[styles.durationText, { color: colors.textSecondary }]}>{selectedProgram.duration}</Text>
+            <Ionicons name="time-outline" size={18} color={tokens.color.textSubtle} />
+            <Text style={[styles.durationText, { color: colors.textSecondary }]}>
+              {selectedProgram.minutes} {t('workoutScreen.mins')}
+            </Text>
           </View>
 
           <View style={styles.exercisesList}>
-            {selectedProgram.exercises.map((exercise, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.exerciseCard,
-                  {
-                    backgroundColor: isDarkMode ? Colors.gray[800] : Colors.white,
-                    borderColor: isDarkMode ? Colors.gray[700] : Colors.gray[100]
-                  }
-                ]}
-              >
-                <View style={styles.exerciseHeader}>
-                  <Text style={[styles.exerciseName, { color: colors.text }]}>{exercise.name}</Text>
-                  {exercise.tag && (
-                    <View style={[styles.exerciseTag, { backgroundColor: isDarkMode ? Colors.primary : Colors.black }]}>
-                      <Text style={styles.exerciseTagText}>{exercise.tag}</Text>
-                    </View>
-                  )}
-                </View>
-
-                <View style={styles.exerciseInfo}>
-                  <Text style={[styles.exerciseStats, { color: colors.textSecondary }]}>
-                    Sets: <Text style={[styles.exerciseStatsValue, { color: colors.text }]}>{exercise.sets}</Text>
-                    {'  '}
-                    Reps: <Text style={[styles.exerciseStatsValue, { color: colors.text }]}>{exercise.reps}</Text>
-                  </Text>
-                </View>
-
-                <Text style={[styles.exerciseDescription, { color: colors.textSecondary }]}>{exercise.description}</Text>
-
-                <TouchableOpacity
+            {selectedProgram.exercises.map((exercise) => {
+              const name = t(`workoutScreen.exercises.${exercise.id}.name`);
+              return (
+                <View
+                  key={exercise.id}
                   style={[
-                    styles.demoButton,
-                    { backgroundColor: isDarkMode ? Colors.primary : Colors.black }
+                    styles.exerciseCard,
+                    {
+                      backgroundColor: tokens.color.surface,
+                      borderColor: tokens.color.border,
+                    },
                   ]}
-                  disabled
                 >
-                  <Ionicons name="play-circle" size={16} color={Colors.white} />
-                  <Text style={styles.demoButtonText}>{exercise.demo}</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
+                  <View style={styles.exerciseHeader}>
+                    <Text style={[styles.exerciseName, { color: colors.text }]}>{name}</Text>
+                    {exercise.tag && (
+                      <View style={[styles.exerciseTag, { backgroundColor: tokens.color.action }]}>
+                        <Text style={[styles.exerciseTagText, { color: tokens.color.onAction }]}>
+                          {t(`workoutScreen.${exercise.tag}`)}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={styles.exerciseInfo}>
+                    <Text style={[styles.exerciseStats, { color: colors.textSecondary }]}>
+                      {t('workoutScreen.sets')}:{' '}
+                      <Text style={[styles.exerciseStatsValue, { color: colors.text }]}>
+                        {exercise.sets}
+                      </Text>
+                      {'  '}
+                      {t('workoutScreen.reps')}:{' '}
+                      <Text style={[styles.exerciseStatsValue, { color: colors.text }]}>
+                        {exercise.holdSeconds !== undefined
+                          ? t('workoutScreen.holdSeconds', { seconds: exercise.holdSeconds })
+                          : exercise.reps}
+                      </Text>
+                    </Text>
+                  </View>
+
+                  <Text style={[styles.exerciseDescription, { color: colors.textSecondary }]}>
+                    {t(`workoutScreen.exercises.${exercise.id}.description`)}
+                  </Text>
+
+                  <TouchableOpacity
+                    style={[styles.demoButton, { backgroundColor: tokens.color.action }]}
+                    disabled
+                    accessibilityRole="button"
+                    accessibilityState={{ disabled: true }}
+                  >
+                    <Ionicons name="play-circle" size={16} color={tokens.color.onAction} />
+                    <Text style={[styles.demoButtonText, { color: tokens.color.onAction }]}>
+                      {t('workoutScreen.demo', { name })}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
           </View>
         </View>
       )}
-
-
     </ScrollView>
   );
-} const styles = StyleSheet.create({
+}
+
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.white,
@@ -310,15 +274,16 @@ export default function WorkoutsScreen() {
   },
   workoutCards: {
     flexDirection: 'row',
-    paddingHorizontal: Spacing.sm,
-    gap: 6,
+    paddingHorizontal: Spacing.screenPaddingHorizontal,
+    gap: 8,
     marginBottom: 32,
   },
   workoutCard: {
     flex: 1,
     borderRadius: 16,
     borderWidth: 2,
-    padding: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 8,
     alignItems: 'center',
     shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
@@ -344,7 +309,7 @@ export default function WorkoutsScreen() {
     textAlign: 'center',
   },
   workoutTitleActive: {
-    color: Colors.white,
+    fontFamily: Fonts.bold,
   },
   workoutSubtitle: {
     fontSize: 13,
@@ -443,5 +408,4 @@ export default function WorkoutsScreen() {
     fontFamily: Fonts.semiBold,
     color: Colors.white,
   },
-
 });

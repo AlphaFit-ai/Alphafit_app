@@ -5,8 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
+import { setLanguage } from '../../i18n/config';
+import { LanguageCode } from '../../services/preferences';
 
-type Language = 'en' | 'es' | 'fr';
+type Language = LanguageCode;
 
 interface LanguageOption {
   code: Language;
@@ -45,7 +47,7 @@ export default function LanguageScreen() {
 
   const handleLanguageChange = async (langCode: Language) => {
     setSelectedLanguage(langCode);
-    await i18n.changeLanguage(langCode);
+    await setLanguage(langCode);
     setTimeout(() => {
       router.back();
     }, 300);
@@ -53,7 +55,9 @@ export default function LanguageScreen() {
 
   return (
     <View style={[SharedStyles.container, { backgroundColor: colors.background }]}>
-      <TouchableOpacity 
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel={t('common.back')}
         style={SharedStyles.backButton}
         onPress={() => router.back()}
         activeOpacity={0.7}
@@ -61,7 +65,7 @@ export default function LanguageScreen() {
         <Ionicons name="arrow-back" size={24} color={colors.icon} />
       </TouchableOpacity>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -72,6 +76,8 @@ export default function LanguageScreen() {
           <View style={styles.languageList}>
             {languages.map((language) => (
               <TouchableOpacity
+                accessibilityRole="radio"
+                accessibilityState={{ selected: selectedLanguage === language.code }}
                 key={language.code}
                 style={[
                   styles.languageItem,
@@ -84,7 +90,9 @@ export default function LanguageScreen() {
                 <View style={styles.languageLeft}>
                   <Text style={styles.flag}>{language.flag}</Text>
                   <View style={styles.languageText}>
-                    <Text style={[styles.languageName, { color: colors.text }]}>{language.name}</Text>
+                    <Text style={[styles.languageName, { color: colors.text }]}>
+                      {language.name}
+                    </Text>
                     <Text style={styles.languageNative}>{language.nativeName}</Text>
                   </View>
                 </View>

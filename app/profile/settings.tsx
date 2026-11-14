@@ -1,77 +1,69 @@
-import { Ionicons } from '@expo/vector-icons';
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Animated, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { LanguageSelector } from '../../components';
-import { Colors, Fonts, Spacing } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
-import { userService } from '../../services';
+import { setLanguage } from '../../i18n/config';
+import { LanguageCode, ThemePreference } from '../../services/preferences';
+import { ListItem, PressableScale, Screen, Text } from '../../src/ui';
+
+const LANGUAGE_NAMES: Record<string, string> = { en: 'English', es: 'Español', fr: 'Français' };
+
+const THEME_OPTIONS: { value: ThemePreference; labelKey: string }[] = [
+  { value: 'system', labelKey: 'profile.themeSystem' },
+  { value: 'light', labelKey: 'profile.themeLight' },
+  { value: 'dark', labelKey: 'profile.themeDark' },
+];
 
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
-  const { isDarkMode, toggleTheme, colors } = useTheme();
+  const { preference, setTheme, tokens } = useTheme();
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-
   const currentLanguage = i18n.language || 'en';
-  const languageNames: { [key: string]: string } = { en: 'English', es: 'Español', fr: 'Français' };
 
-  const handleLanguageSelect = (language: { code: string; name: string; flag: string }) => {
-    Animated.sequence([
-      Animated.timing(fadeAnim, {
-        toValue: 0.3,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    // i18n will handle backend sync automatically via languageChanged event
-    i18n.changeLanguage(language.code);
+  const handleLanguageSelect = (language: { code: LanguageCode; name: string; flag: string }) => {
+    // Saved on this phone and, because the user chose it, sent to the account.
+    void setLanguage(language.code);
   };
 
+  const c = tokens.color;
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-          <View style={[styles.settingItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.settingLeft}>
-              <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}>
-                <Ionicons name="language-outline" size={22} color={colors.icon} />
-              </View>
-              <Text style={[styles.settingTitle, { color: colors.text }]}>{t('profile.language')}</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.settingRight}
-              onPress={() => setShowLanguageSelector(true)}
-              activeOpacity={0.7}
+    <Screen scroll noTopInset contentStyle={styles.content}>
+      <ListItem
+        icon="language-outline"
+        title={t('profile.language')}
+        onPress={() => setShowLanguageSelector(true)}
+        trailing={<Text tone="muted">{LANGUAGE_NAMES[currentLanguage] ?? currentLanguage}</Text>}
+      />
+
+      <Text variant="heading" accessibilityRole="header" style={styles.heading}>
+        {t('profile.theme')}
+      </Text>
+      <View
+        accessibilityRole="radiogroup"
+        accessibilityLabel={t('profile.theme')}
+        style={[styles.segments, { backgroundColor: c.surfaceMuted }]}
+      >
+        {THEME_OPTIONS.map((option) => {
+          const selected = preference === option.value;
+          return (
+            <PressableScale
+              key={option.value}
+              onPress={() => setTheme(option.value)}
+              feedback
+              accessibilityRole="radio"
+              accessibilityLabel={t(option.labelKey)}
+              accessibilityState={{ selected, checked: selected }}
+              style={[styles.segment, selected && { backgroundColor: c.action }]}
             >
-              <Text style={styles.settingValue}>{languageNames[currentLanguage]}</Text>
-              <Ionicons name="chevron-forward" size={20} color={Colors.gray[400]} />
-            </TouchableOpacity>
-          </View>
-
-          <View style={[styles.settingItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.settingLeft}>
-              <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100] }]}>
-                <Ionicons name="moon-outline" size={22} color={colors.icon} />
-              </View>
-              <Text style={[styles.settingTitle, { color: colors.text }]}>{t('profile.darkMode')}</Text>
-            </View>
-            <Switch
-              value={isDarkMode}
-              onValueChange={toggleTheme}
-              trackColor={{ false: Colors.gray[300], true: Colors.primary }}
-              thumbColor={Colors.white}
-            />
-          </View>
-
-        </Animated.View>
-      </ScrollView>
+              <Text variant="label" style={{ color: selected ? c.onAction : c.text }}>
+                {t(option.labelKey)}
+              </Text>
+            </PressableScale>
+          );
+        })}
+      </View>
 
       <LanguageSelector
         visible={showLanguageSelector}
@@ -79,67 +71,20 @@ export default function SettingsScreen() {
         onSelect={handleLanguageSelect}
         selectedLanguage={currentLanguage}
       />
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  content: { paddingTop: 16, gap: 8 },
+  heading: { marginTop: 24, marginBottom: 8 },
+  segments: { flexDirection: 'row', borderRadius: 999, padding: 4, gap: 4 },
+  segment: {
     flex: 1,
-    backgroundColor: Colors.white,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: Spacing.screenPaddingHorizontal,
-    paddingTop: 20,
-  },
-  settingItem: {
-    flexDirection: 'row',
+    minHeight: 44,
+    borderRadius: 999,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    backgroundColor: Colors.white,
-    borderRadius: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: Colors.gray[100],
-  },
-  settingLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.gray[100],
     justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  settingTitle: {
-    fontSize: 15,
-    fontFamily: Fonts.semiBold,
-    color: Colors.black,
-  },
-  settingSubtitle: {
-    fontSize: 13,
-    fontFamily: Fonts.regular,
-    color: Colors.gray[400],
-    marginTop: 2,
-  },
-  settingRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  settingValue: {
-    fontSize: 15,
-    fontFamily: Fonts.regular,
-    color: Colors.gray[400],
+    paddingHorizontal: 8,
   },
 });

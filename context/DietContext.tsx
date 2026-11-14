@@ -1,5 +1,19 @@
-import React, { createContext, ReactNode, useContext, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { dietQuery } from '../hooks/queries';
 import { onboardingService } from '../services';
+import { logError } from '../services/apiError';
+import { queryKeys } from '../services/queryKeys';
+import { registerSessionResetter } from '../services/session';
 
 export interface DietOnboardingData {
   dietPreference?: 'vegetarian' | 'vegan' | 'non-veg' | 'flexible';
@@ -13,7 +27,11 @@ export interface DietOnboardingData {
   barcodeData?: string;
 }
 
+/** What belongs to the scan in progress, not to the user's saved answers. */
+type ScanState = Pick<DietOnboardingData, 'scanId' | 'barcodeData'>;
+
 interface DietContextType {
+  /** The saved answers (from the query cache) plus the scan in progress. */
   dietData: DietOnboardingData;
   updateDietData: (data: Partial<DietOnboardingData>) => Promise<void>;
   loadDietData: (data: DietOnboardingData) => void;
@@ -25,68 +43,83 @@ interface DietContextType {
 
 const DietContext = createContext<DietContextType | undefined>(undefined);
 
-const initialDietData: DietOnboardingData = {
-  dietPreference: undefined,
-  allergies: undefined,
-  hasAllergies: undefined,
-  mealsPerDay: undefined,
-  supplements: undefined,
-  takesSupplements: undefined,
-  foodImage: undefined,
-  scanId: undefined,
-  barcodeData: undefined,
-};
+const TOTAL_STEPS = 6;
 
+/**
+ * Mounted once, in the root layout. The saved answers are server data and live in the query cache; this
+ * context keeps the wizard step and the scan in progress (`scanId`, `barcodeData`).
+ */
 export const DietProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [dietData, setDietData] = useState<DietOnboardingData>(initialDietData);
+  const client = useQueryClient();
+  const { data: saved } = useQuery({ ...dietQuery, enabled: false });
+  const [scan, setScan] = useState<ScanState>({});
   const [currentStep, setCurrentStep] = useState(0);
-  const totalSteps = 6;
+  // The latest merged value, so two updates in a row (before React re-renders) do not overwrite each other.
+  const latest = useRef<DietOnboardingData>({});
 
-  const updateDietData = async (data: Partial<DietOnboardingData>) => {
-    const updatedData = { ...dietData, ...data };
-    setDietData(updatedData);
-    
-    // Save to backend after each update
-    try {
-      await onboardingService.saveDietOnboardingData({
-        dietPreference: updatedData.dietPreference,
-        allergies: updatedData.allergies,
-        hasAllergies: updatedData.hasAllergies,
-        mealsPerDay: updatedData.mealsPerDay,
-        supplements: updatedData.supplements,
-        takesSupplements: updatedData.takesSupplements,
-        foodImage: updatedData.foodImage,
-      });
-      console.log('Diet data saved to backend:', data);
-    } catch (error) {
-      console.error('Failed to save diet data:', error);
-    }
-  };
-
-  const loadDietData = (data: DietOnboardingData) => {
-    setDietData(data);
-  };
-
-  const resetDietData = () => {
-    setDietData(initialDietData);
-    setCurrentStep(0);
-  };
-
-  return (
-    <DietContext.Provider
-      value={{
-        dietData,
-        updateDietData,
-        loadDietData,
-        resetDietData,
-        currentStep,
-        setCurrentStep,
-        totalSteps,
-      }}
-    >
-      {children}
-    </DietContext.Provider>
+  const dietData = useMemo<DietOnboardingData>(
+    () => ({ ...(saved ?? {}), ...scan }),
+    [saved, scan]
   );
+  useEffect(() => {
+    latest.current = dietData;
+  }, [dietData]);
+
+  const updateDietData = useCallback(
+    async (data: Partial<DietOnboardingData>) => {
+      const merged = { ...latest.current, ...data };
+      latest.current = merged;
+      const { scanId, barcodeData, ...answers } = merged;
+      setScan({ scanId, barcodeData });
+      client.setQueryData(queryKeys.diet, answers);
+
+      // Save to backend after each update
+      try {
+        await onboardingService.saveDietOnboardingData({
+          dietPreference: merged.dietPreference,
+          allergies: merged.allergies,
+          hasAllergies: merged.hasAllergies,
+          mealsPerDay: merged.mealsPerDay,
+          supplements: merged.supplements,
+          takesSupplements: merged.takesSupplements,
+          foodImage: merged.foodImage,
+        });
+      } catch (error) {
+        logError('diet.save', error);
+      }
+    },
+    [client]
+  );
+
+  const loadDietData = useCallback(
+    (data: DietOnboardingData) => {
+      client.setQueryData(queryKeys.diet, data);
+    },
+    [client]
+  );
+
+  const resetDietData = useCallback(() => {
+    latest.current = {};
+    setScan({});
+    setCurrentStep(0);
+  }, []);
+
+  useEffect(() => registerSessionResetter(resetDietData), [resetDietData]);
+
+  const value = useMemo<DietContextType>(
+    () => ({
+      dietData,
+      updateDietData,
+      loadDietData,
+      resetDietData,
+      currentStep,
+      setCurrentStep,
+      totalSteps: TOTAL_STEPS,
+    }),
+    [dietData, updateDietData, loadDietData, resetDietData, currentStep]
+  );
+
+  return <DietContext.Provider value={value}>{children}</DietContext.Provider>;
 };
 
 export const useDiet = () => {

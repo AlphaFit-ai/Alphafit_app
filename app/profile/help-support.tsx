@@ -3,66 +3,65 @@ import { useTranslation } from 'react-i18next';
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useTheme } from '../../context/ThemeContext';
+import { logError } from '../../services/apiError';
 
 interface SupportSection {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   content: string;
-  action?: {
+  action: {
     label: string;
-    onPress: () => void;
+    url: string;
   };
+}
+
+/** Where the support screen says to write (kept as it was; the owner decides the domain, ROADMAP D4). */
+const SUPPORT_EMAIL = 'support@alphafit-ai.com';
+
+function openUrl(url: string) {
+  Linking.openURL(url).catch((error) => logError('help.openUrl', error));
 }
 
 export default function HelpSupportScreen() {
   const { t } = useTranslation();
-  const { colors, isDarkMode } = useTheme();
+  const { colors, tokens } = useTheme();
 
   const sections: SupportSection[] = [
     {
       icon: 'help-circle-outline',
-      title: t('profile.faq', 'FAQ'),
-      content: 'Find answers to common questions about AlphaFit AI, features, and subscriptions.',
-      action: {
-        label: 'View FAQ',
-        onPress: () => Linking.openURL('https://alphafit-ai.com/faq.html'),
-      },
+      title: t('profile.faq'),
+      content: t('help.faqContent'),
+      action: { label: t('help.faqAction'), url: 'https://alphafit-ai.com/faq.html' },
     },
     {
       icon: 'mail-outline',
-      title: t('profile.contact', 'Contact Support'),
-      content: 'Need assistance? Reach out to our support team for help with your account or technical issues.',
-      action: {
-        label: 'Contact Us',
-        onPress: () => Linking.openURL('https://alphafit-ai.com/contact.html'),
-      },
+      title: t('profile.contact'),
+      content: t('help.contactContent'),
+      action: { label: t('help.contactAction'), url: 'https://alphafit-ai.com/contact.html' },
     },
     {
       icon: 'shield-checkmark-outline',
-      title: t('profile.privacyPolicy', 'Privacy Policy'),
-      content: 'Read about how we protect your personal information and data security.',
+      title: t('profile.privacyPolicy'),
+      content: t('help.privacyContent'),
       action: {
-        label: 'Read Policy',
-        onPress: () => Linking.openURL('https://alphafit-ai.com/privacy-policy.html'),
+        label: t('help.privacyAction'),
+        url: 'https://alphafit-ai.com/privacy-policy.html',
       },
     },
     {
       icon: 'document-text-outline',
-      title: t('profile.termsOfService', 'Terms of Service'),
-      content: 'Review the terms and conditions for using the AlphaFit AI platform.',
+      title: t('profile.termsOfService'),
+      content: t('help.termsContent'),
       action: {
-        label: 'Read Terms',
-        onPress: () => Linking.openURL('https://alphafit-ai.com/terms-of-service.html'),
+        label: t('help.termsAction'),
+        url: 'https://alphafit-ai.com/terms-of-service.html',
       },
     },
     {
       icon: 'trash-outline',
-      title: t('profile.deleteAccount', 'Delete Account'),
-      content: 'Learn about the process for permanently deleting your account and data.',
-      action: {
-        label: 'Delete Info',
-        onPress: () => Linking.openURL('https://alphafit-ai.com/delete-account.html'),
-      },
+      title: t('profile.deleteAccount'),
+      content: t('help.deleteContent'),
+      action: { label: t('help.deleteAction'), url: 'https://alphafit-ai.com/delete-account.html' },
     },
   ];
 
@@ -70,7 +69,7 @@ export default function HelpSupportScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
-          {sections.map((section, index) => (
+          {sections.map((section) => (
             <View
               key={section.title}
               style={[
@@ -82,33 +81,26 @@ export default function HelpSupportScreen() {
               ]}
             >
               <View style={styles.sectionHeader}>
-                <View
-                  style={[
-                    styles.iconContainer,
-                    { backgroundColor: isDarkMode ? Colors.gray[800] : Colors.primary + '15' },
-                  ]}
-                >
+                <View style={[styles.iconContainer, { backgroundColor: tokens.color.accentSoft }]}>
                   <Ionicons name={section.icon} size={24} color={Colors.primary} />
                 </View>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                  {section.title}
-                </Text>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>{section.title}</Text>
               </View>
 
               <Text style={[styles.sectionContent, { color: colors.textSecondary }]}>
                 {section.content}
               </Text>
 
-              {section.action && (
-                <TouchableOpacity
-                  style={[styles.actionButton, { backgroundColor: Colors.primary }]}
-                  onPress={section.action.onPress}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.actionButtonText}>{section.action.label}</Text>
-                  <Ionicons name="arrow-forward" size={18} color={Colors.white} />
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity
+                style={[styles.actionButton, { backgroundColor: Colors.primary }]}
+                onPress={() => openUrl(section.action.url)}
+                activeOpacity={0.8}
+                accessibilityRole="link"
+                accessibilityLabel={`${section.title}: ${section.action.label}`}
+              >
+                <Text style={styles.actionButtonText}>{section.action.label}</Text>
+                <Ionicons name="arrow-forward" size={18} color={Colors.gray[900]} />
+              </TouchableOpacity>
             </View>
           ))}
 
@@ -116,16 +108,16 @@ export default function HelpSupportScreen() {
             style={[
               styles.contactCard,
               {
-                backgroundColor: isDarkMode ? Colors.gray[800] : Colors.gray[100],
+                backgroundColor: tokens.color.surfaceMuted,
               },
             ]}
           >
             <Ionicons name="mail-outline" size={24} color={Colors.primary} />
             <Text style={[styles.contactTitle, { color: colors.text }]}>
-              Still need help?
+              {t('help.stillNeedHelp')}
             </Text>
             <Text style={[styles.contactSubtitle, { color: colors.textSecondary }]}>
-              support@alphafit-ai.com
+              {SUPPORT_EMAIL}
             </Text>
           </View>
 
@@ -189,7 +181,7 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: Fonts.sizes.base,
     fontFamily: Fonts.semiBold,
-    color: Colors.white,
+    color: Colors.gray[900],
   },
   contactCard: {
     borderRadius: Spacing.radius.lg,

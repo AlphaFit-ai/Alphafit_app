@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Modal, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { imageService } from '../services';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
-import { Colors, Spacing, Fonts } from '../constants';
+import { imageService } from '../services';
+import { logError } from '../services/apiError';
+import { AppImage, Dialog, PressableScale, Text, useToast } from '../src/ui';
 
 interface ImageUploadProps {
   currentImageUrl?: string | null;
@@ -16,6 +17,10 @@ interface ImageUploadProps {
   rounded?: boolean;
 }
 
+/**
+ * A photo slot: shows the current picture, asks where the new one comes from (camera or library) in a
+ * dialog, uploads it (shrunk first, see `services/imagePrep`) and tells the user if that failed.
+ */
 export default function ImageUpload({
   currentImageUrl,
   onImageUploaded,
@@ -25,35 +30,24 @@ export default function ImageUpload({
   size = 120,
   rounded = true,
 }: ImageUploadProps) {
-  const { colors, isDarkMode } = useTheme();
+  const { tokens } = useTheme();
+  const c = tokens.color;
   const { t } = useTranslation();
+  const toast = useToast();
   const [imageUri, setImageUri] = useState<string | null>(currentImageUrl || null);
   const [isUploading, setIsUploading] = useState(false);
-  const [showAlert, setShowAlert] = useState(false);
+  const [showSources, setShowSources] = useState(false);
+  const radius = rounded ? size / 2 : tokens.radius.md;
 
   // Sync local state with prop changes
   useEffect(() => {
     setImageUri(currentImageUrl || null);
   }, [currentImageUrl]);
 
-  const handlePickImage = async (source: 'camera' | 'gallery') => {
-    try {
-      const uri = await imageService.pickImage(source);
-      if (uri) {
-        setImageUri(uri);
-        await uploadImage(uri);
-      }
-    } catch (error: any) {
-      // Error handling - could be enhanced with custom alert
-      console.error('Pick image error:', error);
-    }
-  };
-
   const uploadImage = async (uri: string) => {
     setIsUploading(true);
     try {
       let uploadedUrl: string;
-
       switch (uploadType) {
         case 'profile':
           uploadedUrl = await imageService.uploadProfilePicture(uri);
@@ -68,269 +62,117 @@ export default function ImageUpload({
           throw new Error('Invalid upload type');
       }
 
-      // Add cache busting timestamp to force refresh
-      const urlWithTimestamp = uploadedUrl.includes('?') 
-        ? `${uploadedUrl}&t=${Date.now()}` 
-        : `${uploadedUrl}?t=${Date.now()}`;
-      
-      setImageUri(urlWithTimestamp);
-      onImageUploaded?.(urlWithTimestamp);
-    } catch (error: any) {
-      console.error('Upload error:', error);
-      setImageUri(null);
+      // A new query string makes the image component fetch the new picture.
+      const fresh = `${uploadedUrl}${uploadedUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
+      setImageUri(fresh);
+      onImageUploaded?.(fresh);
+    } catch (error: unknown) {
+      logError('imageUpload.upload', error);
+      // Put the previous picture back and say that the upload did not work.
+      setImageUri(currentImageUrl || null);
+      toast.show(t('imageUpload.uploadFailed'), 'error');
     } finally {
       setIsUploading(false);
     }
   };
 
-  const showImageSourceOptions = () => {
-    setShowAlert(true);
+  const handlePickImage = async (source: 'camera' | 'gallery') => {
+    try {
+      const uri = await imageService.pickImage(source);
+      if (uri) {
+        setImageUri(uri);
+        await uploadImage(uri);
+      }
+    } catch (error: unknown) {
+      // Most often the camera or photo permission was refused.
+      logError('imageUpload.pick', error);
+      toast.show(t('imageUpload.pickFailed'), 'error');
+    }
   };
 
-  const handleAlertOption = (option: 'camera' | 'gallery' | 'cancel') => {
-    setShowAlert(false);
-    if (option !== 'cancel') {
-      setTimeout(() => handlePickImage(option), 300);
-    }
+  const choose = (source: 'camera' | 'gallery') => {
+    // The dialog is closing: let it finish before the system picker opens.
+    setTimeout(() => void handlePickImage(source), 300);
   };
 
   return (
     <>
       <View style={styles.container}>
-        {label && <Text style={[styles.label, { color: colors.text }]}>{label}</Text>}
-        
-        <TouchableOpacity
-        style={[
-          styles.imageContainer,
-          {
-            width: size,
-            height: size,
-            borderRadius: rounded ? size / 2 : Spacing.radius.md,
-            backgroundColor: colors.card,
-            borderColor: imageUri ? Colors.primary + '40' : colors.textSecondary + '30',
-          },
-        ]}
-        onPress={showImageSourceOptions}
-        disabled={isUploading}
-        activeOpacity={0.8}
-      >
-        {isUploading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.primary} />
-            <Text style={[styles.uploadingText, { color: colors.textSecondary }]}>Uploading...</Text>
-          </View>
-        ) : imageUri ? (
-          <>
-            <Image
-              source={{ 
-                uri: imageUri,
-                cache: 'reload'
-              }}
-              style={[
-                styles.image,
-                {
-                  width: size,
-                  height: size,
-                  borderRadius: rounded ? size / 2 : Spacing.radius.md,
-                },
-              ]}
-              resizeMode="cover"
-            />
-            <View style={[styles.editButton, { backgroundColor: Colors.primary }]}>
-              <Ionicons name="camera" size={18} color={Colors.white} />
+        {label ? <Text variant="label">{label}</Text> : null}
+        <PressableScale
+          onPress={() => setShowSources(true)}
+          disabled={isUploading}
+          feedback
+          accessibilityRole="button"
+          accessibilityLabel={label ?? t('imageUpload.addPhoto')}
+          accessibilityState={{ busy: isUploading, disabled: isUploading }}
+          style={[
+            styles.slot,
+            {
+              width: size,
+              height: size,
+              borderRadius: radius,
+              backgroundColor: c.surfaceMuted,
+              borderColor: c.border,
+            },
+          ]}
+        >
+          {isUploading ? (
+            <View style={styles.center}>
+              <ActivityIndicator size="large" color={c.accent} />
+              <Text variant="caption" tone="muted">
+                {t('common.uploading')}
+              </Text>
             </View>
-          </>
-        ) : (
-          <View style={styles.placeholder}>
-            <View style={[styles.placeholderIconWrapper, { backgroundColor: colors.textSecondary + '20' }]}>
-              <Ionicons name="camera-outline" size={32} color={colors.textSecondary} />
+          ) : imageUri ? (
+            <>
+              <AppImage
+                source={{ uri: imageUri }}
+                accessible={false}
+                style={{ width: size, height: size, borderRadius: radius }}
+              />
+              <View style={[styles.edit, { backgroundColor: c.accent }]}>
+                <Ionicons name="camera" size={18} color={c.onAccent} />
+              </View>
+            </>
+          ) : (
+            <View style={styles.center}>
+              <Ionicons name="camera-outline" size={32} color={c.textMuted} />
+              <Text variant="label" tone="muted">
+                {t('imageUpload.addPhoto')}
+              </Text>
             </View>
-            <Text style={[styles.placeholderText, { color: colors.textSecondary }]}>Add Photo</Text>
-          </View>
-        )}
-      </TouchableOpacity>
+          )}
+        </PressableScale>
       </View>
 
-      {/* iOS-style Alert Modal */}
-      <Modal
-        visible={showAlert}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowAlert(false)}
-      >
-        <TouchableOpacity 
-          style={styles.alertOverlay} 
-          activeOpacity={1}
-          onPress={() => setShowAlert(false)}
-        >
-          <View style={[styles.alertContainer, { backgroundColor: isDarkMode ? 'rgba(28, 28, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)' }]}>
-            <Text style={[styles.alertTitle, { color: colors.text }]}>
-              {t('imageUpload.selectSource')}
-            </Text>
-            <Text style={[styles.alertMessage, { color: colors.textSecondary }]}>
-              {t('imageUpload.selectSourceMessage')}
-            </Text>
-            
-            <View style={[styles.alertButtonContainer, { borderTopColor: isDarkMode ? 'rgba(84, 84, 88, 0.6)' : 'rgba(60, 60, 67, 0.29)' }]}>
-              <TouchableOpacity
-                style={[styles.alertButton, { borderBottomColor: isDarkMode ? 'rgba(84, 84, 88, 0.6)' : 'rgba(60, 60, 67, 0.29)' }]}
-                onPress={() => handleAlertOption('camera')}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.alertButtonText, { color: '#007AFF' }]}>
-                  {t('imageUpload.camera')}
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.alertButton, { borderBottomColor: isDarkMode ? 'rgba(84, 84, 88, 0.6)' : 'rgba(60, 60, 67, 0.29)' }]}
-                onPress={() => handleAlertOption('gallery')}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.alertButtonText, { color: '#007AFF' }]}>
-                  {t('imageUpload.gallery')}
-                </Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={styles.alertButton}
-                onPress={() => handleAlertOption('cancel')}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.alertButtonText, styles.alertButtonTextBold, { color: '#007AFF' }]}>
-                  {t('common.cancel')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+      <Dialog
+        visible={showSources}
+        title={t('imageUpload.selectSource')}
+        message={t('imageUpload.selectSourceMessage')}
+        onClose={() => setShowSources(false)}
+        actions={[
+          { label: t('imageUpload.camera'), onPress: () => choose('camera') },
+          { label: t('imageUpload.gallery'), onPress: () => choose('gallery') },
+          { label: t('common.cancel'), tone: 'cancel' },
+        ]}
+      />
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: Spacing.sm,
-  },
-  imageContainer: {
-    overflow: 'hidden',
-    borderWidth: 3,
-    borderStyle: 'solid',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  placeholder: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 12,
-  },
-  placeholderIconWrapper: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  placeholderText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  editButton: {
+  container: { alignItems: 'center', gap: 8 },
+  slot: { borderWidth: 2, alignItems: 'center', justifyContent: 'center', overflow: 'visible' },
+  center: { alignItems: 'center', justifyContent: 'center', gap: 4 },
+  edit: {
     position: 'absolute',
-    bottom: 4,
-    right: 4,
+    right: 0,
+    bottom: 0,
     width: 36,
     height: 36,
     borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: Colors.white,
-    shadowColor: Colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  loadingContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  uploadingText: {
-    marginTop: Spacing.sm,
-    fontSize: 12,
-  },
-  // iOS-style Alert Modal
-  alertOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  alertContainer: {
-    width: 270,
-    borderRadius: 14,
-    overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 10,
-      },
-      android: {
-        elevation: 5,
-      },
-    }),
-  },
-  alertTitle: {
-    fontSize: 17,
-    fontFamily: Fonts.semiBold,
-    fontWeight: '600',
-    textAlign: 'center',
-    paddingTop: 19,
-    paddingHorizontal: 16,
-    marginBottom: 2,
-  },
-  alertMessage: {
-    fontSize: 13,
-    fontFamily: Fonts.regular,
-    textAlign: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 0,
-    paddingBottom: 20,
-    lineHeight: 18,
-  },
-  alertButtonContainer: {
-    borderTopWidth: 0.5,
-  },
-  alertButton: {
-    paddingVertical: 11,
     alignItems: 'center',
     justifyContent: 'center',
-    borderBottomWidth: 0.5,
-  },
-  alertButtonText: {
-    fontSize: 17,
-    fontFamily: Fonts.regular,
-  },
-  alertButtonTextBold: {
-    fontFamily: Fonts.semiBold,
-    fontWeight: '600',
   },
 });

@@ -1,6 +1,8 @@
 import * as ImagePicker from 'expo-image-picker';
 import apiClient from './apiClient';
 import { config } from '../config';
+import { logError } from './apiError';
+import { FOOD_SCAN_MAX_SIDE, PROFILE_MAX_SIDE, prepareImageForUpload } from './imagePrep';
 
 export interface ImageUploadResponse {
   success: boolean;
@@ -11,23 +13,12 @@ export interface ImageUploadResponse {
   };
 }
 
-export interface ProgressPhoto {
-  url: string;
-  fileName: string;
-  type: string;
-  uploadedAt: string;
-}
-
-export interface ProgressPhotosResponse {
-  progressPhotos: ProgressPhoto[];
-  totalCount: number;
-}
-
 class ImageService {
   /**
    * Upload profile picture
    */
-  async uploadProfilePicture(imageUri: string): Promise<string> {
+  async uploadProfilePicture(originalUri: string): Promise<string> {
+    const imageUri = await prepareImageForUpload(originalUri, PROFILE_MAX_SIDE);
     const formData = new FormData();
 
     // Create file object from URI
@@ -41,16 +32,12 @@ class ImageService {
       type,
     } as any);
 
-    const response = await apiClient.post<ImageUploadResponse>(
-      '/images/profile',
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        timeout: 60000, // 60 seconds for file upload
-      }
-    );
+    const response = await apiClient.post<ImageUploadResponse>('/images/profile', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 60000, // 60 seconds for file upload
+    });
 
     if (response.data.success && response.data.data) {
       // Convert relative URL to absolute URL with backend base
@@ -70,7 +57,10 @@ class ImageService {
    * @param imageUri - Local image URI
    * @param type - Photo type: 'front', 'side', 'back'
    */
-  async uploadProgressPhoto(imageUri: string, type: 'front' | 'side' | 'back' = 'front'): Promise<string> {
+  async uploadProgressPhoto(
+    imageUri: string,
+    type: 'front' | 'side' | 'back' = 'front'
+  ): Promise<string> {
     const formData = new FormData();
 
     const filename = imageUri.split('/').pop() || 'progress.jpg';
@@ -108,7 +98,9 @@ class ImageService {
   /**
    * Upload food scan image
    */
-  async uploadFoodScanImage(imageUri: string): Promise<string> {
+  async uploadFoodScanImage(originalUri: string): Promise<string> {
+    // A smaller photo uploads faster and is all the model needs.
+    const imageUri = await prepareImageForUpload(originalUri, FOOD_SCAN_MAX_SIDE);
     const formData = new FormData();
 
     const filename = imageUri.split('/').pop() || 'food.jpg';
@@ -121,16 +113,12 @@ class ImageService {
       type,
     } as any);
 
-    const response = await apiClient.post<ImageUploadResponse>(
-      '/images/food-scan',
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        timeout: 60000, // 60 seconds for file upload
-      }
-    );
+    const response = await apiClient.post<ImageUploadResponse>('/images/food-scan', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 60000, // 60 seconds for file upload
+    });
 
     if (response.data.success && response.data.data) {
       const absoluteUrl = this.toAbsoluteUrl(response.data.data.imageUrl);
@@ -144,7 +132,7 @@ class ImageService {
   }
 
   /**
-   * Get user's profile picture URL
+   * Get user's profile picture URL. Screens read it through `useProfilePicture()`, which caches it.
    */
   async getProfilePicture(): Promise<string | null> {
     const response = await apiClient.get<ImageUploadResponse>('/images/profile');
@@ -154,36 +142,6 @@ class ImageService {
     }
 
     return null;
-  }
-
-  /**
-   * Get user's progress photos
-   */
-  async getProgressPhotos(): Promise<ProgressPhotosResponse> {
-    const response = await apiClient.get<{
-      success: boolean;
-      message: string;
-      data: ProgressPhotosResponse;
-    }>('/images/progress');
-
-    if (response.data.success && response.data.data) {
-      return response.data.data;
-    }
-
-    return { progressPhotos: [], totalCount: 0 };
-  }
-
-  /**
-   * Delete an image
-   */
-  async deleteImage(imageId: string): Promise<void> {
-    const response = await apiClient.delete<{ success: boolean; message: string }>(
-      `/images/${imageId}`
-    );
-
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to delete image');
-    }
   }
 
   /**
@@ -205,19 +163,20 @@ class ImageService {
       }
 
       // Launch picker
-      const result = source === 'camera'
-        ? await ImagePicker.launchCameraAsync({
-          mediaTypes: 'Images' as any,
-          allowsEditing: true,
-          aspect: [1, 1],
-          quality: 0.8,
-        })
-        : await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: 'Images' as any,
-          allowsEditing: true,
-          aspect: [1, 1],
-          quality: 0.8,
-        });
+      const result =
+        source === 'camera'
+          ? await ImagePicker.launchCameraAsync({
+              mediaTypes: ['images'],
+              allowsEditing: true,
+              aspect: [1, 1],
+              quality: 0.8,
+            })
+          : await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ['images'],
+              allowsEditing: true,
+              aspect: [1, 1],
+              quality: 0.8,
+            });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         return result.assets[0].uri;
@@ -225,7 +184,7 @@ class ImageService {
 
       return null;
     } catch (error) {
-      console.error('Error picking image:', error);
+      logError('image.pick', error);
       throw error;
     }
   }

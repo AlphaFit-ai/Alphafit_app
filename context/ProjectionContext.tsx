@@ -1,5 +1,19 @@
-import React, { createContext, ReactNode, useContext, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { projectionQuery } from '../hooks/queries';
+import { logError } from '../services/apiError';
 import { onboardingService } from '../services';
+import { queryKeys } from '../services/queryKeys';
+import { registerSessionResetter } from '../services/session';
 
 interface ProjectionData {
   sleepHours?: string;
@@ -29,75 +43,93 @@ const initialProjectionData: ProjectionData = {
   stressLevel: undefined,
 };
 
+const TOTAL_STEPS = 6;
+
+/**
+ * Mounted once, in the root layout. The answers are server data and live in the query cache; this
+ * context keeps the wizard step and the back history.
+ */
 export const ProjectionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [projectionData, setProjectionData] = useState<ProjectionData>(initialProjectionData);
+  const client = useQueryClient();
+  const { data } = useQuery({ ...projectionQuery, enabled: false });
+  const projectionData: ProjectionData = data ?? initialProjectionData;
   const [currentStep, setCurrentStep] = useState(0);
-  const [navigationHistory, setNavigationHistory] = useState<number[]>([0]);
-  const totalSteps = 6;
+  // Steps the user has visited, so Back returns to the previous one rather than to step - 1.
+  const history = useRef<number[]>([0]);
 
-  const updateProjectionData = async (data: Partial<ProjectionData>) => {
-    const updatedData = { ...projectionData, ...data };
-    setProjectionData(updatedData);
-    
-    // Save to backend after each update - only send the fields that were actually provided
-    try {
-      // Filter out undefined values to only send what was actually updated
-      const dataToSave: Partial<ProjectionData> = {};
-      if (data.sleepHours !== undefined) dataToSave.sleepHours = data.sleepHours;
-      if (data.dailySteps !== undefined) dataToSave.dailySteps = data.dailySteps;
-      if (data.stressLevel !== undefined) dataToSave.stressLevel = data.stressLevel;
-      if (data.frontPhotoUrl !== undefined) dataToSave.frontPhotoUrl = data.frontPhotoUrl;
-      if (data.sidePhotoUrl !== undefined) dataToSave.sidePhotoUrl = data.sidePhotoUrl;
-      if (data.backPhotoUrl !== undefined) dataToSave.backPhotoUrl = data.backPhotoUrl;
-      
-      await onboardingService.saveProjectionOnboardingData(dataToSave);
-      console.log('Projection data saved to backend:', dataToSave);
-    } catch (error) {
-      console.error('Failed to save projection data:', error);
-    }
-  };
+  const updateProjectionData = useCallback(
+    async (patch: Partial<ProjectionData>) => {
+      client.setQueryData<ProjectionData | null>(queryKeys.projection, (prev) => ({
+        ...(prev ?? {}),
+        ...patch,
+      }));
 
-  const loadProjectionData = (data: ProjectionData) => {
-    setProjectionData(data);
-  };
+      // Save to backend after each update - only send the fields that were actually provided
+      try {
+        const dataToSave: Partial<ProjectionData> = {};
+        if (patch.sleepHours !== undefined) dataToSave.sleepHours = patch.sleepHours;
+        if (patch.dailySteps !== undefined) dataToSave.dailySteps = patch.dailySteps;
+        if (patch.stressLevel !== undefined) dataToSave.stressLevel = patch.stressLevel;
+        if (patch.frontPhotoUrl !== undefined) dataToSave.frontPhotoUrl = patch.frontPhotoUrl;
+        if (patch.sidePhotoUrl !== undefined) dataToSave.sidePhotoUrl = patch.sidePhotoUrl;
+        if (patch.backPhotoUrl !== undefined) dataToSave.backPhotoUrl = patch.backPhotoUrl;
 
-  const handleSetCurrentStep = (step: number) => {
-    setNavigationHistory((prev) => [...prev, step]);
-    setCurrentStep(step);
-  };
-
-  const goBack = () => {
-    if (navigationHistory.length > 1) {
-      const newHistory = [...navigationHistory];
-      newHistory.pop(); // Remove current step
-      const previousStep = newHistory[newHistory.length - 1];
-      setNavigationHistory(newHistory);
-      setCurrentStep(previousStep);
-    }
-  };
-
-  const resetProjectionData = () => {
-    setProjectionData(initialProjectionData);
-    setCurrentStep(0);
-    setNavigationHistory([0]);
-  };
-
-  return (
-    <ProjectionContext.Provider
-      value={{
-        projectionData,
-        updateProjectionData,
-        loadProjectionData,
-        resetProjectionData,
-        currentStep,
-        setCurrentStep: handleSetCurrentStep,
-        goBack,
-        totalSteps,
-      }}
-    >
-      {children}
-    </ProjectionContext.Provider>
+        await onboardingService.saveProjectionOnboardingData(dataToSave);
+      } catch (error) {
+        logError('projection.save', error);
+      }
+    },
+    [client]
   );
+
+  const loadProjectionData = useCallback(
+    (next: ProjectionData) => {
+      client.setQueryData(queryKeys.projection, next);
+    },
+    [client]
+  );
+
+  const handleSetCurrentStep = useCallback((step: number) => {
+    history.current = [...history.current, step];
+    setCurrentStep(step);
+  }, []);
+
+  const goBack = useCallback(() => {
+    if (history.current.length <= 1) return;
+    history.current = history.current.slice(0, -1); // Remove current step
+    setCurrentStep(history.current[history.current.length - 1]);
+  }, []);
+
+  const resetProjectionData = useCallback(() => {
+    setCurrentStep(0);
+    history.current = [0];
+  }, []);
+
+  useEffect(() => registerSessionResetter(resetProjectionData), [resetProjectionData]);
+
+  const value = useMemo<ProjectionContextType>(
+    () => ({
+      projectionData,
+      updateProjectionData,
+      loadProjectionData,
+      resetProjectionData,
+      currentStep,
+      setCurrentStep: handleSetCurrentStep,
+      goBack,
+      totalSteps: TOTAL_STEPS,
+    }),
+    [
+      projectionData,
+      updateProjectionData,
+      loadProjectionData,
+      resetProjectionData,
+      currentStep,
+      handleSetCurrentStep,
+      goBack,
+    ]
+  );
+
+  return <ProjectionContext.Provider value={value}>{children}</ProjectionContext.Provider>;
 };
 
 export const useProjection = (): ProjectionContextType => {

@@ -1,0 +1,11 @@
+node_modules
+.expo
+dist
+coverage
+assets
+android
+ios
+package-lock.json
+google-services.json
+GoogleService-Info.plist
+.preview

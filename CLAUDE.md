@@ -1,0 +1,87 @@
+# Alphafit_app (mobile)
+
+Expo SDK 54, React Native 0.81, React 19 (React Compiler on), expo-router, TypeScript strict, npm. Firebase sign-in (Google, Apple on iOS, email) exchanged for an api token. Workspace rules are in `../CLAUDE.md`; the api you may call is `../docs/CONTRACTS.md` section 2 (`LIVE` routes only); the plan is `../docs/ROADMAP.md` (`WP-MOB-*`). Branch `modernization`; never commit.
+
+## Commands (run from this folder)
+
+| Command | Use |
+|---|---|
+| `npm ci` | install exactly the lock file |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run lint` | ESLint over the whole repo, `--max-warnings 0` (a warning fails) |
+| `npm test` / `npm run test:ci` | Jest (`jest-expo`, Testing Library); ~380 tests, about 35 s |
+| `npm run i18n:check` | translation audit (parity, missing, unused keys) |
+| `npm run format:check` / `npm run format` | Prettier on the files changed against `origin/main` (or `FORMAT_BASE`) |
+| `npm run check` | typecheck + lint + tests |
+| `npx expo-doctor` | 18 checks; should be 18/18 |
+| `npm run preview:build`, `npm run preview:shots`, `npm run preview:flows` | browser preview (react-native-web + Playwright): PNGs in `.preview/shots`, route-guard flows. Look at the PNGs; they find real bugs (an unfilled `{{years}}` was found this way). Web cannot show native fonts, shadows, keyboard, safe areas, camera, gestures |
+| `npx expo export --platform android --output-dir <dir outside the repo>` | proves the bundle builds; delete the folder afterwards |
+
+There is no Android SDK or device here: nothing native runs (Firebase, Google sign-in, camera, barcode need a development build via EAS and `npm run start:dev-client`). Say so in reports and list what only a device can confirm.
+
+## Layout
+
+```
+app/        routes only (thin). _layout.tsx mounts AppProviders once and the error boundary.
+components/ older shared UI (Button, Input, OptionCard, ErrorState re-export src/ui). ErrorBoundary = crash fallback.
+src/theme/  tokens.ts: semantic design tokens (colour, spacing, radius, type, elevation) for light and dark
+src/wizard/ the Diet and Projection questions as data (flows.ts) plus ChoiceStep, YesNoStep and useWizardFlow
+src/scan/   the scan experience: items.ts (reads a FoodScanDto defensively, portion maths), ScanResult, ScanProgress
+src/ui/     the design-system primitives: Screen, Text, Button, Input, OptionCard, ListItem, Dialog, Sheet, Toast,
+            WheelPicker, Skeleton, EmptyState, ErrorState, WizardStep, StepTransition, AppImage, BrandLogo, Checkbox, FullScreen, useDialog, haptics, motion
+context/    UI state only (Theme, Onboarding, Diet, Projection). AppProviders.tsx composes them.
+hooks/      queries.ts (all TanStack Query hooks), useApplyServerPreferences, useProjectionPrefill
+i18n/       config.ts (setLanguage, restoreStoredPreferences) and locales/{en,fr,es}.json
+services/   api + Firebase. See the table below.
+scripts/    check-i18n.js (also run by a test), format-changed.js
+__tests__/  tests; routes in app/ must not be test files
+app.config.ts  replaces app.json; reads EXPO_PUBLIC_API_URL (default production)
+config.ts      typed reader of app.config.ts `extra`
+```
+
+`src/ui` and `src/theme` exist (WP-MOB-4); `src/features` and `src/lib` come with WP-MOB-5. Do not reshuffle folders before then, and do not add a second pattern next to an old one you touch.
+
+`services/` map (WP-MOB-3 additions first): `sessionStore` (status loading/signedOut/onboarding/ready, `entryRoute`) - `launch` (`runLaunchCheck`, `connectSessionToApi`) - `sessionRenewal` (single-flight token renewal from the Firebase ID token) - `queryClient`/`queryKeys` (+ `hooks/queries.ts`: `useProfile`, `useOnboardingData`, `useDietData`, `useProjectionData`, `useRecentScans`, `useScansHistory`, `useProfilePicture`) - `tokenStore` is now secure-store with a one-time migration from AsyncStorage. Older: `apiClient` (axios, token header, renews once on 401 via `sessionRenewal`, then `onSessionExpired` signs out) - `apiError` (`ApiError`, `normalizeApiError`, kinds offline/timeout/http/cancelled/unknown, `isSessionInvalid` = 401 only, `logError`) - `session` (`signOut`, `registerSessionResetter`, `getSessionEpoch`/`isSessionCurrent`) - `bootstrap` (`bootstrapSession`, `completeSignIn`) - `onboardingResume` (`resolveOnboardingResume`, `getDietResumeStep`, `getProjectionResumeStep`) - `preferences` (saved language/theme, `pushPreferencesToServer`) - `firebaseAuthService` (sign-in methods, `signOutProviders`, `AuthError` keeps `.code`) - `tokenStore` (expo-secure-store)/`storage`/`storageKeys` - `dateOfBirth` - `scanLock` - `barcodeService`, `foodScanService`, `chatbotService`, `imageService`, `userService`, `onboardingService`.
+
+## Conventions
+
+- **Server data is in the query cache, never in a context's state.** Add a query to `hooks/queries.ts` and a key to `queryKeys`; write answers with `queryClient.setQueryData`. The contexts (`useOnboarding().onboardingData`, `useDiet().dietData`, `useProjection().projectionData`) are read-only views plus patch functions. Everything persisted is wiped by `signOut()` (`clearQueryCache`).
+- **Routing is the session store's job.** No screen picks a route from saved answers. After sign-in call `sessionStore.setSignedIn(result)` (or `setReady()` when onboarding ends) then `router.replace('/')`. New app screens go inside the `Stack.Protected` group in `app/_layout.tsx` (a test fails otherwise). A turned-away user lands on `app/onboarding/index.tsx`, which redirects to `/`.
+- **401 is handled in the api client**, not in screens: do not call `signOut()` from a screen because a request failed with 401. 403 means wrong role. `normalizeApiError(...).kind === 'cancelled'` is not an error to show.
+- **Failure is not "no data".** A request that fails shows `ErrorState` with a retry (or keeps the data already on screen). Never fall back to `[]`, `null` or "start the wizard". `onboardingService.get*` rejects on error and resolves `null` only for "nothing saved".
+- **One `signOut()`** (`services/session.ts`) for logout, account deletion and an invalid session. It never throws. A store that holds per-user data registers a reset with `registerSessionResetter` in a `useEffect`. A loader that writes into a store captures `getSessionEpoch()` first and drops its result if `isSessionCurrent(epoch)` is false. `__tests__/architecture.test.ts` fails if a screen calls Firebase sign-out itself.
+- **Design tokens, not palettes.** Read colours, spacing and type from `useTheme().tokens` (`tokens.color.text`, `.surface`, `.accent`, `.onAccent` ...) and build screens from `src/ui`. No `isDarkMode ? a : b` and no `Colors.gray[n]` in a screen you touch (`__tests__/architecture.test.ts` lists the migrated screens). Text on the coral accent is `onAccent` (dark navy), never white: white on coral is 2.8:1. Every text/background pair in `TEXT_PAIRS` is tested for 4.5:1 in both themes (`tokens.test.ts`); add a pair there when you add a token that carries text.
+- **Primitives.** Wizard steps are `<WizardStep>` (back + progress on top, heading right under it, Continue pinned at the bottom: never centre the body vertically). Messages and confirmations are `Dialog` (or `useToast()` for non-blocking), pickers are `Sheet` and `WheelPicker` (one virtualised implementation), loading is `Skeleton`, no data is `EmptyState`, failure is `ErrorState`. Do not hand-roll a `Modal` for an alert (a test fails on `<Modal` and `Alert.alert` outside `src/ui`; the camera uses `FullScreen`). Images are `AppImage` (expo-image, cached, placeholder).
+- **Wizards are config.** A Diet or Projection question is an entry in `src/wizard/flows.ts` (title key, options, field) and its route file is `return renderStep('diet-meals')`. Saved answers are preselected, Back goes to the previous question (or to the profile when editing), Continue saves with the same field names and shapes as before. Do not write another screen per question. The onboarding screens use `WizardStep` and preselect from `onboardingData`.
+- **Scan result.** `ScanResult` reads fields through `itemsFromScan` (the api shape and the older flat names). It shows `portionWeightG`, `needsConfirmation`, `alternatives` and `userEdited` when the scan carries them and works without them (the api omits absent fields). Corrections go to `PATCH /food-scans/{id}` (CONTRACTS 3.6) through `saveScanEdits` in `src/scan/saveEdits.ts`: body `{items:[{classId, grams, foodName?}], confirmed?}`, grams are whole numbers 1 to 5000; the edit shows at once and is rolled back with a toast if the save fails; 409 refetches the scan and retries once, then says so; 404 (older server) keeps the edit on screen only and shows a note; 400 and offline have their own messages; 401 is the api client's job. A saved scan replaces the one on screen and in the Home and History caches (`applyScanToCaches`). "Looks right" sends `confirmed: true`. `ScanProgress` shows upload, analyze and finish as real steps with the time so far and Cancel.
+- **Brand.** Logos come from `BrandLogo` (symbol or horizontal lockup, light or dark version by theme) and the files in `assets/images/brand` (copied from the landing repo `brand/`, concept Summit); the app icon, adaptive layers and splash are wired in `app.config.ts` and tested in `brandAssets.test.tsx`. Do not recolour or redraw the mark; ask for a new kit instead. Only a device build shows the real home-screen icon, the adaptive-icon masks and the splash.
+- **Home, History, Chat (MOB-6).** Home makes no chat-model call on mount or refresh; its week strip (`src/scan/week.ts`) marks the last seven days that have completed scans among the 50 loaded. History loads one page at a time (an in-flight guard), tells a failed first page, a failed refresh (banner) and a failed next page apart, and its filters only look at the loaded pages (the api has no status filter): it says so and auto-loads at most four more pages. Chat shows the newest 30 messages and pages older ones in (the api returns the whole history), sends only the latest 20 as context, and offers a retry when the history could not be loaded. Profile shows a placeholder, not the empty "Add Photo" slot, while the picture is looked up.
+- **Images before upload** are shrunk by `services/imagePrep.ts` (longest side 1280 px, JPEG 0.8); it falls back to the original on any failure.
+- **Feel.** Press feedback comes from `PressableScale`; entrances use `enter(index, reduce)`; haptics go through `haptic.select/confirm/error/shutter`. Every animation checks `useReduceMotion()`.
+- **Theme preference** is `system | light | dark` (`useTheme().preference`, `setTheme`). `system` is kept on the phone only; the server is told `light` or `dark` only.
+- **Providers once.** Only `context/AppProviders.tsx` renders the four providers and only `app/_layout.tsx` renders it. Nested layouts must not mount providers.
+- **Language and theme.** Read from storage at start (no request), sent to the server only on a user change. Use `setLanguage()` (never `i18n.changeLanguage`) and `useTheme().setTheme/toggleTheme`. `signOut` resets the theme to the phone's and keeps the language.
+- **i18n.** Every visible string is `t('key')`, no `t('key', 'English default')`, no `t(key) || 'x'` (`t` returns the key, so the fallback never runs). en, fr and es keep identical keys and `{{placeholders}}`; add to all three with real translations. Dynamic keys must have a fixed prefix (`` t(`faq.items.${id}.question`) ``); tables of keys use string values (`titleKey: 'home.title'`) so the audit sees them.
+- **Logging.** `logError(context, error)` only; it prints kind, status and code, never headers, bodies or tokens (axios errors carry the `Authorization` header). No `console` anywhere else (a test enforces it). No `console` monkey-patching.
+- **Dates.** `dateOfBirth.month` is 1 to 12 (the api reads `LocalDate.of`). Builds before 2026-11 stored 0 to 11; `normalizeStoredMonth` reads a 0 as January.
+- **Accessibility.** `accessibilityRole` on every touchable (a test fails otherwise) and a label on icon-only ones; targets 44 pt; text scales to 1.5x (`Text` caps it). Wheels are one `adjustable` control with increment and decrement.
+- **Tests.** New behaviour gets a test that fails without it. Mock native modules and Firebase (`jest.setup.js` does); run the app's own code for real. In `jest.mock` factories use `jest.requireActual`, and name outer variables `mock...`.
+- **Prettier** only on changed files (`format-changed.js`); do not reformat untouched files.
+
+## Traps
+
+- `npx expo lint` lints only `app`, `components` and `src`. Use `npm run lint` (it passes `.`).
+- Expo Router lists every file under `app/` as a route: keep tests, helpers and data out of it.
+- The Diet and Projections tabs render the wizard screens by importing `app/diet/*` and `app/projection/*` directly, and the same screens are also routes (opened from the profile with `?returnTo=profile`). They share one provider; do not give the route layouts their own.
+- `app/(tabs)/diet.tsx` and `projections.tsx` check progress once, when the tab first opens (tabs are lazy).
+- The api token lives 24 hours and the api now answers 401 for a missing, invalid or expired token (403 = wrong role). The client renews on 401 (`sessionRenewal.ts`). NetInfo is used only for `isConnected`: its reachability probe can wrongly say offline and queries would wait forever; the launch check uses `networkMode: 'always'` so offline ends on the retry screen.
+- `Stack.Protected` guards run on render: navigate to `/` (always open) after changing the session store, not straight to a guarded route in the same tick.
+- Web preview: select the retry button by role (`getByRole('button', { name: 'Try again' })`), the message text also contains "try again".
+- `POST /users/deactivate` needs the exact text `Delete my account` (English) whatever the app language.
+- The diet-preference labels do not match the stored values (ROADMAP D3); leave it. The paywall buttons are disabled on purpose (D1). The Projections tab is hidden (D2): `FEATURES.projections` in `constants/Features.ts` (default false) controls the tab (`href: null`), the intro mock scores, the FAQ question and the Pro plan lines about it; the route and code stay so the flag can bring it back. Home's sleep card opens the lifestyle questions in the profile instead.
+- `react-native-keyboard-controller` is a native module: it needs a new development build (EAS) before `Screen keyboard` works on a device; Expo Go and the web preview only have its no-op.
+- Home shows an estimated calorie target from the onboarding answers (`services/calorieTarget.ts`, Mifflin-St Jeor); there is no api target. It says "estimated" on screen and shows nothing when an answer is missing.
+- `reanimated`, `gesture-handler`, `worklets`, `expo-haptics` and `expo-image` are installed on purpose for WP-MOB-4; do not remove them as unused.
+- Firebase web config and Google client ids are public identifiers in `app.config.ts`; `google-services.json` and `GoogleService-Info.plist` are tracked although `.gitignore` lists them. Never add a real secret.
+- Windows: use the Write tool for files that contain backslashes or quotes; a shell heredoc can corrupt them.
+- Support e-mail addresses differ between screens (`alphafitai.com` in the FAQ, `alphafit-ai.com` in Help); that is ROADMAP D4 (owner decision), not a bug to fix here.

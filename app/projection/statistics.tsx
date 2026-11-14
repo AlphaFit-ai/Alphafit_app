@@ -1,22 +1,15 @@
 import { Ionicons, Octicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors, Fonts, Spacing } from '../../constants';
 import { useProjection } from '../../context/ProjectionContext';
 import { useTheme } from '../../context/ThemeContext';
+import { AppImage } from '../../src/ui';
 
 interface BodyPartScore {
   label: string;
   score: number;
-}
-
-interface StatCard {
-  label: string;
-  value: string;
-  unit: string;
-  icon: string;
-  color: string;
 }
 
 interface Recommendation {
@@ -28,7 +21,7 @@ interface Recommendation {
 
 export default function StatisticsScreen() {
   const { t } = useTranslation();
-  const { colors, isDarkMode } = useTheme();
+  const { colors, tokens } = useTheme();
   const { setCurrentStep } = useProjection();
 
   // Mock data - will be replaced with actual backend data
@@ -42,37 +35,6 @@ export default function StatisticsScreen() {
     { label: 'arms', score: 45 },
     { label: 'back', score: 97 },
     { label: 'legs', score: 61 },
-  ];
-
-  const stats: StatCard[] = [
-    {
-      label: 'Weight',
-      value: '75',
-      unit: 'kg',
-      icon: 'barbell',
-      color: Colors.primary,
-    },
-    {
-      label: 'Body Fat',
-      value: '18',
-      unit: '%',
-      icon: 'analytics',
-      color: Colors.warning,
-    },
-    {
-      label: 'Muscle Mass',
-      value: '42',
-      unit: '%',
-      icon: 'fitness',
-      color: Colors.success,
-    },
-    {
-      label: 'BMI',
-      value: '24.3',
-      unit: '',
-      icon: 'speedometer',
-      color: Colors.info,
-    },
   ];
 
   const recommendations: Recommendation[] = [
@@ -146,21 +108,20 @@ export default function StatisticsScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-
         {/* Physique Rating Card */}
         <View style={styles.sectionHeader}>
           <Octicons name="goal" size={24} color={Colors.warning} />
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              {t('statistics.physiqueRating')}
+            {t('statistics.physiqueRating')}
           </Text>
         </View>
-        
+
         <View
           style={[
             styles.physiqueCard,
             {
-              backgroundColor: isDarkMode ? Colors.gray[800] : Colors.white,
-              borderColor: isDarkMode ? Colors.gray[700] : Colors.gray[200],
+              backgroundColor: tokens.color.surface,
+              borderColor: tokens.color.border,
             },
           ]}
         >
@@ -168,20 +129,18 @@ export default function StatisticsScreen() {
             <View style={styles.headerTitleRow}>
               <View style={styles.physiqueImageContainer}>
                 <View style={[styles.imageCircle, { borderColor: colors.text }]}>
-                  <Image
+                  <AppImage
                     source={require('../../assets/images/projection/physique.png')}
-                    style={[styles.physiqueImage, { tintColor: colors.text }]}
-                    resizeMode="contain"
+                    noPlaceholder
+                    accessible={false}
+                    tintColor={colors.text}
+                    contentFit="contain"
+                    style={[styles.physiqueImage, { backgroundColor: 'transparent' }]}
                   />
                 </View>
               </View>
 
-              <View
-                style={[
-                  styles.levelBadge,
-                  { backgroundColor: getLevelColor(physiqueLevel) },
-                ]}
-              >
+              <View style={[styles.levelBadge, { backgroundColor: getLevelColor(physiqueLevel) }]}>
                 <Text style={styles.levelBadgeText}>{physiqueLevel}</Text>
               </View>
             </View>
@@ -194,16 +153,12 @@ export default function StatisticsScreen() {
                   <Text style={[styles.bodyPartLabel, { color: colors.text }]}>
                     {t(`statistics.${part.label}`)}
                   </Text>
-                  <Text style={[styles.bodyPartScore, { color: colors.text }]}>
-                    {part.score}
-                  </Text>
+                  <Text style={[styles.bodyPartScore, { color: colors.text }]}>{part.score}</Text>
                   <View
                     style={[
                       styles.progressBarContainer,
                       {
-                        backgroundColor: isDarkMode
-                          ? Colors.gray[700]
-                          : Colors.gray[200],
+                        backgroundColor: tokens.color.border,
                       },
                     ]}
                   >
@@ -232,7 +187,7 @@ export default function StatisticsScreen() {
                 style={[
                   styles.generalProgressBar,
                   {
-                    backgroundColor: isDarkMode ? Colors.gray[700] : Colors.gray[200],
+                    backgroundColor: tokens.color.border,
                   },
                 ]}
               >
@@ -255,7 +210,7 @@ export default function StatisticsScreen() {
           <View style={styles.sectionHeader}>
             <Ionicons name="sparkles" size={24} color={Colors.warning} />
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              {t('statistics.aiRecommendations', 'AI Recommendations')}
+              {t('statistics.aiRecommendations')}
             </Text>
           </View>
 
@@ -266,8 +221,8 @@ export default function StatisticsScreen() {
                 style={[
                   styles.recommendationCard,
                   {
-                    backgroundColor: isDarkMode ? Colors.gray[800] : Colors.white,
-                    borderColor: isDarkMode ? Colors.gray[700] : Colors.gray[200],
+                    backgroundColor: tokens.color.surface,
+                    borderColor: tokens.color.border,
                   },
                 ]}
               >
@@ -298,6 +253,7 @@ export default function StatisticsScreen() {
 
         {/* Rescan Button */}
         <TouchableOpacity
+          accessibilityRole="button"
           style={[
             styles.rescanButton,
             {
@@ -307,10 +263,8 @@ export default function StatisticsScreen() {
           onPress={handleRescan}
           activeOpacity={0.8}
         >
-          <Ionicons name="camera" size={20} color={Colors.white} />
-          <Text style={styles.rescanButtonText}>
-            {t('statistics.rescan', 'Rescan Body')}
-          </Text>
+          <Ionicons name="camera" size={20} color={Colors.gray[900]} />
+          <Text style={styles.rescanButtonText}>{t('statistics.rescan')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -334,7 +288,7 @@ const styles = StyleSheet.create({
   headerTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
   },
   levelBadge: {
     paddingHorizontal: 16,
@@ -482,6 +436,6 @@ const styles = StyleSheet.create({
   rescanButtonText: {
     fontSize: Fonts.sizes.lg,
     fontFamily: Fonts.semiBold,
-    color: Colors.white,
+    color: Colors.gray[900],
   },
 });

@@ -1,16 +1,16 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
+import { logError } from './apiError';
 
 /**
- * Platform-aware storage utility
- * - Mobile: Uses AsyncStorage (SecureStore-like behavior)
+ * Device key-value storage (AsyncStorage). WP-MOB-3 moves the auth token to expo-secure-store; keep
+ * every read and write of the token going through this module so that move touches one file.
  */
 class StorageService {
   async setItem(key: string, value: string): Promise<void> {
     try {
       await AsyncStorage.setItem(key, value);
     } catch (error) {
-      console.error('StorageService setItem error:', error);
+      logError('storage.setItem', error);
       throw error;
     }
   }
@@ -19,7 +19,7 @@ class StorageService {
     try {
       return await AsyncStorage.getItem(key);
     } catch (error) {
-      console.error('StorageService getItem error:', error);
+      logError('storage.getItem', error);
       return null;
     }
   }
@@ -28,16 +28,7 @@ class StorageService {
     try {
       await AsyncStorage.removeItem(key);
     } catch (error) {
-      console.error('StorageService removeItem error:', error);
-      throw error;
-    }
-  }
-
-  async clear(): Promise<void> {
-    try {
-      await AsyncStorage.clear();
-    } catch (error) {
-      console.error('StorageService clear error:', error);
+      logError('storage.removeItem', error);
       throw error;
     }
   }

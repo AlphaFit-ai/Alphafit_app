@@ -1,21 +1,25 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
-import { Button, OptionCard, ProgressBar } from '../../components';
-import { Colors, Fonts, SharedStyles, Spacing } from '../../constants';
+import { StyleSheet, View } from 'react-native';
+import { OptionCard, WizardStep } from '../../src/ui';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useProfileUpdateNavigation } from '../../hooks/useProfileUpdateNavigation';
 import { onboardingService } from '../../services';
+import { logError } from '../../services/apiError';
 
 export default function WorkoutsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { updateOnboardingData, setCurrentStep } = useOnboarding();
-  const { colors } = useTheme();
+  const { onboardingData, updateOnboardingData, setCurrentStep } = useOnboarding();
+  const { tokens } = useTheme();
+  const selectedBar = { backgroundColor: tokens.color.onAction };
   const { navigateAfterUpdate, isUpdatingFromProfile } = useProfileUpdateNavigation();
-  const [selectedWorkouts, setSelectedWorkouts] = useState<'0-2' | '3-5' | '6+' | null>(null);
+  // The saved answer is preselected when this question is opened to change it.
+  const [picked, setSelectedWorkouts] = useState<'0-2' | '3-5' | '6+' | null | null>(null);
+  const selectedWorkouts: '0-2' | '3-5' | '6+' | null | null =
+    picked ?? onboardingData.workoutsPerWeek ?? null;
 
   const handleContinue = async () => {
     if (selectedWorkouts) {
@@ -23,14 +27,14 @@ export default function WorkoutsScreen() {
       if (!isUpdatingFromProfile) {
         setCurrentStep(7);
       }
-      
+
       // Save to backend in real-time
       try {
         await onboardingService.saveOnboardingData({ workoutsPerWeek: selectedWorkouts });
       } catch (error) {
-        console.error('Failed to save workouts per week:', error);
+        logError('onboarding.save-workouts', error);
       }
-      
+
       if (isUpdatingFromProfile) {
         navigateAfterUpdate();
       } else {
@@ -40,93 +44,92 @@ export default function WorkoutsScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.header}>
-        <ProgressBar currentStep={7} totalSteps={10} />
-      </View>
-
-      <View style={styles.content}>
-        <Text style={[styles.title, { color: colors.text }]}>{t('onboarding.workouts.title')}</Text>
-
-        <View style={styles.optionsContainer}>
-          <OptionCard
-            title="0 - 2"
-            subtitle={t('onboarding.workouts.subtitle')}
-            selected={selectedWorkouts === '0-2'}
-            onPress={() => setSelectedWorkouts('0-2')}
-            icon={
-              <View style={[styles.iconContainer, selectedWorkouts === '0-2' && styles.iconContainerSelected]}>
-                <View style={styles.barChart}>
-                  <View style={[styles.bar, styles.barLow, selectedWorkouts === '0-2' && styles.barSelected]} />
-                </View>
+    <WizardStep
+      step={7}
+      totalSteps={10}
+      title={t('onboarding.workouts.title')}
+      onContinue={handleContinue}
+      continueDisabled={!selectedWorkouts}
+    >
+      <>
+        <OptionCard
+          title="0 - 2"
+          subtitle={t('onboarding.workouts.subtitle')}
+          selected={selectedWorkouts === '0-2'}
+          onPress={() => setSelectedWorkouts('0-2')}
+          icon={
+            <View
+              style={[
+                styles.iconContainer,
+                selectedWorkouts === '0-2' && styles.iconContainerSelected,
+              ]}
+            >
+              <View style={styles.barChart}>
+                <View
+                  style={[styles.bar, styles.barLow, selectedWorkouts === '0-2' && selectedBar]}
+                />
               </View>
-            }
-          />
-          <OptionCard
-            title="3 - 5"
-            subtitle={t('onboarding.workouts.subtitle')}
-            selected={selectedWorkouts === '3-5'}
-            onPress={() => setSelectedWorkouts('3-5')}
-            icon={
-              <View style={[styles.iconContainer, selectedWorkouts === '3-5' && styles.iconContainerSelected]}>
-                <View style={styles.barChart}>
-                  <View style={[styles.bar, styles.barLow, selectedWorkouts === '3-5' && styles.barSelected]} />
-                  <View style={[styles.bar, styles.barMedium, selectedWorkouts === '3-5' && styles.barSelected]} />
-                  <View style={[styles.bar, styles.barLow, selectedWorkouts === '3-5' && styles.barSelected]} />
-                </View>
+            </View>
+          }
+        />
+        <OptionCard
+          title="3 - 5"
+          subtitle={t('onboarding.workouts.subtitle')}
+          selected={selectedWorkouts === '3-5'}
+          onPress={() => setSelectedWorkouts('3-5')}
+          icon={
+            <View
+              style={[
+                styles.iconContainer,
+                selectedWorkouts === '3-5' && styles.iconContainerSelected,
+              ]}
+            >
+              <View style={styles.barChart}>
+                <View
+                  style={[styles.bar, styles.barLow, selectedWorkouts === '3-5' && selectedBar]}
+                />
+                <View
+                  style={[styles.bar, styles.barMedium, selectedWorkouts === '3-5' && selectedBar]}
+                />
+                <View
+                  style={[styles.bar, styles.barLow, selectedWorkouts === '3-5' && selectedBar]}
+                />
               </View>
-            }
-          />
-          <OptionCard
-            title="6+"
-            subtitle={t('onboarding.workouts.subtitle')}
-            selected={selectedWorkouts === '6+'}
-            onPress={() => setSelectedWorkouts('6+')}
-            icon={
-              <View style={[styles.iconContainer, selectedWorkouts === '6+' && styles.iconContainerSelected]}>
-                <View style={styles.barChart}>
-                  <View style={[styles.bar, styles.barMedium, selectedWorkouts === '6+' && styles.barSelected]} />
-                  <View style={[styles.bar, styles.barHigh, selectedWorkouts === '6+' && styles.barSelected]} />
-                  <View style={[styles.bar, styles.barMedium, selectedWorkouts === '6+' && styles.barSelected]} />
-                </View>
+            </View>
+          }
+        />
+        <OptionCard
+          title="6+"
+          subtitle={t('onboarding.workouts.subtitle')}
+          selected={selectedWorkouts === '6+'}
+          onPress={() => setSelectedWorkouts('6+')}
+          icon={
+            <View
+              style={[
+                styles.iconContainer,
+                selectedWorkouts === '6+' && styles.iconContainerSelected,
+              ]}
+            >
+              <View style={styles.barChart}>
+                <View
+                  style={[styles.bar, styles.barMedium, selectedWorkouts === '6+' && selectedBar]}
+                />
+                <View
+                  style={[styles.bar, styles.barHigh, selectedWorkouts === '6+' && selectedBar]}
+                />
+                <View
+                  style={[styles.bar, styles.barMedium, selectedWorkouts === '6+' && selectedBar]}
+                />
               </View>
-            }
-          />
-        </View>
-      </View>
-
-      <View style={styles.footer}>
-        <Button title={t('onboarding.continue')} onPress={handleContinue} disabled={!selectedWorkouts} />
-      </View>
-    </View>
+            </View>
+          }
+        />
+      </>
+    </WizardStep>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.white,
-  },
-  header: {
-    paddingTop: 60,
-    paddingHorizontal: Spacing.screenPaddingHorizontal,
-    paddingBottom: 20,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: Spacing.screenPaddingHorizontal,
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 32,
-    fontFamily: Fonts.bold,
-    fontWeight: '700',
-    color: Colors.black,
-    marginBottom: 40,
-  },
-  optionsContainer: {
-    gap: 12,
-  },
   iconContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -135,7 +138,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: Colors.gray[100],
+    backgroundColor: 'rgba(128,128,128,0.15)',
     paddingBottom: 12,
   },
   iconContainerSelected: {
@@ -150,7 +153,7 @@ const styles = StyleSheet.create({
   bar: {
     width: 4,
     borderRadius: 2,
-    backgroundColor: Colors.gray[400],
+    backgroundColor: '#6B7280',
   },
   barLow: {
     height: 8,
@@ -160,12 +163,5 @@ const styles = StyleSheet.create({
   },
   barHigh: {
     height: 24,
-  },
-  barSelected: {
-    backgroundColor: Colors.white,
-  },
-  footer: {
-    paddingHorizontal: Spacing.screenPaddingHorizontal,
-    paddingBottom: 40,
   },
 });

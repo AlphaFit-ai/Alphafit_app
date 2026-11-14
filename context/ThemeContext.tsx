@@ -1,9 +1,25 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { Appearance } from 'react-native';
+import React, {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import { useColorScheme } from 'react-native';
 import { Colors } from '../constants';
-import { userService } from '../services';
+import { darkTokens, lightTokens, Tokens } from '../src/theme/tokens';
+import { logError } from '../services/apiError';
+import {
+  pushPreferencesToServer,
+  storeTheme,
+  ThemeName,
+  ThemePreference,
+} from '../services/preferences';
+import { registerSessionResetter } from '../services/session';
 
+/** The older flat palette. New code reads `tokens`; this stays for screens not moved yet. */
 interface ThemeColors {
   background: string;
   backgroundSecondary: string;
@@ -17,134 +33,80 @@ interface ThemeColors {
 
 interface ThemeContextType {
   isDarkMode: boolean;
+  /** What the user picked: follow the phone, or fixed light or dark. */
+  preference: ThemePreference;
+  /** Switches between light and dark (a fixed choice). */
   toggleTheme: () => void;
+  /**
+   * Set the theme. `sync: false` applies a value that came from the server without writing it back.
+   * `system` is kept on this device only; the server only ever hears `light` or `dark`.
+   */
+  setTheme: (theme: ThemePreference, options?: { sync?: boolean }) => void;
   colors: ThemeColors;
+  /** Semantic design tokens for the active theme. */
+  tokens: Tokens;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-const THEME_STORAGE_KEY = '@alphafit_ai_theme';
 
-const lightTheme: ThemeColors = {
-  background: Colors.white,
-  backgroundSecondary: Colors.gray[50],
-  text: Colors.black,
-  textSecondary: Colors.gray[600],
-  border: Colors.gray[200],
-  card: Colors.white,
-  primary: Colors.primary,
-  icon: Colors.black,
-};
+function toLegacyColors(tokens: Tokens): ThemeColors {
+  const c = tokens.color;
+  return {
+    background: c.bg,
+    backgroundSecondary: c.bgSubtle,
+    text: c.text,
+    textSecondary: c.textMuted,
+    border: c.border,
+    card: c.surface,
+    primary: Colors.primary,
+    icon: c.text,
+  };
+}
 
-const darkTheme: ThemeColors = {
-  background: Colors.backgroundDark,
-  backgroundSecondary: Colors.gray[800],
-  text: Colors.white,
-  textSecondary: Colors.gray[400],
-  border: Colors.gray[700],
-  card: Colors.gray[900],
-  primary: Colors.primary,
-  icon: Colors.white,
-};
+const lightColors = toLegacyColors(lightTokens);
+const darkColors = toLegacyColors(darkTokens);
 
-export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(Appearance.getColorScheme() === 'dark');
-  const [isLoading, setIsLoading] = useState(true);
+interface ThemeProviderProps {
+  children: ReactNode;
+  /** The preference saved on this device, read before the first render so there is no flash. */
+  initialTheme?: ThemePreference | null;
+}
 
-  useEffect(() => {
-    loadTheme();
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children, initialTheme = null }) => {
+  const [preference, setPreference] = useState<ThemePreference>(initialTheme ?? 'system');
+  // Follows the phone's appearance live while the preference is `system`.
+  const deviceScheme = useColorScheme();
+  const isDarkMode = preference === 'system' ? deviceScheme === 'dark' : preference === 'dark';
+
+  const setTheme = useCallback((theme: ThemePreference, options: { sync?: boolean } = {}) => {
+    const { sync = true } = options;
+    setPreference(theme);
+    storeTheme(theme).catch((error) => logError('theme.store', error));
+    // The server copy is updated only when the user changed the setting, and only with a real theme.
+    if (sync && theme !== 'system') void pushPreferencesToServer({ theme: theme as ThemeName });
   }, []);
 
-  const loadTheme = async () => {
-    try {
-      // First, check if user is authenticated
-      const isAuthenticated = await userService.isAuthenticated();
-      
-      if (isAuthenticated) {
-        // Try to load from backend
-        try {
-          const profile = await userService.getUserProfile();
-          if (profile.preferences?.theme) {
-            const isDark = profile.preferences.theme === 'dark';
-            setIsDarkMode(isDark);
-            // Also save to AsyncStorage for offline access
-            await AsyncStorage.setItem(THEME_STORAGE_KEY, profile.preferences.theme);
-            return;
-          }
-        } catch (error: any) {
-          // Only log unexpected errors (not 401/404)
-          if (error?.response?.status !== 401 && error?.response?.status !== 404) {
-            console.log('Could not load theme from backend:', error.message);
-          }
-        }
-      }
+  const toggleTheme = useCallback(() => {
+    setTheme(isDarkMode ? 'light' : 'dark');
+  }, [isDarkMode, setTheme]);
 
-      // Fallback to AsyncStorage
-      const savedTheme = await AsyncStorage.getItem(THEME_STORAGE_KEY);
-      if (savedTheme !== null) {
-        setIsDarkMode(savedTheme === 'dark');
-      } else {
-        // Use device default if no saved preference
-        const deviceTheme = Appearance.getColorScheme() === 'dark';
-        setIsDarkMode(deviceTheme);
-        
-        // Save default to backend only if authenticated
-        if (isAuthenticated) {
-          try {
-            await userService.updateUserProfile({
-              preferences: {
-                theme: deviceTheme ? 'dark' : 'light'
-              }
-            });
-          } catch (error: any) {
-            // Silently fail for authentication errors
-            if (error?.response?.status !== 401 && error?.response?.status !== 404) {
-              console.log('Could not save initial theme to backend:', error.message);
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load theme:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // After sign-out the theme goes back to following the phone. (`signOut()` removes the saved value;
+  // this resets what is on screen.)
+  useEffect(() => registerSessionResetter(() => setPreference('system')), []);
 
-  const toggleTheme = async () => {
-    try {
-      const newMode = !isDarkMode;
-      setIsDarkMode(newMode);
-      await AsyncStorage.setItem(THEME_STORAGE_KEY, newMode ? 'dark' : 'light');
-      
-      // Sync with backend only if authenticated
-      const isAuthenticated = await userService.isAuthenticated();
-      if (isAuthenticated) {
-        try {
-          await userService.updateUserProfile({
-            preferences: {
-              theme: newMode ? 'dark' : 'light'
-            }
-          });
-        } catch (error: any) {
-          // Only log unexpected errors (not authentication errors)
-          if (error?.response?.status !== 401 && error?.response?.status !== 404) {
-            console.error('Failed to sync theme with backend:', error.message);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Failed to save theme:', error);
-    }
-  };
-
-  const colors = isDarkMode ? darkTheme : lightTheme;
-
-  // Render children immediately with current theme (default or loaded)
-  return (
-    <ThemeContext.Provider value={{ isDarkMode, toggleTheme, colors }}>
-      {children}
-    </ThemeContext.Provider>
+  const value = useMemo<ThemeContextType>(
+    () => ({
+      isDarkMode,
+      preference,
+      toggleTheme,
+      setTheme,
+      colors: isDarkMode ? darkColors : lightColors,
+      tokens: isDarkMode ? darkTokens : lightTokens,
+    }),
+    [isDarkMode, preference, toggleTheme, setTheme]
   );
+
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 };
 
 export const useTheme = (): ThemeContextType => {

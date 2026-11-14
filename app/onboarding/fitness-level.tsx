@@ -1,21 +1,23 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
-import { Button, OptionCard, ProgressBar } from '../../components';
-import { Colors, Fonts, Spacing } from '../../constants';
+import { OptionCard, WizardStep } from '../../src/ui';
 import { useOnboarding } from '../../context/OnboardingContext';
-import { useTheme } from '../../context/ThemeContext';
 import { useProfileUpdateNavigation } from '../../hooks/useProfileUpdateNavigation';
 import { onboardingService } from '../../services';
+import { logError } from '../../services/apiError';
 
 export default function FitnessLevelScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { updateOnboardingData, setCurrentStep } = useOnboarding();
-  const { colors } = useTheme();
+  const { onboardingData, updateOnboardingData, setCurrentStep } = useOnboarding();
   const { navigateAfterUpdate, isUpdatingFromProfile } = useProfileUpdateNavigation();
-  const [selectedLevel, setSelectedLevel] = useState<'beginner' | 'intermediate' | 'advanced' | null>(null);
+  // The saved answer is preselected when this question is opened to change it.
+  const [picked, setSelectedLevel] = useState<
+    'beginner' | 'intermediate' | 'advanced' | null | null
+  >(null);
+  const selectedLevel: 'beginner' | 'intermediate' | 'advanced' | null | null =
+    picked ?? onboardingData.fitnessLevel ?? null;
 
   const handleContinue = async () => {
     if (selectedLevel) {
@@ -23,14 +25,14 @@ export default function FitnessLevelScreen() {
       if (!isUpdatingFromProfile) {
         setCurrentStep(5);
       }
-      
+
       // Save to backend in real-time
       try {
         await onboardingService.saveOnboardingData({ fitnessLevel: selectedLevel });
       } catch (error) {
-        console.error('Failed to save fitness level:', error);
+        logError('onboarding.save-fitness-level', error);
       }
-      
+
       if (isUpdatingFromProfile) {
         navigateAfterUpdate();
       } else {
@@ -40,67 +42,28 @@ export default function FitnessLevelScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.header}>
-        <ProgressBar currentStep={5} totalSteps={10} />
-      </View>
-
-      <View style={styles.content}>
-        <Text style={[styles.title, { color: colors.text }]}>{t('onboarding.fitnessLevel.title')}</Text>
-
-        <View style={styles.optionsContainer}>
-          <OptionCard
-            title={t('onboarding.fitnessLevel.beginner')}
-            selected={selectedLevel === 'beginner'}
-            onPress={() => setSelectedLevel('beginner')}
-          />
-          <OptionCard
-            title={t('onboarding.fitnessLevel.intermediate')}
-            selected={selectedLevel === 'intermediate'}
-            onPress={() => setSelectedLevel('intermediate')}
-          />
-          <OptionCard
-            title={t('onboarding.fitnessLevel.advanced')}
-            selected={selectedLevel === 'advanced'}
-            onPress={() => setSelectedLevel('advanced')}
-          />
-        </View>
-      </View>
-
-      <View style={styles.footer}>
-        <Button title={t('onboarding.continue')} onPress={handleContinue} disabled={!selectedLevel} />
-      </View>
-    </View>
+    <WizardStep
+      step={5}
+      totalSteps={10}
+      title={t('onboarding.fitnessLevel.title')}
+      onContinue={handleContinue}
+      continueDisabled={!selectedLevel}
+    >
+      <OptionCard
+        title={t('onboarding.fitnessLevel.beginner')}
+        selected={selectedLevel === 'beginner'}
+        onPress={() => setSelectedLevel('beginner')}
+      />
+      <OptionCard
+        title={t('onboarding.fitnessLevel.intermediate')}
+        selected={selectedLevel === 'intermediate'}
+        onPress={() => setSelectedLevel('intermediate')}
+      />
+      <OptionCard
+        title={t('onboarding.fitnessLevel.advanced')}
+        selected={selectedLevel === 'advanced'}
+        onPress={() => setSelectedLevel('advanced')}
+      />
+    </WizardStep>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.white,
-  },
-  header: {
-    paddingTop: 60,
-    paddingHorizontal: Spacing.screenPaddingHorizontal,
-    paddingBottom: 20,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: Spacing.screenPaddingHorizontal,
-    justifyContent: 'center',
-  },
-    title: {
-    fontSize: 32,
-    fontFamily: Fonts.bold,
-    fontWeight: '700',
-    color: Colors.black,
-    marginBottom: Spacing.lg,
-  },
-  optionsContainer: {
-    gap: 12,
-  },
-  footer: {
-    paddingHorizontal: Spacing.screenPaddingHorizontal,
-    paddingBottom: 40,
-  },
-});

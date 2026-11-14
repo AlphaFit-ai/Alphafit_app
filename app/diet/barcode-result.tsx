@@ -1,444 +1,164 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
+import { Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Fonts, Spacing } from '../../constants';
+import { StyleSheet, View } from 'react-native';
 import { useDiet } from '../../context/DietContext';
 import { useTheme } from '../../context/ThemeContext';
+import { logError } from '../../services/apiError';
+import type { BarcodeProductDto } from '../../services/barcodeService';
+import { AppImage, Button, Screen, Skeleton, SkeletonGroup, Text } from '../../src/ui';
 
-interface BarcodeProduct {
-  scan_id: string;
-  image_url: string;
-  predictions: Array<{
-    food: string;
-    confidence: number;
-    portion_size: string;
-    portion_weight_g: number;
-  }>;
-  total_nutrition: {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-    fiber: number;
-    sugar: number;
-  };
-  timestamp: string;
-  source?: string;
-}
-
+/** Nutrition of a scanned product, per 100 g, as the barcode lookup returns it. */
 export default function BarcodeResultScreen() {
   const { t } = useTranslation();
-  const router = useRouter();
-  const { colors, isDarkMode } = useTheme();
+  const { tokens } = useTheme();
+  const c = tokens.color;
   const { dietData, setCurrentStep } = useDiet();
-  const [product, setProduct] = useState<BarcodeProduct | null>(null);
+  const [product, setProduct] = useState<BarcodeProductDto | null>(null);
 
   useEffect(() => {
-    if (dietData.barcodeData) {
-      try {
-        const productData = JSON.parse(dietData.barcodeData);
-        console.log('Barcode result received:', productData);
-        console.log('Nutrition values:', productData.total_nutrition);
-        setProduct(productData);
-      } catch (error) {
-        console.error('Failed to parse barcode data:', error);
-        setCurrentStep(4); // Go back to food scan
-      }
-    } else {
+    if (!dietData.barcodeData) {
       setCurrentStep(4); // Go back to food scan if no data
+      return;
     }
-  }, [dietData.barcodeData]);
+    try {
+      const productData = JSON.parse(dietData.barcodeData) as BarcodeProductDto;
+      // A product with no prediction has nothing to show: go back instead of reading `predictions[0]`.
+      if (!productData.predictions?.length || !productData.total_nutrition) {
+        setCurrentStep(4);
+        return;
+      }
+      setProduct(productData);
+    } catch (error) {
+      logError('barcodeResult.parse', error);
+      setCurrentStep(4); // Go back to food scan
+    }
+  }, [dietData.barcodeData, setCurrentStep]);
+
+  const header = (
+    <Stack.Screen
+      options={{
+        title: t('diet.foodScan.barcodeResult'),
+        headerShown: true,
+        headerStyle: { backgroundColor: c.bg },
+        headerTintColor: c.text,
+        headerShadowVisible: false,
+      }}
+    />
+  );
 
   if (!product) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        <Stack.Screen
-          options={{
-            title: t('diet.foodScan.barcodeResult') || 'Product Information',
-            headerShown: true,
-            headerStyle: { backgroundColor: colors.background },
-            headerTintColor: colors.text,
-            headerShadowVisible: false,
-          }}
-        />
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </SafeAreaView>
+      <Screen noTopInset>
+        {header}
+        <SkeletonGroup label={t('common.loading')} style={styles.skeleton}>
+          <Skeleton height={180} radius={20} />
+          <Skeleton height={120} radius={16} />
+        </SkeletonGroup>
+      </Screen>
     );
   }
 
   const prediction = product.predictions[0];
-  const nutrition = product.total_nutrition;
+  const n = product.total_nutrition;
+  const macros = [
+    { key: 'protein', label: t('diet.statistics.protein'), grams: n.protein, color: c.success },
+    { key: 'carbs', label: t('diet.statistics.carbs'), grams: n.carbs, color: c.warning },
+    { key: 'fat', label: t('diet.statistics.fat'), grams: n.fat, color: c.accent },
+  ];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
-      <Stack.Screen
-        options={{
-          title: t('diet.foodScan.barcodeResult') || 'Product Information',
-          headerShown: true,
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.text,
-          headerShadowVisible: false,
-        }}
-      />
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-      >
+    <Screen
+      scroll
+      noTopInset
+      contentStyle={styles.content}
+      footer={
+        <Button
+          variant="accent"
+          icon="scan"
+          iconPosition="left"
+          title={t('diet.statistics.scanAnother')}
+          onPress={() => setCurrentStep(4)}
+        />
+      }
+    >
+      {header}
+      {product.image_url ? (
+        <AppImage
+          source={{ uri: product.image_url }}
+          contentFit="contain"
+          accessible={false}
+          style={[styles.image, { backgroundColor: c.surfaceMuted }]}
+        />
+      ) : null}
 
-        {/* Product Image */}
-        {product.image_url && (
-          <View style={styles.imageContainer}>
-            <Image
-              source={{ uri: product.image_url }}
-              style={styles.productImage}
-              resizeMode="contain"
-            />
-          </View>
-        )}
-
-        {/* Nutrition Facts Card */}
-        <View style={[styles.card, { backgroundColor: colors.card }]}>
-          {/* Product Name */}
-          <View style={styles.productNameContainer}>
-            <Text style={[styles.productName, { color: colors.text }]}>
-              {prediction.food}
+      <View style={[styles.card, { backgroundColor: c.surface, borderColor: c.border }]}>
+        <Text variant="heading" accessibilityRole="header">
+          {prediction.food}
+        </Text>
+        {prediction.portion_size && prediction.portion_size !== 'N/A' ? (
+          <Text tone="muted">{prediction.portion_size}</Text>
+        ) : null}
+        {product.source ? (
+          <View style={styles.source}>
+            <Ionicons name="information-circle-outline" size={16} color={c.accentText} />
+            <Text variant="caption" tone="accent">
+              {product.source}
             </Text>
-            {prediction.portion_size && prediction.portion_size !== 'N/A' && (
-              <Text style={[styles.portionSize, { color: colors.textSecondary }]}>
-                {prediction.portion_size}
-              </Text>
-            )}
-            {product.source && (
-              <View style={styles.sourceBadge}>
-                <Ionicons name="information-circle-outline" size={14} color={Colors.primary} />
-                <Text style={styles.sourceText}>{product.source}</Text>
-              </View>
-            )}
           </View>
+        ) : null}
 
-          <Text style={[styles.cardTitle, { color: colors.text }]}>
-            {t('diet.statistics.nutritionFacts') || 'Nutrition Facts'}
-          </Text>
-          <Text style={[styles.servingSize, { color: colors.textSecondary }]}>
-            Per 100g
-          </Text>
-
-          {/* Calories */}
-          <View style={styles.caloriesContainer}>
-            <View style={styles.caloriesRow}>
-              <Ionicons name="flame" size={32} color={Colors.error} />
-              <View style={styles.caloriesTextContainer}>
-                <Text style={[styles.caloriesValue, { color: colors.text }]}>
-                  {Math.round(nutrition.calories)}
-                </Text>
-                <Text style={[styles.caloriesLabel, { color: colors.textSecondary }]}>
-                  {t('diet.statistics.caloriesUnit') || 'cal'}
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Macronutrients */}
-          <View style={styles.macrosContainer}>
-            {/* First Row */}
-            <View style={styles.macroRow}>
-              {/* Protein */}
-              <View style={styles.macroItem}>
-                <View style={[styles.macroIconContainer, { backgroundColor: Colors.primary + '20' }]}>
-                  <Ionicons name="fitness" size={24} color={Colors.primary} />
-                </View>
-                <Text style={[styles.macroLabel, { color: colors.textSecondary }]}>
-                  {t('diet.statistics.protein') || 'Protein'}
-                </Text>
-                <Text style={[styles.macroValue, { color: colors.text }]}>
-                  {nutrition.protein.toFixed(1)}g
-                </Text>
-                <View style={styles.macroBar}>
-                  <View
-                    style={[
-                      styles.macroBarFill,
-                      {
-                        backgroundColor: Colors.primary,
-                        width: `${Math.min((nutrition.protein / 30) * 100, 100)}%`
-                      }
-                    ]}
-                  />
-                </View>
-              </View>
-
-              {/* Carbs */}
-              <View style={styles.macroItem}>
-                <View style={[styles.macroIconContainer, { backgroundColor: Colors.warning + '20' }]}>
-                  <Ionicons name="leaf" size={24} color={Colors.warning} />
-                </View>
-                <Text style={[styles.macroLabel, { color: colors.textSecondary }]}>
-                  {t('diet.statistics.carbs') || 'Carbs'}
-                </Text>
-                <Text style={[styles.macroValue, { color: colors.text }]}>
-                  {nutrition.carbs.toFixed(1)}g
-                </Text>
-                <View style={styles.macroBar}>
-                  <View
-                    style={[
-                      styles.macroBarFill,
-                      {
-                        backgroundColor: Colors.warning,
-                        width: `${Math.min((nutrition.carbs / 50) * 100, 100)}%`
-                      }
-                    ]}
-                  />
-                </View>
-              </View>
-            </View>
-
-            {/* Second Row */}
-            <View style={styles.macroRow}>
-              {/* Fat */}
-              <View style={styles.macroItem}>
-                <View style={[styles.macroIconContainer, { backgroundColor: Colors.info + '20' }]}>
-                  <Ionicons name="water" size={24} color={Colors.info} />
-                </View>
-                <Text style={[styles.macroLabel, { color: colors.textSecondary }]}>
-                  {t('diet.statistics.fat') || 'Fat'}
-                </Text>
-                <Text style={[styles.macroValue, { color: colors.text }]}>
-                  {nutrition.fat.toFixed(1)}g
-                </Text>
-                <View style={styles.macroBar}>
-                  <View
-                    style={[
-                      styles.macroBarFill,
-                      {
-                        backgroundColor: Colors.info,
-                        width: `${Math.min((nutrition.fat / 20) * 100, 100)}%`
-                      }
-                    ]}
-                  />
-                </View>
-              </View>
-
-              {/* Empty space for symmetry */}
-              <View style={styles.macroItem} />
-            </View>
-          </View>
-
-          {/* Additional Nutrients */}
-          {(nutrition.fiber > 0 || nutrition.sugar > 0) && (
-            <View style={styles.additionalNutrients}>
-              {nutrition.fiber > 0 && (
-                <View style={styles.nutrientRow}>
-                  <Text style={[styles.nutrientLabel, { color: colors.textSecondary }]}>
-                    Fiber
-                  </Text>
-                  <Text style={[styles.nutrientValue, { color: colors.text }]}>
-                    {nutrition.fiber.toFixed(1)}g
-                  </Text>
-                </View>
-              )}
-              {nutrition.sugar > 0 && (
-                <View style={styles.nutrientRow}>
-                  <Text style={[styles.nutrientLabel, { color: colors.textSecondary }]}>
-                    Sugar
-                  </Text>
-                  <Text style={[styles.nutrientValue, { color: colors.text }]}>
-                    {nutrition.sugar.toFixed(1)}g
-                  </Text>
-                </View>
-              )}
-            </View>
-          )}
+        <Text variant="label" tone="muted" style={styles.gap}>
+          {t('diet.statistics.nutritionFacts')} · {t('diet.foodScan.per100g')}
+        </Text>
+        <View style={styles.baseline}>
+          <Ionicons name="flame" size={28} color={c.accentText} />
+          <Text variant="display">{Math.round(n.calories)}</Text>
+          <Text tone="muted">{t('diet.statistics.caloriesUnit')}</Text>
         </View>
 
-        {/* Action Buttons */}
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.secondaryButton]}
-            onPress={() => setCurrentStep(4)}
-          >
-            <Ionicons name="scan" size={20} color={Colors.primary} style={{ marginRight: 8 }} />
-            <Text style={[styles.secondaryButtonText]}>
-              {t('diet.statistics.scanAnother') || 'Scan Another'}
-            </Text>
-          </TouchableOpacity>
+        <View style={styles.macros}>
+          {macros.map((m) => (
+            <View key={m.key} style={[styles.macro, { backgroundColor: c.surfaceMuted }]}>
+              <View style={styles.baseline}>
+                <View style={[styles.dot, { backgroundColor: m.color }]} />
+                <Text variant="caption" tone="muted">
+                  {m.label}
+                </Text>
+              </View>
+              <Text variant="subheading">{m.grams.toFixed(1)}g</Text>
+            </View>
+          ))}
         </View>
-      </ScrollView>
-    </SafeAreaView>
+
+        {n.fiber > 0 ? (
+          <View style={styles.row}>
+            <Text tone="muted">{t('diet.statistics.fiber')}</Text>
+            <Text variant="bodyStrong">{n.fiber.toFixed(1)}g</Text>
+          </View>
+        ) : null}
+        {n.sugar > 0 ? (
+          <View style={styles.row}>
+            <Text tone="muted">{t('diet.statistics.sugar')}</Text>
+            <Text variant="bodyStrong">{n.sugar.toFixed(1)}g</Text>
+          </View>
+        ) : null}
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  imageContainer: {
-    alignItems: 'center',
-  },
-  productImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: Spacing.lg,
-  },
-  productNameContainer: {
-    alignItems: 'center',
-    marginBottom: Spacing.lg,
-    paddingBottom: Spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  productName: {
-    fontSize: 24,
-    fontFamily: Fonts.bold,
-    textAlign: 'center',
-    marginBottom: Spacing.xs,
-  },
-  portionSize: {
-    fontSize: 16,
-    fontFamily: Fonts.regular,
-    textAlign: 'center',
-  },
-  sourceBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primary + '15',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: Spacing.sm,
-    marginTop: Spacing.sm,
-  },
-  sourceText: {
-    fontSize: 12,
-    fontFamily: Fonts.medium,
-    color: Colors.primary,
-    marginLeft: 4,
-  },
-  card: {
-    marginHorizontal: Spacing.lg,
-    marginTop: Spacing.md,
-    padding: Spacing.lg,
-    borderRadius: Spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cardTitle: {
-    fontSize: 20,
-    fontFamily: Fonts.bold,
-    marginBottom: Spacing.xs,
-  },
-  servingSize: {
-    fontSize: 14,
-    fontFamily: Fonts.regular,
-    marginBottom: Spacing.lg,
-  },
-  caloriesContainer: {
-    marginBottom: Spacing.lg,
-    paddingBottom: Spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  caloriesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  caloriesTextContainer: {
-    marginLeft: Spacing.md,
-  },
-  caloriesValue: {
-    fontSize: 32,
-    fontFamily: Fonts.bold,
-  },
-  caloriesLabel: {
-    fontSize: 14,
-    fontFamily: Fonts.regular,
-  },
-  macrosContainer: {
-    marginTop: Spacing.sm,
-  },
-  macroRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.md,
-  },
-  macroItem: {
-    flex: 1,
-    marginHorizontal: Spacing.xs,
-  },
-  macroIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: Spacing.xs,
-  },
-  macroLabel: {
-    fontSize: 14,
-    fontFamily: Fonts.medium,
-    marginTop: Spacing.xs,
-    marginBottom: Spacing.xs,
-  },
-  macroValue: {
-    fontSize: 20,
-    fontFamily: Fonts.bold,
-    marginBottom: Spacing.xs,
-  },
-  macroBar: {
-    height: 8,
-    backgroundColor: Colors.gray[200],
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  macroBarFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  additionalNutrients: {
-    marginTop: Spacing.lg,
-    paddingTop: Spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-  },
-  nutrientRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.sm,
-  },
-  nutrientLabel: {
-    fontSize: 14,
-    fontFamily: Fonts.regular,
-  },
-  nutrientValue: {
-    fontSize: 16,
-    fontFamily: Fonts.semiBold,
-  },
-  actionButtons: {
-    paddingHorizontal: Spacing.lg,
-    marginTop: Spacing.xl,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.md,
-    borderRadius: Spacing.md,
-  },
-  secondaryButton: {
-    backgroundColor: Colors.primary + '15',
-    borderWidth: 1,
-    borderColor: Colors.primary,
-  },
-  secondaryButtonText: {
-    fontSize: 16,
-    fontFamily: Fonts.semiBold,
-    color: Colors.primary,
-  },
+  skeleton: { paddingTop: 16, gap: 16 },
+  content: { paddingTop: 16, paddingBottom: 24, gap: 16 },
+  image: { width: '100%', height: 200, borderRadius: 20 },
+  card: { borderRadius: 20, borderWidth: 1, padding: 16, gap: 8 },
+  source: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  gap: { marginTop: 12 },
+  baseline: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  macros: { flexDirection: 'row', gap: 8, marginTop: 8 },
+  macro: { flex: 1, borderRadius: 14, padding: 10, gap: 2 },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 8 },
 });

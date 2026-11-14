@@ -1,11 +1,12 @@
 import apiClient from './apiClient';
-import { storage } from './storage';
+import { tokenStore } from './tokenStore';
 
 export interface UserOnboardingData {
   fullName?: string;
   email?: string;
   authProvider?: 'google' | 'apple' | 'email';
   source?: 'instagram' | 'facebook' | 'tiktok' | 'threads' | 'x' | 'youtube' | 'google' | 'others';
+  /** `month` is 1 to 12. Builds before 2026-11 stored 0 to 11; see `services/dateOfBirth.ts`. */
   dateOfBirth?: {
     month: number;
     day: number;
@@ -34,13 +35,6 @@ export interface UserOnboardingData {
   projectedPhysique?: number;
 }
 
-export interface AuthResponse {
-  token: string;
-  userId: string;
-  user: any;
-  needsOnboarding?: boolean;
-}
-
 export interface UserPreferences {
   theme?: 'light' | 'dark';
   language?: string;
@@ -64,21 +58,32 @@ export interface UserProfile {
   lastLoginAt?: string;
 }
 
+/** Flat body of `POST /auth/firebase` (CONTRACTS section 2). */
+export interface AuthResponse {
+  token: string;
+  userId: string;
+  user?: UserProfile;
+  needsOnboarding?: boolean;
+  message?: string;
+}
+
 class UserService {
-  // Authentication endpoints - All auth handled through Firebase ID tokens
+  // Authentication: every sign-in method ends in a Firebase ID token exchanged here for an api token.
 
   /**
-   * Authenticate user with Firebase token
+   * Exchange a Firebase ID token for an api token and store it.
    */
-  async authenticateUser(firebaseIdToken: string, provider?: 'google' | 'apple' | 'email'): Promise<AuthResponse> {
-    const response = await apiClient.post('/auth/firebase', {
+  async authenticateUser(
+    firebaseIdToken: string,
+    provider?: 'google' | 'apple' | 'email'
+  ): Promise<AuthResponse> {
+    const response = await apiClient.post<AuthResponse>('/auth/firebase', {
       idToken: firebaseIdToken,
-      provider: provider
+      provider: provider,
     });
 
     if (response.data.token) {
-      await storage.setItem('authToken', response.data.token);
-      await storage.setItem('userId', response.data.userId);
+      await tokenStore.save(response.data.token, response.data.userId);
     }
 
     return response.data;
@@ -89,84 +94,47 @@ class UserService {
    * Returns true if user is registered, false otherwise
    */
   async checkEmailExists(email: string): Promise<boolean> {
-    const response = await apiClient.get(`/auth/check-email?email=${encodeURIComponent(email)}`);
+    const response = await apiClient.get<boolean>(
+      `/auth/check-email?email=${encodeURIComponent(email)}`
+    );
     return response.data;
+  }
+
+  /** Email a 6-digit code to confirm an address before registering (`POST /auth/send-verification-code`). */
+  async sendVerificationCode(email: string): Promise<void> {
+    await apiClient.post('/auth/send-verification-code', { email });
   }
 
   /**
-   * Legacy email/password registration (for backward compatibility)
-   * Prefer using Firebase auth with authenticateUser instead
+   * Check the code the user typed. The api answers 400 for a wrong code; any other failure rejects,
+   * so a network problem is not reported as "wrong code".
    */
-  async registerWithEmail(email: string, password: string, fullName?: string): Promise<AuthResponse> {
-    const response = await apiClient.post('/auth/register', {
-      email,
-      password,
-      fullName
-    });
-
-    if (response.data.token) {
-      await storage.setItem('authToken', response.data.token);
-      await storage.setItem('userId', response.data.userId);
+  async verifyCode(email: string, code: string): Promise<boolean> {
+    try {
+      const response = await apiClient.post<boolean>('/auth/verify-code', { email, code });
+      return response.data !== false;
+    } catch (error: unknown) {
+      if ((error as { response?: { status?: number } })?.response?.status === 400) return false;
+      throw error;
     }
-
-    return response.data;
-  }
-
-  /**
-   * Legacy email/password login (for backward compatibility)
-   * Prefer using Firebase auth with authenticateUser instead
-   */
-  async loginWithEmail(email: string, password: string): Promise<AuthResponse> {
-    const response = await apiClient.post('/auth/login', {
-      email,
-      password
-    });
-
-    if (response.data.token) {
-      await storage.setItem('authToken', response.data.token);
-      await storage.setItem('userId', response.data.userId);
-    }
-
-    return response.data;
-  }
-
-  // Onboarding data submission
-  async submitOnboardingData(data: UserOnboardingData): Promise<UserProfile> {
-    const response = await apiClient.post('/users/onboarding', data);
-    return response.data;
-  }
-
-  async updateOnboardingData(data: Partial<UserOnboardingData>): Promise<UserProfile> {
-    const response = await apiClient.patch('/users/onboarding', data);
-    return response.data;
   }
 
   // User profile endpoints
   async getUserProfile(): Promise<UserProfile> {
-    const response = await apiClient.get('/users/profile');
+    const response = await apiClient.get<UserProfile>('/users/profile');
     return response.data;
   }
 
   async updateUserProfile(data: Partial<UserProfile>): Promise<UserProfile> {
-    const response = await apiClient.put('/users/profile', data);
+    const response = await apiClient.put<UserProfile>('/users/profile', data);
     return response.data;
   }
 
-  // Deactivate account
+  /**
+   * Deactivate the account on the server. The caller then calls `signOut()` to clear the device.
+   */
   async deactivateAccount(confirmationText: string): Promise<void> {
     await apiClient.post('/users/deactivate', { confirmationText });
-  }
-
-  // Logout
-  async logout(): Promise<void> {
-    await storage.removeItem('authToken');
-    await storage.removeItem('userId');
-  }
-
-  // Check if user is authenticated
-  async isAuthenticated(): Promise<boolean> {
-    const token = await storage.getItem('authToken');
-    return !!token;
   }
 }
 
